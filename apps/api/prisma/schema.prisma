@@ -1,8 +1,3 @@
-// =============================================================================
-// PRISMA SCHEMA — Enterprise Management System
-// Provider: SQLite (dev) | PostgreSQL/Supabase (prod)
-// =============================================================================
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -12,74 +7,50 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ENUMS  (SQLite stores as String — validated at app layer)
-// ─────────────────────────────────────────────────────────────────────────────
-// UserRole: SUPER_ADMIN | ADMIN | MANAGER | EMPLOYEE
-// UserStatus: ACTIVE | INACTIVE | PENDING | SUSPENDED
-// Department: ENGINEERING | FINANCE | HR | MARKETING | OPERATIONS | SALES | LEGAL | PRODUCT
-// TransactionType: INCOME | EXPENSE | TRANSFER | REFUND
-// TransactionStatus: PENDING | COMPLETED | FAILED | CANCELLED
-// InvoiceStatus: DRAFT | SENT | PAID | OVERDUE | CANCELLED
-// TaskStatus: TODO | IN_PROGRESS | IN_REVIEW | DONE | CANCELLED
-// TaskPriority: LOW | MEDIUM | HIGH | CRITICAL
-// ProjectStatus: PLANNING | ACTIVE | ON_HOLD | COMPLETED | CANCELLED
-// LeaveType: ANNUAL | SICK | MATERNITY | PATERNITY | UNPAID | EMERGENCY
-// LeaveStatus: PENDING | APPROVED | REJECTED | CANCELLED
-// AttendanceStatus: PRESENT | ABSENT | LATE | HALF_DAY | REMOTE
-// NotificationType: INFO | WARNING | SUCCESS | ERROR | SYSTEM
-// FileVisibility: PUBLIC | PRIVATE | TEAM | DEPARTMENT
-// BudgetPeriod: MONTHLY | QUARTERLY | ANNUAL
-
-// ─────────────────────────────────────────────────────────────────────────────
-// MODEL: User
-// ─────────────────────────────────────────────────────────────────────────────
 model User {
-  id                 String    @id @default(cuid())
-  email              String    @unique
-  passwordHash       String
-  role               String    @default("EMPLOYEE")
-  status             String    @default("PENDING")
-  firstName          String
-  lastName           String
-  avatarUrl          String?
-  phone              String?
-  department         String?
-  position           String?
-  refreshToken       String?
-  emailVerified      Boolean   @default(false)
-  emailVerifyToken   String?
-  pwResetToken       String?
-  pwResetExpires     DateTime?
-  lastLoginAt        DateTime?
-  createdById        String?
-  updatedById        String?
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
-  deletedAt          DateTime?
-
-  // Relations
-  createdBy          User?     @relation("UserCreatedBy", fields: [createdById], references: [id])
-  usersCreated       User[]    @relation("UserCreatedBy")
-  notifications      Notification[]
-  auditLogs          AuditLog[]
-  uploadedFiles      File[]
-  managedProjects    Project[]  @relation("ProjectManager")
-  reportedTasks      Task[]     @relation("TaskReporter")
-  assignedTasks      Task[]     @relation("TaskAssignee")
-  taskComments       TaskComment[]
-  payrollRecords     PayrollRecord[]
-  leaveRequests      LeaveRequest[] @relation("LeaveUser")
-  approvedLeaves     LeaveRequest[] @relation("LeaveApprover")
-  attendanceRecords  AttendanceRecord[]
+  id                  String             @id @default(cuid())
+  email               String             @unique
+  passwordHash        String
+  role                String             @default("EMPLOYEE")
+  status              String             @default("PENDING")
+  firstName           String
+  lastName            String
+  avatarUrl           String?
+  phone               String?
+  department          String?
+  position            String?
+  refreshToken        String?
+  emailVerified       Boolean            @default(false)
+  emailVerifyToken    String?
+  pwResetToken        String?
+  pwResetExpires      DateTime?
+  lastLoginAt         DateTime?
+  createdById         String?
+  updatedById         String?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  deletedAt           DateTime?
+  attendanceRecords   AttendanceRecord[]
+  auditLogs           AuditLog[]
+  createdBudgets      BudgetAllocation[]
+  createdClients      Client[]
+  grantedFilePerms    FilePermission[]   @relation("FilePermissionGranter")
+  filePermissions     FilePermission[]   @relation("FilePermissionUser")
+  uploadedFiles       File[]
+  createdInvoices     Invoice[]
+  approvedLeaves      LeaveRequest[]     @relation("LeaveApprover")
+  leaveRequests       LeaveRequest[]     @relation("LeaveUser")
+  notifications       Notification[]
+  processedPayrolls   PayrollRecord[]    @relation("PayrollProcessor")
+  payrollRecords      PayrollRecord[]
+  createdProjects     Project[]          @relation("ProjectCreator")
+  managedProjects     Project[]          @relation("ProjectManager")
+  taskComments        TaskComment[]
+  reportedTasks       Task[]             @relation("TaskReporter")
+  assignedTasks       Task[]             @relation("TaskAssignee")
   createdTransactions Transaction[]
-  createdInvoices    Invoice[]
-  createdClients     Client[]
-  createdProjects    Project[]  @relation("ProjectCreator")
-  processedPayrolls  PayrollRecord[] @relation("PayrollProcessor")
-  createdBudgets     BudgetAllocation[]
-  grantedFilePerms   FilePermission[] @relation("FilePermissionGranter")
-  filePermissions    FilePermission[] @relation("FilePermissionUser")
+  createdBy           User?              @relation("UserCreatedBy", fields: [createdById], references: [id])
+  usersCreated        User[]             @relation("UserCreatedBy")
 
   @@index([email])
   @@index([role])
@@ -89,9 +60,6 @@ model User {
   @@map("users")
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MODEL: Department
-// ─────────────────────────────────────────────────────────────────────────────
 model Department {
   id          String   @id @default(cuid())
   name        String   @unique
@@ -104,9 +72,6 @@ model Department {
   @@map("departments")
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MODEL: BudgetAllocation
-// ─────────────────────────────────────────────────────────────────────────────
 model BudgetAllocation {
   id          String   @id @default(cuid())
   department  String
@@ -117,17 +82,14 @@ model BudgetAllocation {
   allocated   Decimal  @default(0)
   spent       Decimal  @default(0)
   createdById String
-  createdBy   User     @relation(fields: [createdById], references: [id])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  createdBy   User     @relation(fields: [createdById], references: [id])
 
   @@index([department, period, year])
   @@map("budget_allocations")
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MODEL: Client
-// ─────────────────────────────────────────────────────────────────────────────
 model Client {
   id          String    @id @default(cuid())
   name        String
@@ -137,43 +99,38 @@ model Client {
   address     String?
   taxId       String?
   createdById String
-  createdBy   User      @relation(fields: [createdById], references: [id])
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-
-  invoices  Invoice[]
-  projects  Project[]
+  createdBy   User      @relation(fields: [createdById], references: [id])
+  invoices    Invoice[]
+  projects    Project[]
 
   @@index([email])
   @@map("clients")
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MODEL: Invoice
-// ─────────────────────────────────────────────────────────────────────────────
 model Invoice {
-  id            String    @id @default(cuid())
-  invoiceNumber String    @unique
+  id            String            @id @default(cuid())
+  invoiceNumber String            @unique
   clientId      String
-  client        Client    @relation(fields: [clientId], references: [id])
-  status        String    @default("DRAFT")
-  subtotal      Decimal   @default(0)
-  taxRate       Decimal   @default(0)
-  taxAmount     Decimal   @default(0)
-  discount      Decimal   @default(0)
-  total         Decimal   @default(0)
-  currency      String    @default("USD")
+  status        String            @default("DRAFT")
+  subtotal      Decimal           @default(0)
+  taxRate       Decimal           @default(0)
+  taxAmount     Decimal           @default(0)
+  discount      Decimal           @default(0)
+  total         Decimal           @default(0)
+  currency      String            @default("USD")
   notes         String?
   dueDate       DateTime
   issuedAt      DateTime?
   paidAt        DateTime?
   createdById   String
-  createdBy     User      @relation(fields: [createdById], references: [id])
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  lineItems    InvoiceLineItem[]
-  transactions Transaction[]
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  lineItems     InvoiceLineItem[]
+  createdBy     User              @relation(fields: [createdById], references: [id])
+  client        Client            @relation(fields: [clientId], references: [id])
+  transactions  Transaction[]
 
   @@index([clientId])
   @@index([status])
@@ -181,44 +138,38 @@ model Invoice {
   @@map("invoices")
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MODEL: InvoiceLineItem
-// ─────────────────────────────────────────────────────────────────────────────
 model InvoiceLineItem {
   id          String  @id @default(cuid())
   invoiceId   String
-  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
   description String
   quantity    Decimal @default(1)
   unitPrice   Decimal
   total       Decimal
   sortOrder   Int     @default(0)
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
   @@index([invoiceId])
   @@map("invoice_line_items")
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MODEL: Transaction
-// ─────────────────────────────────────────────────────────────────────────────
 model Transaction {
-  id              String    @id @default(cuid())
+  id              String   @id @default(cuid())
   type            String
-  status          String    @default("COMPLETED")
+  status          String   @default("COMPLETED")
   amount          Decimal
-  currency        String    @default("USD")
+  currency        String   @default("USD")
   description     String
   category        String
   department      String?
   reference       String?
   paymentMethod   String?
   invoiceId       String?
-  invoice         Invoice?  @relation(fields: [invoiceId], references: [id])
-  transactionDate DateTime  @default(now())
+  transactionDate DateTime @default(now())
   createdById     String
-  createdBy       User      @relation(fields: [createdById], references: [id])
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  createdBy       User     @relation(fields: [createdById], references: [id])
+  invoice         Invoice? @relation(fields: [invoiceId], references: [id])
 
   @@index([type])
   @@index([status])
@@ -228,30 +179,26 @@ model Transaction {
   @@map("transactions")
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MODEL: Project
-// ─────────────────────────────────────────────────────────────────────────────
 model Project {
   id          String    @id @default(cuid())
   name        String
   description String?
   status      String    @default("PLANNING")
   managerId   String
-  manager     User      @relation("ProjectManager", fields: [managerId], references: [id])
   clientId    String?
-  client      Client?   @relation(fields: [clientId], references: [id])
   department  String?
   startDate   DateTime
   endDate     DateTime?
   budget      Decimal?
   progress    Int       @default(0)
   createdById String
-  createdBy   User      @relation("ProjectCreator", fields: [createdById], references: [id])
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
-
-  tasks Task[]
+  createdBy   User      @relation("ProjectCreator", fields: [createdById], references: [id])
+  client      Client?   @relation(fields: [clientId], references: [id])
+  manager     User      @relation("ProjectManager", fields: [managerId], references: [id])
+  tasks       Task[]
 
   @@index([managerId])
   @@index([status])
@@ -260,31 +207,27 @@ model Project {
   @@map("projects")
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MODEL: Task
-// ─────────────────────────────────────────────────────────────────────────────
 model Task {
-  id             String    @id @default(cuid())
+  id             String        @id @default(cuid())
   title          String
   description    String?
-  status         String    @default("TODO")
-  priority       String    @default("MEDIUM")
+  status         String        @default("TODO")
+  priority       String        @default("MEDIUM")
   projectId      String
-  project        Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
   assigneeId     String?
-  assignee       User?     @relation("TaskAssignee", fields: [assigneeId], references: [id])
   reporterId     String
-  reporter       User      @relation("TaskReporter", fields: [reporterId], references: [id])
   dueDate        DateTime?
   completedAt    DateTime?
   estimatedHours Decimal?
   actualHours    Decimal?
-  tags           String?   // JSON array stored as string for SQLite
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  tags           String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
   deletedAt      DateTime?
-
-  comments TaskComment[]
+  comments       TaskComment[]
+  reporter       User          @relation("TaskReporter", fields: [reporterId], references: [id])
+  assignee       User?         @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  project        Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
   @@index([assigneeId])
@@ -294,45 +237,38 @@ model Task {
   @@map("tasks")
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MODEL: TaskComment
-// ─────────────────────────────────────────────────────────────────────────────
 model TaskComment {
   id        String   @id @default(cuid())
   taskId    String
-  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
   authorId  String
-  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
   content   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
 
   @@index([taskId])
   @@map("task_comments")
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MODEL: File
-// ─────────────────────────────────────────────────────────────────────────────
 model File {
-  id           String   @id @default(cuid())
+  id           String           @id @default(cuid())
   name         String
   originalName String
   mimeType     String
   sizeBytes    Int
   storagePath  String
   publicUrl    String?
-  folderPath   String   @default("/")
-  visibility   String   @default("PRIVATE")
+  folderPath   String           @default("/")
+  visibility   String           @default("PRIVATE")
   department   String?
   entityType   String?
   entityId     String?
   uploadedById String
-  uploadedBy   User     @relation(fields: [uploadedById], references: [id])
-  createdAt    DateTime @default(now())
+  createdAt    DateTime         @default(now())
   deletedAt    DateTime?
-
-  permissions FilePermission[]
+  permissions  FilePermission[]
+  uploadedBy   User             @relation(fields: [uploadedById], references: [id])
 
   @@index([uploadedById])
   @@index([folderPath])
@@ -340,21 +276,18 @@ model File {
   @@map("files")
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MODEL: FilePermission
-// ─────────────────────────────────────────────────────────────────────────────
 model FilePermission {
   id          String   @id @default(cuid())
   fileId      String
-  file        File     @relation(fields: [fileId], references: [id], onDelete: Cascade)
   userId      String
-  user        User     @relation("FilePermissionUser", fields: [userId], references: [id], onDelete: Cascade)
   canView     Boolean  @default(true)
   canDownload Boolean  @default(false)
   canDelete   Boolean  @default(false)
   grantedById String
-  grantedBy   User     @relation("FilePermissionGranter", fields: [grantedById], references: [id])
   createdAt   DateTime @default(now())
+  grantedBy   User     @relation("FilePermissionGranter", fields: [grantedById], references: [id])
+  user        User     @relation("FilePermissionUser", fields: [userId], references: [id], onDelete: Cascade)
+  file        File     @relation(fields: [fileId], references: [id], onDelete: Cascade)
 
   @@unique([fileId, userId])
   @@index([fileId])
@@ -362,20 +295,17 @@ model FilePermission {
   @@map("file_permissions")
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MODEL: Notification
-// ─────────────────────────────────────────────────────────────────────────────
 model Notification {
   id        String   @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   type      String   @default("INFO")
   title     String
   message   String
   isRead    Boolean  @default(false)
   actionUrl String?
-  metadata  String?  // JSON as string for SQLite
+  metadata  String?
   createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([userId, isRead])
@@ -383,21 +313,18 @@ model Notification {
   @@map("notifications")
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MODEL: AuditLog
-// ─────────────────────────────────────────────────────────────────────────────
 model AuditLog {
   id        String   @id @default(cuid())
   userId    String?
-  user      User?    @relation(fields: [userId], references: [id])
   action    String
   entity    String
   entityId  String?
-  oldValues String?  // JSON as string
-  newValues String?  // JSON as string
+  oldValues String?
+  newValues String?
   ipAddress String?
   userAgent String?
   createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@index([entity, entityId])
@@ -405,27 +332,24 @@ model AuditLog {
   @@map("audit_logs")
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MODEL: PayrollRecord
-// ─────────────────────────────────────────────────────────────────────────────
 model PayrollRecord {
-  id           String    @id @default(cuid())
-  userId       String
-  user         User      @relation(fields: [userId], references: [id])
-  month        Int
-  year         Int
-  baseSalary   Decimal
-  allowances   Decimal   @default(0)
-  deductions   Decimal   @default(0)
-  bonus        Decimal   @default(0)
-  netSalary    Decimal
-  isPaid       Boolean   @default(false)
-  paidAt       DateTime?
-  notes        String?
+  id            String    @id @default(cuid())
+  userId        String
+  month         Int
+  year          Int
+  baseSalary    Decimal
+  allowances    Decimal   @default(0)
+  deductions    Decimal   @default(0)
+  bonus         Decimal   @default(0)
+  netSalary     Decimal
+  isPaid        Boolean   @default(false)
+  paidAt        DateTime?
+  notes         String?
   processedById String?
-  processedBy  User?     @relation("PayrollProcessor", fields: [processedById], references: [id])
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  processedBy   User?     @relation("PayrollProcessor", fields: [processedById], references: [id])
+  user          User      @relation(fields: [userId], references: [id])
 
   @@unique([userId, month, year])
   @@index([userId])
@@ -433,13 +357,9 @@ model PayrollRecord {
   @@map("payroll_records")
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MODEL: LeaveRequest
-// ─────────────────────────────────────────────────────────────────────────────
 model LeaveRequest {
   id              String    @id @default(cuid())
   userId          String
-  user            User      @relation("LeaveUser", fields: [userId], references: [id], onDelete: Cascade)
   type            String
   status          String    @default("PENDING")
   startDate       DateTime
@@ -447,31 +367,29 @@ model LeaveRequest {
   daysCount       Decimal
   reason          String?
   approvedById    String?
-  approvedBy      User?     @relation("LeaveApprover", fields: [approvedById], references: [id])
   approvedAt      DateTime?
   rejectionReason String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+  approvedBy      User?     @relation("LeaveApprover", fields: [approvedById], references: [id])
+  user            User      @relation("LeaveUser", fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([status])
   @@map("leave_requests")
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MODEL: AttendanceRecord
-// ─────────────────────────────────────────────────────────────────────────────
 model AttendanceRecord {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   date      DateTime
-  status    String   @default("PRESENT")
+  status    String    @default("PRESENT")
   checkIn   DateTime?
   checkOut  DateTime?
   notes     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, date])
   @@index([userId])
