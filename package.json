@@ -6,8 +6,8 @@
     "build": "turbo run build",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
-    "db:generate": "npx prisma generate --schema=apps/api/prisma/schema.prisma",
-    "db:migrate": "npx prisma migrate deploy --schema=apps/api/prisma/schema.prisma",
+    "db:generate": "npx prisma@5.13.0 generate --schema=apps/api/prisma/schema.prisma",
+    "db:migrate": "npx prisma@5.13.0 migrate deploy --schema=apps/api/prisma/schema.prisma",
     "db:seed": "pnpm --filter @ems/api run db:seed",
     "postinstall": "npm run db:generate"
   },

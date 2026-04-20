@@ -11,11 +11,11 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
-    "db:generate": "npx prisma generate",
-    "db:migrate": "npx prisma migrate dev",
+    "db:generate": "npx prisma@5.13.0 generate",
+    "db:migrate": "npx prisma@5.13.0 migrate dev",
     "db:seed": "ts-node -r tsconfig-paths/register prisma/seed.ts",
-    "db:studio": "npx prisma studio",
-    "db:reset": "npx prisma migrate reset --force"
+    "db:studio": "npx prisma@5.13.0 studio",
+    "db:reset": "npx prisma@5.13.0 migrate reset --force"
   },
   "dependencies": {
     "@ems/shared": "workspace:*",
