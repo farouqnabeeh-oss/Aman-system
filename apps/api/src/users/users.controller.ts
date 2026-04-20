@@ -52,7 +52,7 @@ export class UsersController {
   }
 
   @Patch('bulk')
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles('MANAGER', 'ADMIN', 'SUPER_ADMIN')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Bulk activate / deactivate / delete users' })
   async bulkAction(@Body() dto: BulkActionDto, @CurrentUser() actor: RequestUser) {
@@ -68,7 +68,7 @@ export class UsersController {
   }
 
   @Delete(':id')
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles('MANAGER', 'ADMIN', 'SUPER_ADMIN')
   @ApiOperation({ summary: 'Soft-delete a user' })
   async remove(@Param('id') id: string, @CurrentUser() actor: RequestUser) {
     await this.usersService.softDelete(id, actor.id);

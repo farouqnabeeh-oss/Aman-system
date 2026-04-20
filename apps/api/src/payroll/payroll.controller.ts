@@ -22,7 +22,7 @@ class CreatePayrollDto {
 @ApiTags('Payroll')
 @ApiBearerAuth('JWT')
 @UseGuards(RolesGuard)
-@Roles('ADMIN', 'SUPER_ADMIN')
+@Roles('MANAGER', 'ADMIN', 'SUPER_ADMIN')
 @Controller('payroll')
 export class PayrollController {
   constructor(private readonly payrollService: PayrollService) {}

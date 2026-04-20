@@ -22,7 +22,7 @@ const TRANSLATIONS = {
     dashboard: 'Dashboard', users: 'Team', finance: 'Finance',
     projects: 'Projects', tasks: 'Tasks', files: 'Files',
     hr: 'Human Resources', payroll: 'Payroll',
-    notifications: 'Notifications', auditLogs: 'Audit Logs', brand: 'Sahab Digital',
+    notifications: 'Notifications', auditLogs: 'Audit Logs', brand: 'AMAN System',
   }
 };
 
@@ -34,9 +34,9 @@ const NAV_ITEMS = (t: any) => [
   { path: '/tasks',        label: t.tasks,         icon: CheckSquare,     color: 'text-sky-400',    roles: ['SUPER_ADMIN','ADMIN','MANAGER','EMPLOYEE'] },
   { path: '/files',        label: t.files,         icon: FileText,        color: 'text-teal-400',   roles: ['SUPER_ADMIN','ADMIN','MANAGER','EMPLOYEE'] },
   { path: '/hr',           label: t.hr,            icon: HeartPulse,      color: 'text-rose-400',   roles: ['SUPER_ADMIN','ADMIN','MANAGER','EMPLOYEE'] },
-  { path: '/payroll',      label: t.payroll,       icon: CreditCard,      color: 'text-indigo-400', roles: ['SUPER_ADMIN','ADMIN'] },
+  { path: '/payroll',      label: t.payroll,       icon: CreditCard,      color: 'text-indigo-400', roles: ['SUPER_ADMIN','ADMIN','MANAGER'] },
   { path: '/notifications',label: t.notifications, icon: Bell,            color: 'text-orange-400', roles: ['SUPER_ADMIN','ADMIN','MANAGER','EMPLOYEE'] },
-  { path: '/audit-logs',   label: t.auditLogs,     icon: ScrollText,      color: 'text-slate-400',  roles: ['SUPER_ADMIN','ADMIN'] },
+  { path: '/audit-logs',   label: t.auditLogs,     icon: ScrollText,      color: 'text-slate-400',  roles: ['SUPER_ADMIN','ADMIN','MANAGER'] },
 ];
 
 export function Sidebar() {

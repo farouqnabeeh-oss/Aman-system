@@ -31,7 +31,7 @@ export class FinanceController {
     return { success: true, data: await this.financeService.createTransaction(dto, actor.id) };
   }
 
-  @Delete('transactions/:id') @Roles('ADMIN', 'SUPER_ADMIN') @HttpCode(HttpStatus.OK)
+  @Delete('transactions/:id') @Roles('MANAGER', 'ADMIN', 'SUPER_ADMIN') @HttpCode(HttpStatus.OK)
   async deleteTransaction(@Param('id') id: string, @CurrentUser() actor: RequestUser) {
     await this.financeService.deleteTransaction(id, actor.id);
     return { success: true, data: null };

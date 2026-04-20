@@ -52,6 +52,6 @@ export class ProjectsController {
   @Patch(':id')
   async update(@Param('id') id: string, @Body() dto: UpdateProjectDto, @CurrentUser() actor: RequestUser) { return { success: true, data: await this.projectsService.update(id, dto as unknown as Record<string, unknown>, actor.id, actor.role) }; }
 
-  @Delete(':id') @Roles('ADMIN', 'SUPER_ADMIN') @HttpCode(HttpStatus.OK)
+  @Delete(':id') @Roles('MANAGER', 'ADMIN', 'SUPER_ADMIN') @HttpCode(HttpStatus.OK)
   async remove(@Param('id') id: string, @CurrentUser() actor: RequestUser) { await this.projectsService.remove(id, actor.id); return { success: true, data: null }; }
 }

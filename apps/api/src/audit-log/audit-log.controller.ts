@@ -11,9 +11,9 @@ import { RolesGuard } from '../common/guards/roles.guard';
 export class AuditLogController {
   constructor(private readonly auditLogService: AuditLogService) {}
 
-  @Get()
-  @Roles('ADMIN', 'SUPER_ADMIN')
-  @ApiOperation({ summary: 'Get paginated audit logs (admin only)' })
+  @Get()  
+  @Roles('MANAGER', 'ADMIN', 'SUPER_ADMIN')
+  @ApiOperation({ summary: 'Get paginated audit logs (manager/admin access)' })
   async findAll(
     @Query('page') page = 1,
     @Query('limit') limit = 20,

@@ -117,7 +117,7 @@ export function UsersPage() {
         
         <select value={roleFilter} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setRoleFilter(e.target.value)} className="bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 text-xs font-black text-slate-400 outline-none uppercase tracking-widest">
           <option value="">{t.allRoles}</option>
-          {['SUPER_ADMIN','ADMIN','MANAGER','EMPLOYEE'].map(r => <option key={r} value={r}>{r}</option>)}
+          {['MANAGER','EMPLOYEE'].map(r => <option key={r} value={r}>{r}</option>)}
         </select>
 
         <div className="flex bg-white/5 rounded-2xl border border-white/10 p-1">
@@ -183,7 +183,7 @@ export function UsersPage() {
             )}
 
             <div className="grid grid-cols-2 gap-6">
-               <Select label={t.role} icon={ShieldCheck} value={form.role} options={['SUPER_ADMIN','ADMIN','MANAGER','EMPLOYEE'].map(r => ({value:r, label:r}))} onChange={(e: any) => setForm(f => ({...f, role: e.target.value}))} />
+               <Select label={t.role} icon={ShieldCheck} value={form.role} options={['MANAGER','EMPLOYEE'].map(r => ({value:r, label:r}))} onChange={(e: any) => setForm(f => ({...f, role: e.target.value}))} />
                <Select label={t.dept} icon={Zap} value={form.department} options={['ENGINEERING','FINANCE','HR','MARKETING','OPERATIONS'].map(d => ({value:d, label:d}))} onChange={(e: any) => setForm(f => ({...f, department: e.target.value}))} />
             </div>
 
