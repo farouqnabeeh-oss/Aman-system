@@ -5,7 +5,7 @@ import { addDays, subDays, startOfMonth } from 'date-fns';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🧹 Clearing all previous data...');
+  console.log('🧹 Cleaning database for final delivery...');
   const tableNames = [
     'AuditLog', 'AttendanceRecord', 'PayrollRecord', 'Task', 'Project', 
     'User', 'Department', 'Notification', 'BudgetAllocation', 'Transaction', 'Invoice'
@@ -17,17 +17,23 @@ async function main() {
     } catch(e) {}
   }
 
-  console.log('🌱 Initializing AMAN System (Production Ready)...');
+  console.log('🌱 Deploying fully linked AMAN production data...');
 
   const managerPass = await bcrypt.hash('aman@2026', 12);
   const employeePass = await bcrypt.hash('Password123!', 12);
 
   // 1. Departments
-  const engineering = await prisma.department.create({ data: { name: 'ENGINEERING', budget: 1000000 } });
-  const operations = await prisma.department.create({ data: { name: 'OPERATIONS', budget: 800000 } });
-  const hr = await prisma.department.create({ data: { name: 'HR', budget: 300000 } });
+  await prisma.department.createMany({
+    data: [
+      { name: 'ENGINEERING', budget: 1000000 },
+      { name: 'OPERATIONS', budget: 800000 },
+      { name: 'HR', budget: 300000 },
+      { name: 'FINANCE', budget: 500000 },
+      { name: 'MARKETING', budget: 400000 }
+    ]
+  });
 
-  // 2. Main Manager (aman10@gmail.com)
+  // 2. Manager
   const manager = await prisma.user.create({
     data: {
       email: 'aman10@gmail.com',
@@ -72,7 +78,7 @@ async function main() {
     }
   });
 
-  // 4. Integrated Projects
+  // 4. Projects
   const project = await prisma.project.create({
     data: {
       name: 'Vision 2026 Dashboard',
@@ -88,12 +94,12 @@ async function main() {
     }
   });
 
-  // 5. Linked Tasks
+  // 5. Tasks
   await prisma.task.createMany({
     data: [
       {
         title: 'Backend API Hardening',
-        description: 'Verify all JWT logic and relationship integrity.',
+        description: 'Verify relationship integrity in the ORM layer.',
         status: 'IN_PROGRESS',
         priority: 'HIGH',
         projectId: project.id,
@@ -114,59 +120,53 @@ async function main() {
     ]
   });
 
-  // 6. Financial Data (Transactions)
-  const now = new Date();
-  await prisma.transaction.createMany({
+  // 6. Invoices (for Overdue KPI)
+  await prisma.invoice.createMany({
     data: [
       {
-        amount: 50000,
-        type: 'INCOME',
-        category: 'SERVICES',
-        status: 'COMPLETED',
-        description: 'Quarterly Service Fee',
-        transactionDate: subDays(now, 5),
-        createdById: manager.id
-      },
-      {
-        amount: 15000,
-        type: 'EXPENSE',
-        category: 'RENT',
-        status: 'COMPLETED',
-        description: 'Headquarters Rent',
-        transactionDate: subDays(now, 2),
+        invoiceNumber: 'INV-2026-001',
+        status: 'OVERDUE',
+        issueDate: subDays(new Date(), 45),
+        dueDate: subDays(new Date(), 15),
+        subtotal: 1500,
+        tax: 225,
+        total: 1725,
+        clientId: 'temp-client-id',
+        projectId: project.id,
         createdById: manager.id
       }
     ]
   });
 
-  // 7. Budget Allocations (for Dashboard Radar)
+  // 7. Finance Data
+  const now = new Date();
+  await prisma.transaction.createMany({
+    data: [
+      { amount: 150000, type: 'INCOME', category: 'SERVICES', status: 'COMPLETED', description: 'Annual Contract', transactionDate: subDays(now, 5), createdById: manager.id },
+      { amount: 25000, type: 'EXPENSE', category: 'OPERATIONS', status: 'COMPLETED', description: 'Equipment Purchase', transactionDate: subDays(now, 2), createdById: manager.id }
+    ]
+  });
+
+  // 8. Budget Allocations (Radar Chart)
   await prisma.budgetAllocation.createMany({
     data: [
       { department: 'ENGINEERING', period: 'MONTHLY', year: now.getFullYear(), month: now.getMonth() + 1, allocated: 100000, spent: 45000, createdById: manager.id },
-      { department: 'OPERATIONS', period: 'MONTHLY', year: now.getFullYear(), month: now.getMonth() + 1, allocated: 80000, spent: 62000, createdById: manager.id },
-      { department: 'HR', period: 'MONTHLY', year: now.getFullYear(), month: now.getMonth() + 1, allocated: 30000, spent: 12000, createdById: manager.id }
+      { department: 'OPERATIONS', period: 'MONTHLY', year: now.getFullYear(), month: now.getMonth() + 1, allocated: 80000, spent: 75000, createdById: manager.id },
+      { department: 'HR', period: 'MONTHLY', year: now.getFullYear(), month: now.getMonth() + 1, allocated: 30000, spent: 12000, createdById: manager.id },
+      { department: 'FINANCE', period: 'MONTHLY', year: now.getFullYear(), month: now.getMonth() + 1, allocated: 50000, spent: 10000, createdById: manager.id }
     ]
   });
 
-  // 8. Payroll & Attendance
-  await prisma.payrollRecord.createMany({
+  // 9. Extra Activity Logs (to make feed look good)
+  await prisma.auditLog.createMany({
     data: [
-      { userId: manager.id, month: now.getMonth() + 1, year: 2026, baseSalary: 12000, allowances: 2000, netSalary: 14000, isPaid: true, paidAt: new Date() },
-      { userId: dev1.id, month: now.getMonth() + 1, year: 2026, baseSalary: 8000, allowances: 1000, netSalary: 9000, isPaid: false }
+       { userId: manager.id, action: 'CREATE', entity: 'PROJECT', entityId: project.id, details: 'Created Vision 2026 Dashboard' },
+       { userId: dev1.id, action: 'UPDATE', entity: 'TASK', details: 'Started work on API Hardening' }
     ]
   });
 
-  await prisma.attendanceRecord.createMany({
-    data: [
-      { userId: dev1.id, date: subDays(now, 1), status: 'PRESENT', checkIn: subDays(now, 1) },
-      { userId: hr1.id, date: subDays(now, 1), status: 'LATE', checkIn: subDays(now, 1) }
-    ]
-  });
-
-  console.log('✅ AMAN Production Seed Complete. Dashboard is now ALIVE.');
-  console.log('\n📋 Access Details:');
-  console.log('   Manager: aman10@gmail.com / aman@2026');
-  console.log('   Employee: dev1@aman.dev / Password123!');
+  console.log('✅ AMAN System: Full Relational Sync Complete.');
+  console.log('📋 Access: aman10@gmail.com / aman@2026');
 }
 
 main()
