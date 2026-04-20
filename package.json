@@ -8,8 +8,7 @@
     "typecheck": "turbo run typecheck",
     "db:generate": "npx prisma generate --schema=apps/api/prisma/schema.prisma",
     "db:migrate": "npx prisma migrate deploy --schema=apps/api/prisma/schema.prisma",
-    "db:seed": "pnpm --filter @ems/api run db:seed",
-    "postinstall": "npm run db:generate"
+    "db:seed": "pnpm --filter @ems/api run db:seed"
   },
   "devDependencies": {
     "turbo": "^1.13.0"
