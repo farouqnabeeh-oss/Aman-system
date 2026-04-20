@@ -5,19 +5,22 @@ import { addDays, subDays } from 'date-fns';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🧹 Cleaning database for final delivery...');
-  const tableNames = [
-    'AuditLog', 'AttendanceRecord', 'PayrollRecord', 'Task', 'Project', 
-    'User', 'Department', 'Notification', 'BudgetAllocation', 'Transaction', 'Invoice', 'Client'
-  ];
-  for (const table of tableNames) {
-    try {
-      // @ts-ignore
-      await prisma[table.toLowerCase()].deleteMany({});
-    } catch(e) {}
-  }
+  console.log('🧹 Cleaning cloud database for final delivery...');
+  
+  // High-level cleaning to avoid FK issues
+  await prisma.auditLog.deleteMany({});
+  await prisma.attendanceRecord.deleteMany({});
+  await prisma.payrollRecord.deleteMany({});
+  await prisma.task.deleteMany({});
+  await prisma.project.deleteMany({});
+  await prisma.transaction.deleteMany({});
+  await prisma.budgetAllocation.deleteMany({});
+  await prisma.invoice.deleteMany({});
+  await prisma.client.deleteMany({});
+  await prisma.user.deleteMany({});
+  await prisma.department.deleteMany({});
 
-  console.log('🌱 Deploying fully linked AMAN production data...');
+  console.log('🌱 Deploying fully linked cloud production data...');
 
   const managerPass = await bcrypt.hash('aman@2026', 12);
   const employeePass = await bcrypt.hash('Password123!', 12);
@@ -38,22 +41,7 @@ async function main() {
     },
   });
 
-  // 2. Employees
-  const dev1 = await prisma.user.create({
-    data: {
-      email: 'dev1@aman.dev',
-      passwordHash: employeePass,
-      role: 'EMPLOYEE',
-      status: 'ACTIVE',
-      firstName: 'Faisal',
-      lastName: 'Ahmed',
-      department: 'ENGINEERING',
-      position: 'Senior Developer',
-      emailVerified: true
-    }
-  });
-
-  // 3. Client (Needed for Invoice)
+  // 2. Client
   const client = await prisma.client.create({
     data: {
       name: 'Global Tech Solutions',
@@ -62,7 +50,7 @@ async function main() {
     }
   });
 
-  // 4. Projects
+  // 3. Project
   const project = await prisma.project.create({
     data: {
       name: 'Vision 2026 Dashboard',
@@ -78,53 +66,35 @@ async function main() {
     }
   });
 
-  // 5. Tasks
-  await prisma.task.createMany({
-    data: [
-      {
-        title: 'Backend API Hardening',
-        description: 'Verify relationship integrity in the ORM layer.',
-        status: 'IN_PROGRESS',
-        priority: 'HIGH',
-        projectId: project.id,
-        assigneeId: dev1.id,
-        reporterId: manager.id,
-        dueDate: addDays(new Date(), 3),
-      }
-    ]
-  });
-
-  // 6. Invoices
-  await prisma.invoice.create({
-    data: {
-      invoiceNumber: 'INV-2026-001',
-      status: 'OVERDUE',
-      dueDate: subDays(new Date(), 15),
-      subtotal: 1500,
-      total: 1725,
-      clientId: client.id,
-      createdById: manager.id
+  // 4. Finance (Transactions)
+  const now = new Date();
+  await prisma.transaction.create({
+    data: { 
+      amount: 150000, 
+      type: 'INCOME', 
+      category: 'SERVICES', 
+      status: 'COMPLETED', 
+      description: 'Annual Contract', 
+      transactionDate: subDays(now, 5), 
+      createdById: manager.id 
     }
   });
 
-  // 7. Finance Data
-  const now = new Date();
-  await prisma.transaction.createMany({
-    data: [
-      { amount: 150000, type: 'INCOME', category: 'SERVICES', status: 'COMPLETED', description: 'Annual Contract', transactionDate: subDays(now, 5), createdById: manager.id },
-      { amount: 25000, type: 'EXPENSE', category: 'OPERATIONS', status: 'COMPLETED', description: 'Equipment Purchase', transactionDate: subDays(now, 2), createdById: manager.id }
-    ]
+  // 5. Budget Allocations
+  await prisma.budgetAllocation.create({
+    data: { 
+      department: 'OPERATIONS', 
+      period: 'MONTHLY', 
+      year: now.getFullYear(), 
+      month: now.getMonth() + 1, 
+      allocated: 80000, 
+      spent: 75000, 
+      createdById: manager.id 
+    }
   });
 
-  // 8. Budget Allocations
-  await prisma.budgetAllocation.createMany({
-    data: [
-      { department: 'ENGINEERING', period: 'MONTHLY', year: now.getFullYear(), month: now.getMonth() + 1, allocated: 100000, spent: 45000, createdById: manager.id },
-      { department: 'OPERATIONS', period: 'MONTHLY', year: now.getFullYear(), month: now.getMonth() + 1, allocated: 80000, spent: 75000, createdById: manager.id }
-    ]
-  });
-
-  console.log('✅ AMAN System: Full Relational Sync Complete.');
+  console.log('✅ AMAN System: Cloud Deployment & Seeding Complete.');
+  console.log('📋 Login: aman10@gmail.com / aman@2026');
 }
 
 main()
