@@ -56,7 +56,7 @@ const TRANSLATIONS = {
 
 export function ProfilePage() {
   const user = useAuthStore((s) => s.user);
-  const setUser = useAuthStore((s) => s.setUser);
+  const updateUser = useAuthStore((s) => s.updateUser);
   const { language } = useUIStore();
   const qc = useQueryClient();
   const isRtl = language === 'ar';
@@ -85,8 +85,8 @@ export function ProfilePage() {
       return api.patch(`/users/${user?.id}`, payload);
     },
     onSuccess: (res) => {
-      const updatedUser = res.data.data;
-      setUser(updatedUser);
+      const updatedUserData = res.data.data;
+      updateUser(updatedUserData);
       qc.invalidateQueries({ queryKey: ['me'] });
       setEditOpen(false);
       setForm(f => ({ ...f, password: '' })); // Clear password
