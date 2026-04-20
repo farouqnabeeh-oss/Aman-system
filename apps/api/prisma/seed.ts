@@ -5,34 +5,38 @@ import { addDays, subDays } from 'date-fns';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Seeding database with production-ready base data and relationships...');
+  console.log('🧹 Cleaning database...');
+  // Delete in reverse order of dependencies
+  await prisma.auditLog.deleteMany({});
+  await prisma.attendanceRecord.deleteMany({});
+  await prisma.payrollRecord.deleteMany({});
+  await prisma.task.deleteMany({});
+  await prisma.project.deleteMany({});
+  await prisma.user.deleteMany({});
+  await prisma.department.deleteMany({});
 
-  const hash = await bcrypt.hash('Password123!', 12);
+  console.log('🌱 Seeding production system...');
 
-  // 1. Fundamental Departments
+  const systemHash = await bcrypt.hash('Password123!', 12);
+  const managerHash = await bcrypt.hash('aman@2026', 12);
+
+  // 1. Departments
   const depts = [
     'ENGINEERING', 'FINANCE', 'HR', 'MARKETING', 
     'OPERATIONS', 'SALES', 'PRODUCT', 'LEGAL'
   ];
   
-  console.log('  - Creating departments...');
   for (const name of depts) {
-    await prisma.department.upsert({
-      where: { name },
-      update: {},
-      create: { name, budget: 500000 }
+    await prisma.department.create({
+      data: { name, budget: 1000000 }
     });
   }
 
-  // 2. Core Users
-  console.log('  - Creating users...');
-  
-  const superAdmin = await prisma.user.upsert({
-    where: { email: 'superadmin@ems.dev' },
-    update: {},
-    create: {
+  // 2. Core Accounts
+  const superAdmin = await prisma.user.create({
+    data: {
       email: 'superadmin@ems.dev',
-      passwordHash: hash,
+      passwordHash: systemHash,
       role: 'SUPER_ADMIN',
       status: 'ACTIVE',
       firstName: 'System',
@@ -43,125 +47,41 @@ async function main() {
     },
   });
 
-  const manager = await prisma.user.upsert({
-    where: { email: 'manager@ems.dev' },
-    update: {},
-    create: {
-      email: 'manager@ems.dev',
-      passwordHash: hash,
+  const mainManager = await prisma.user.create({
+    data: {
+      email: 'aman10@gmail.com',
+      passwordHash: managerHash,
       role: 'MANAGER',
       status: 'ACTIVE',
-      firstName: 'Omar',
-      lastName: 'Hassan',
-      department: 'ENGINEERING',
-      position: 'Software Manager',
-      emailVerified: true
+      firstName: 'Aman',
+      lastName: 'Management',
+      department: 'OPERATIONS',
+      position: 'General Manager',
+      emailVerified: true,
+      phone: '+966-500-000-000'
     },
   });
 
-  const employee = await prisma.user.upsert({
-    where: { email: 'employee@ems.dev' },
-    update: {},
-    create: {
-      email: 'employee@ems.dev',
-      passwordHash: hash,
-      role: 'EMPLOYEE',
-      status: 'ACTIVE',
-      firstName: 'Sarah',
-      lastName: 'Ahmed',
-      department: 'ENGINEERING',
-      position: 'Frontend Developer',
-      emailVerified: true
-    },
-  });
-
-  // 3. Projects (Relationship: Manager -> Project)
-  console.log('  - Creating projects...');
+  // 3. Initial Project
   const project = await prisma.project.create({
     data: {
-      name: 'Eagle Eye Dashboard',
-      description: 'Advanced monitoring system for corporate infrastructure',
+      name: 'Aman Core System',
+      description: 'The central management hub for Aman Corporate Operations.',
       status: 'ACTIVE',
-      budget: 120000,
-      progress: 45,
-      startDate: subDays(new Date(), 30),
-      endDate: addDays(new Date(), 60),
-      department: 'ENGINEERING',
-      managerId: manager.id,
+      budget: 500000,
+      progress: 0,
+      startDate: new Date(),
+      endDate: addDays(new Date(), 365),
+      department: 'OPERATIONS',
+      managerId: mainManager.id,
       createdById: superAdmin.id,
     }
   });
 
-  // 4. Tasks (Relationship: Project -> Task, Assignee -> Task)
-  console.log('  - Creating tasks...');
-  await prisma.task.createMany({
-    data: [
-      {
-        title: 'Design UI Components',
-        description: 'Create high-fidelity glassmorphism components',
-        status: 'IN_PROGRESS',
-        priority: 'HIGH',
-        projectId: project.id,
-        assigneeId: employee.id,
-        reporterId: manager.id,
-        dueDate: addDays(new Date(), 5),
-      },
-      {
-        title: 'Setup API Gateway',
-        description: 'Configure NestJS gateway with rate limiting',
-        status: 'TODO',
-        priority: 'CRITICAL',
-        projectId: project.id,
-        assigneeId: manager.id,
-        reporterId: superAdmin.id,
-        dueDate: addDays(new Date(), 2),
-      }
-    ]
-  });
-
-  // 5. Payroll (Relationship: User -> Payroll)
-  console.log('  - Creating payroll records...');
-  const now = new Date();
-  await prisma.payrollRecord.createMany({
-    data: [
-      {
-        userId: manager.id,
-        month: now.getMonth() + 1,
-        year: now.getFullYear(),
-        baseSalary: 8500,
-        allowances: 1000,
-        bonus: 500,
-        netSalary: 10000,
-        isPaid: true,
-        paidAt: new Date()
-      },
-      {
-        userId: employee.id,
-        month: now.getMonth() + 1,
-        year: now.getFullYear(),
-        baseSalary: 4500,
-        allowances: 500,
-        bonus: 0,
-        netSalary: 5000,
-        isPaid: false
-      }
-    ]
-  });
-
-  // 6. Attendance
-  console.log('  - Creating attendance records...');
-  await prisma.attendanceRecord.createMany({
-    data: [
-      { userId: manager.id, date: subDays(new Date(), 1), status: 'PRESENT', checkIn: subDays(new Date(), 1), checkOut: subDays(new Date(), 1) },
-      { userId: employee.id, date: subDays(new Date(), 1), status: 'LATE', checkIn: subDays(new Date(), 1), checkOut: subDays(new Date(), 1) }
-    ]
-  });
-
-  console.log('✅ Seed complete! Full system link established.');
-  console.log('\n📋 Test Access:');
-  console.log('   Admin: superadmin@ems.dev / Password123!');
-  console.log('   Manager: manager@ems.dev / Password123!');
-  console.log('   Employee: employee@ems.dev / Password123!');
+  console.log('✅ Production seed complete.');
+  console.log('\n📋 Access Credentials:');
+  console.log('   Manager: aman10@gmail.com / aman@2026');
+  console.log('   SuperAdmin: superadmin@ems.dev / Password123!');
 }
 
 main()

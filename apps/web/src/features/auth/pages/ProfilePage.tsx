@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../../store/auth.store';
 import { useUIStore } from '@/store/ui.store';
 import api from '../../../lib/axios';
-import { Mail, Phone, Shield, Building, Globe, Fingerprint, Calendar, Edit3, User, Briefcase } from 'lucide-react';
+import { Mail, Phone, Shield, Building, Globe, Fingerprint, Calendar, Edit3, User, Briefcase, Key, Image as ImageIcon } from 'lucide-react';
 import { PageHeader } from '../../../components/ui/States';
 import { roleBadge } from '../../../components/ui/Badge';
 import { Skeleton } from '../../../components/ui/Skeleton';
@@ -23,12 +23,14 @@ const TRANSLATIONS = {
     verified: 'الهوية الموثقة',
     since: 'تاريخ الانتشار',
     notSet: 'غير مفعل',
-    edit: 'تعديل البيانات',
-    save: 'حفظ التغييرات',
-    cancel: 'إلغاء العملية',
+    edit: 'تعديل البيانات الآمنة',
+    save: 'تحديث السجلات',
+    cancel: 'إلغاء',
     firstName: 'الاسم الأول',
     lastName: 'الاسم الأخير',
     position: 'المسمى الوظيفي',
+    password: 'كلمة مرور جديدة (اتركه فارغاً للحفاظ على الحالية)',
+    avatarUrl: 'رابط الصورة الشخصية',
   },
   en: {
     title: 'Strategic Profile',
@@ -41,12 +43,14 @@ const TRANSLATIONS = {
     verified: 'Identity Logic',
     since: 'Deployment Date',
     notSet: 'Not Initialized',
-    edit: 'Modify Identity',
+    edit: 'Modify Secure Identity',
     save: 'Update Record',
     cancel: 'Abort',
-    firstName: 'First Denotation',
-    lastName: 'Last Denotation',
+    firstName: 'First Name',
+    lastName: 'Last Name',
     position: 'Operational Title',
+    password: 'New Access Cipher (Empty to keep current)',
+    avatarUrl: 'Avatar Resource URL',
   }
 };
 
@@ -64,6 +68,8 @@ export function ProfilePage() {
     lastName: user?.lastName || '',
     phone: user?.phone || '',
     position: user?.position || '',
+    password: '',
+    avatarUrl: user?.avatarUrl || '',
   });
 
   const { data, isLoading } = useQuery({
@@ -72,16 +78,22 @@ export function ProfilePage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (dto: typeof form) => api.patch(`/users/${user?.id}`, dto),
+    mutationFn: (dto: any) => {
+      // Don't send empty password
+      const payload = { ...dto };
+      if (!payload.password) delete payload.password;
+      return api.patch(`/users/${user?.id}`, payload);
+    },
     onSuccess: (res) => {
       const updatedUser = res.data.data;
       setUser(updatedUser);
       qc.invalidateQueries({ queryKey: ['me'] });
       setEditOpen(false);
+      setForm(f => ({ ...f, password: '' })); // Clear password
       toast.success(isRtl ? 'تم تحديث السجل بنجاح' : 'Identity Record Synchronized');
     },
     onError: () => {
-      toast.error(isRtl ? 'فشل التحديث' : 'Synchronization Failed');
+      toast.error(isRtl ? 'فشل التحديث - تأكد من الصلاحيات' : 'Synchronization Failed');
     }
   });
 
@@ -102,6 +114,8 @@ export function ProfilePage() {
       lastName: profile?.lastName || '',
       phone: profile?.phone || '',
       position: profile?.position || '',
+      password: '',
+      avatarUrl: profile?.avatarUrl || '',
     });
     setEditOpen(true);
   };
@@ -126,12 +140,16 @@ export function ProfilePage() {
       ) : (
         <div className="clean-card !p-12 relative overflow-hidden">
            <div className="flex flex-col md:flex-row items-center gap-10 mb-16 pb-16 border-b border-white/10">
-              <div className="relative">
-                 <div className="w-32 h-32 rounded-[2.5rem] bg-white text-black flex items-center justify-center text-4xl font-black shadow-[0_20px_60px_rgba(255,255,255,0.15)] group relative overflow-hidden">
-                    {profile?.firstName?.[0]}{profile?.lastName?.[0]}
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer">
-                       <Edit3 size={24} className="text-white" />
-                    </div>
+              <div className="relative group">
+                 {profile?.avatarUrl ? (
+                   <img src={profile.avatarUrl} alt="Profile" className="w-32 h-32 rounded-[2.5rem] object-cover ring-1 ring-white/10" />
+                 ) : (
+                   <div className="w-32 h-32 rounded-[2.5rem] bg-white text-black flex items-center justify-center text-4xl font-black shadow-[0_20px_60px_rgba(255,255,255,0.15)]">
+                      {profile?.firstName?.[0]}{profile?.lastName?.[0]}
+                   </div>
+                 )}
+                 <div onClick={handleOpenEdit} className="absolute inset-0 bg-black/60 rounded-[2.5rem] opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all cursor-pointer backdrop-blur-sm">
+                    <Edit3 size={24} className="text-white" />
                  </div>
                  <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-2xl bg-[#0B0F1A] border border-white/10 flex items-center justify-center text-indigo-400">
                     <Fingerprint size={20} />
@@ -177,8 +195,13 @@ export function ProfilePage() {
             <Input label={t.lastName} icon={User} value={form.lastName} onChange={(e: any) => setForm(f => ({...f, lastName: e.target.value}))} />
           </div>
           
-          <Input label={t.phone} icon={Phone} type="tel" value={form.phone} onChange={(e: any) => setForm(f => ({...f, phone: e.target.value}))} />
-          <Input label={t.position} icon={Briefcase} value={form.position} onChange={(e: any) => setForm(f => ({...f, position: e.target.value}))} />
+          <div className="grid grid-cols-2 gap-6">
+            <Input label={t.phone} icon={Phone} type="tel" value={form.phone} onChange={(e: any) => setForm(f => ({...f, phone: e.target.value}))} />
+            <Input label={t.position} icon={Briefcase} value={form.position} onChange={(e: any) => setForm(f => ({...f, position: e.target.value}))} />
+          </div>
+
+          <Input label={t.avatarUrl} icon={ImageIcon} value={form.avatarUrl} onChange={(e: any) => setForm(f => ({...f, avatarUrl: e.target.value}))} />
+          <Input label={t.password} icon={Key} type="password" value={form.password} onChange={(e: any) => setForm(f => ({...f, password: e.target.value}))} placeholder="••••••••" />
 
           <div className="flex justify-end gap-4 mt-12 py-6 border-t border-white/5">
             <button className="clean-btn-secondary px-10 h-12 text-[10px] uppercase tracking-widest" onClick={() => setEditOpen(false)}>{t.cancel}</button>
