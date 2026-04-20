@@ -25,6 +25,7 @@ export class UpdateUserDto {
   @ApiPropertyOptional({ enum: Department }) @IsEnum(Department) @IsOptional() department?: Department;
   @ApiPropertyOptional() @IsString() @MaxLength(100) @IsOptional() position?: string;
   @ApiPropertyOptional() @IsString() @IsOptional() phone?: string;
+  @ApiPropertyOptional() @IsString() @MinLength(8) @IsOptional() password?: string;
   @ApiPropertyOptional() @IsString() @IsOptional() avatarUrl?: string;
 }
 
