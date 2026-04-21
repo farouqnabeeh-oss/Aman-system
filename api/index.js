@@ -8,20 +8,32 @@ console.log('API Wrapper: cwd:', process.cwd());
 try {
     const mainPath = require('path').join(__dirname, 'apps/api/dist/apps/api/src/main');
     console.log('API Wrapper: Attempting to require main from:', mainPath);
+    // Add log for env variable presence (safe)
+    console.log('API Wrapper: DATABASE_URL present:', !!process.env.DATABASE_URL);
+    console.log('API Wrapper: DATABASE_URL prefix:', process.env.DATABASE_URL?.split(':')[0]);
+
     const main = require(mainPath);
     console.log('API Wrapper: Main module loaded successfully');
 
     const handler = main.default || main;
 
     module.exports = async (req, res) => {
+        console.log(`API Wrapper: Request received: ${req.method} ${req.url}`);
+        
+        // Timeout safeguard for the request handler
+        const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Request Timeout (10s Safeguard)')), 10000)
+        );
+
         try {
-            return await handler(req, res);
+            return await Promise.race([handler(req, res), timeoutPromise]);
         } catch (err) {
             console.error('API Wrapper: Runtime Error:', err);
             res.status(500).json({
                 statusCode: 500,
                 message: 'Internal Server Error (Wrapper Catch)',
-                error: err.message
+                error: err.message,
+                stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
             });
         }
     };
