@@ -1,14 +1,14 @@
 {
   "buildCommand": "pnpm exec prisma generate --schema=apps/api/prisma/schema.prisma && pnpm build --filter @ems/api",
   "functions": {
-    "serverless.js": {
+    "api/main.js": {
       "includeFiles": "apps/api/dist/**"
     }
   },
   "rewrites": [
-    { "source": "/api/v1/(.*)", "destination": "/serverless.js" },
-    { "source": "/api/(.*)", "destination": "/serverless.js" },
-    { "source": "/", "destination": "/serverless.js" }
+    { "source": "/api/v1/(.*)", "destination": "/api/main.js" },
+    { "source": "/api/(.*)", "destination": "/api/main.js" },
+    { "source": "/", "destination": "/api/main.js" }
   ],
   "framework": null
 }
