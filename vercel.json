@@ -1,22 +1,13 @@
 {
   "buildCommand": "pnpm exec prisma generate --schema=apps/api/prisma/schema.prisma && pnpm build --filter @ems/api",
   "functions": {
-    "api/main.js": {
+    "api/index.js": {
       "includeFiles": "dist/api/**",
-      "memory": 1024,
-      "maxDuration": 60
-    },
-    "api/debug.js": {
-      "memory": 1024,
       "maxDuration": 60
     }
   },
   "rewrites": [
-    { "source": "/api/info", "destination": "/api/info.js" },
-    { "source": "/api/debug", "destination": "/api/debug.js" },
-    { "source": "/api/v1/(.*)", "destination": "/api/main.js" },
-    { "source": "/api/(.*)", "destination": "/api/main.js" },
-    { "source": "/", "destination": "/api/main.js" }
+    { "source": "/(.*)", "destination": "/api/index.js" }
   ],
   "framework": null
 }

@@ -17,9 +17,9 @@ module.exports = async (req, res) => {
         }
 
         console.log('API Wrapper: Handoff to NestJS handler...');
-        
+
         // Safeguard timeout (matches Vercel maxDuration)
-        const timeout = new Promise((_, reject) => 
+        const timeout = new Promise((_, reject) =>
             setTimeout(() => reject(new Error('Request Timeout (60s Safeguard)')), 60000)
         );
 

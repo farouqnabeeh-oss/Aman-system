@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 async function main() {
   console.log('🧹 Cleaning cloud database for final delivery...');
-  
+
   // High-level cleaning to avoid FK issues
   await prisma.auditLog.deleteMany({});
   await prisma.attendanceRecord.deleteMany({});
@@ -69,27 +69,27 @@ async function main() {
   // 4. Finance (Transactions)
   const now = new Date();
   await prisma.transaction.create({
-    data: { 
-      amount: 150000, 
-      type: 'INCOME', 
-      category: 'SERVICES', 
-      status: 'COMPLETED', 
-      description: 'Annual Contract', 
-      transactionDate: subDays(now, 5), 
-      createdById: manager.id 
+    data: {
+      amount: 150000,
+      type: 'INCOME',
+      category: 'SERVICES',
+      status: 'COMPLETED',
+      description: 'Annual Contract',
+      transactionDate: subDays(now, 5),
+      createdById: manager.id
     }
   });
 
   // 5. Budget Allocations
   await prisma.budgetAllocation.create({
-    data: { 
-      department: 'OPERATIONS', 
-      period: 'MONTHLY', 
-      year: now.getFullYear(), 
-      month: now.getMonth() + 1, 
-      allocated: 80000, 
-      spent: 75000, 
-      createdById: manager.id 
+    data: {
+      department: 'OPERATIONS',
+      period: 'MONTHLY',
+      year: now.getFullYear(),
+      month: now.getMonth() + 1,
+      allocated: 80000,
+      spent: 75000,
+      createdById: manager.id
     }
   });
 
