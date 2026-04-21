@@ -3,7 +3,7 @@
  * Optimized for Vercel with path resolution and deferred initialization.
  */
 const path = require('path');
-const mainPath = path.join(process.cwd(), 'apps/api/dist/apps/api/src/main');
+const mainPath = path.join(process.cwd(), 'dist/api/main');
 
 console.log('API Wrapper: Entry starting...');
 
