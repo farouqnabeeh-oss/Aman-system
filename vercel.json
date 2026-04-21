@@ -1,0 +1,5 @@
+{
+  "buildCommand": "npx prisma generate --schema=apps/api/prisma/schema.prisma && pnpm build --filter @ems/api",
+  "outputDirectory": "apps/api/dist",
+  "framework": null
+}
