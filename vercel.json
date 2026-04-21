@@ -1,12 +1,6 @@
 {
   "buildCommand": "pnpm exec prisma generate --schema=apps/api/prisma/schema.prisma && pnpm build --filter @ems/api",
-  "functions": {
-    "apps/api/dist/src/main.js": {
-      "maxDuration": 30
-    }
-  },
   "rewrites": [
-    { "source": "/(.*)", "destination": "/apps/api/dist/src/main.js" }
-  ],
-  "framework": null
+    { "source": "/(.*)", "destination": "/api" }
+  ]
 }
