@@ -5,9 +5,14 @@
       "includeFiles": "dist/api/**",
       "memory": 1024,
       "maxDuration": 60
+    },
+    "api/debug.js": {
+      "memory": 1024,
+      "maxDuration": 60
     }
   },
   "rewrites": [
+    { "source": "/api/debug", "destination": "/api/debug.js" },
     { "source": "/api/v1/(.*)", "destination": "/api/main.js" },
     { "source": "/api/(.*)", "destination": "/api/main.js" },
     { "source": "/", "destination": "/api/main.js" }
