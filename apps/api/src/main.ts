@@ -8,21 +8,24 @@ import * as cookieParser from 'cookie-parser';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import { ExpressAdapter, NestExpressApplication } from '@nestjs/platform-express';
+import express from 'express';
 
-async function bootstrap(): Promise<void> {
-  const logger = new Logger('Bootstrap');
+const server = express();
 
-  const app = await NestFactory.create(AppModule, {
-    logger: ['error', 'warn', 'log'],
-  });
+async function createApp(): Promise<NestExpressApplication> {
+  const app = await NestFactory.create<NestExpressApplication>(
+    AppModule,
+    new ExpressAdapter(server),
+    { logger: ['error', 'warn', 'log'] },
+  );
 
   app.use(helmet({ crossOriginEmbedderPolicy: false }));
   app.use(compression());
   app.use(cookieParser());
 
-  const origins = (process.env['CORS_ORIGINS'] ?? 'http://localhost:3000').split(',');
   app.enableCors({
-    origin: origins,
+    origin: true,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -51,10 +54,31 @@ async function bootstrap(): Promise<void> {
 
   SwaggerModule.setup('api/docs', app, SwaggerModule.createDocument(app, config));
 
+  await app.init();
+  return app;
+}
+
+// For Vercel serverless
+let cachedApp: NestExpressApplication;
+
+export default async function handler(req: any, res: any) {
+  if (!cachedApp) {
+    cachedApp = await createApp();
+  }
+  server(req, res);
+}
+
+// For local development
+async function bootstrap(): Promise<void> {
+  const logger = new Logger('Bootstrap');
+  await createApp();
   const port = process.env['PORT'] ?? 5000;
-  await app.listen(port);
+  await new Promise<void>((resolve) => server.listen(port, resolve));
   logger.log(`🚀 API running on http://localhost:${port}`);
   logger.log(`📚 Swagger at http://localhost:${port}/api/docs`);
 }
 
-bootstrap();
+// Only start local server if not on Vercel
+if (!process.env['VERCEL']) {
+  bootstrap();
+}
