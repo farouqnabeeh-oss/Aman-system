@@ -1,4 +1,4 @@
-import { PrismaClient } from './client';
+import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { addDays, subDays } from 'date-fns';
 

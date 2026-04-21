@@ -6,12 +6,15 @@
     "build": "turbo run build",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
-    "db:generate": "npx prisma@5.13.0 generate --schema=apps/api/prisma/schema.prisma",
-    "db:migrate": "npx prisma@5.13.0 migrate deploy --schema=apps/api/prisma/schema.prisma",
+    "db:generate": "pnpm exec prisma generate --schema=apps/api/prisma/schema.prisma",
+    "db:migrate": "pnpm exec prisma migrate deploy --schema=apps/api/prisma/schema.prisma",
     "db:seed": "pnpm --filter @ems/api run db:seed"
   },
+  "dependencies": {
+    "@prisma/client": "5.22.0"
+  },
   "devDependencies": {
-    "prisma": "^5.22.0",
+    "prisma": "5.22.0",
     "turbo": "^1.13.0"
   },
   "engines": {
