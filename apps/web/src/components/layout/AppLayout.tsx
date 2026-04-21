@@ -42,11 +42,10 @@ export function AppLayout() {
 
       {/* Main content */}
       <div
-        className={`relative flex flex-col flex-1 min-w-0 z-10 transition-all duration-350 ease-[cubic-bezier(0.4,0,0.2,1)] ${
-          isRtl
+        className={`relative flex flex-col flex-1 min-w-0 z-10 transition-all duration-350 ease-[cubic-bezier(0.4,0,0.2,1)] ${isRtl
             ? (sidebarCollapsed ? 'lg:mr-[72px]' : 'lg:mr-[256px]')
             : (sidebarCollapsed ? 'lg:ml-[72px]' : 'lg:ml-[256px]')
-        }`}
+          }`}
       >
         {/* Topbar */}
         <Topbar onOpenCommand={() => setCmdOpen(true)} />

@@ -27,16 +27,16 @@ const TRANSLATIONS = {
 };
 
 const NAV_ITEMS = (t: any) => [
-  { path: '/dashboard',    label: t.dashboard,     icon: LayoutDashboard, color: 'text-blue-400',   roles: ['SUPER_ADMIN','ADMIN','MANAGER','EMPLOYEE'] },
-  { path: '/users',        label: t.users,         icon: Users,           color: 'text-violet-400', roles: ['SUPER_ADMIN','ADMIN','MANAGER'] },
-  { path: '/finance',      label: t.finance,       icon: DollarSign,      color: 'text-emerald-400',roles: ['SUPER_ADMIN','ADMIN','MANAGER'] },
-  { path: '/projects',     label: t.projects,      icon: FolderKanban,    color: 'text-amber-400',  roles: ['SUPER_ADMIN','ADMIN','MANAGER','EMPLOYEE'] },
-  { path: '/tasks',        label: t.tasks,         icon: CheckSquare,     color: 'text-sky-400',    roles: ['SUPER_ADMIN','ADMIN','MANAGER','EMPLOYEE'] },
-  { path: '/files',        label: t.files,         icon: FileText,        color: 'text-teal-400',   roles: ['SUPER_ADMIN','ADMIN','MANAGER','EMPLOYEE'] },
-  { path: '/hr',           label: t.hr,            icon: HeartPulse,      color: 'text-rose-400',   roles: ['SUPER_ADMIN','ADMIN','MANAGER','EMPLOYEE'] },
-  { path: '/payroll',      label: t.payroll,       icon: CreditCard,      color: 'text-indigo-400', roles: ['SUPER_ADMIN','ADMIN','MANAGER'] },
-  { path: '/notifications',label: t.notifications, icon: Bell,            color: 'text-orange-400', roles: ['SUPER_ADMIN','ADMIN','MANAGER','EMPLOYEE'] },
-  { path: '/audit-logs',   label: t.auditLogs,     icon: ScrollText,      color: 'text-slate-400',  roles: ['SUPER_ADMIN','ADMIN','MANAGER'] },
+  { path: '/dashboard', label: t.dashboard, icon: LayoutDashboard, color: 'text-blue-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'] },
+  { path: '/users', label: t.users, icon: Users, color: 'text-violet-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
+  { path: '/finance', label: t.finance, icon: DollarSign, color: 'text-emerald-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
+  { path: '/projects', label: t.projects, icon: FolderKanban, color: 'text-amber-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'] },
+  { path: '/tasks', label: t.tasks, icon: CheckSquare, color: 'text-sky-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'] },
+  { path: '/files', label: t.files, icon: FileText, color: 'text-teal-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'] },
+  { path: '/hr', label: t.hr, icon: HeartPulse, color: 'text-rose-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'] },
+  { path: '/payroll', label: t.payroll, icon: CreditCard, color: 'text-indigo-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
+  { path: '/notifications', label: t.notifications, icon: Bell, color: 'text-orange-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'] },
+  { path: '/audit-logs', label: t.auditLogs, icon: ScrollText, color: 'text-slate-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
 ];
 
 export function Sidebar() {
@@ -73,7 +73,7 @@ export function Sidebar() {
     >
       {/* Grid overlay */}
       <div className="absolute inset-0 bg-grid opacity-30 pointer-events-none" />
-      
+
       {/* Top ambient */}
       <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-blue-900/20 to-transparent pointer-events-none" />
 
@@ -209,8 +209,8 @@ export function Sidebar() {
         )}
       >
         {sidebarCollapsed
-          ? (isRtl ? <ChevronLeft size={10}/> : <ChevronRight size={10}/>)
-          : (isRtl ? <ChevronRight size={10}/> : <ChevronLeft size={10}/>)
+          ? (isRtl ? <ChevronLeft size={10} /> : <ChevronRight size={10} />)
+          : (isRtl ? <ChevronRight size={10} /> : <ChevronLeft size={10} />)
         }
       </button>
     </motion.aside>

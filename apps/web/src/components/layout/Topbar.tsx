@@ -54,7 +54,7 @@ export function Topbar({ onOpenCommand }: { onOpenCommand?: () => void }) {
   return (
     <header className="relative h-16 flex items-center justify-between px-4 lg:px-6 flex-shrink-0 z-40"
       style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(5,8,16,0.7)', backdropFilter: 'blur(20px)' }}>
-      
+
       {/* Left: Mobile toggle + breadcrumb */}
       <div className="flex items-center gap-3">
         <button
