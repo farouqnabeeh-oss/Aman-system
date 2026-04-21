@@ -14,11 +14,13 @@ import express from 'express';
 const server = express();
 
 async function createApp(): Promise<NestExpressApplication> {
+  console.log('NestJS: Starting NestFactory.create...');
   const app = await NestFactory.create<NestExpressApplication>(
     AppModule,
     new ExpressAdapter(server),
     { logger: ['error', 'warn', 'log'] },
   );
+  console.log('NestJS: NestFactory.create finished.');
 
   app.use(helmet({ crossOriginEmbedderPolicy: false }));
   app.use(compression());
@@ -32,6 +34,7 @@ async function createApp(): Promise<NestExpressApplication> {
   });
 
   app.setGlobalPrefix('api/v1');
+  console.log('NestJS: Global prefix set to api/v1');
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -45,16 +48,27 @@ async function createApp(): Promise<NestExpressApplication> {
   app.useGlobalFilters(new AllExceptionsFilter());
   app.useGlobalInterceptors(new LoggingInterceptor(), new TransformInterceptor());
 
-  const config = new DocumentBuilder()
-    .setTitle('Enterprise Management System API')
-    .setDescription('Production-grade EMS REST API')
-    .setVersion('1.0')
-    .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 'JWT')
-    .build();
+  // Only setup Swagger if NOT on Vercel to save memory/time
+  if (!process.env['VERCEL']) {
+    console.log('NestJS: Setting up Swagger...');
+    const config = new DocumentBuilder()
+      .setTitle('Enterprise Management System API')
+      .setDescription('Production-grade EMS REST API')
+      .setVersion('1.0')
+      .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 'JWT')
+      .build();
 
-  SwaggerModule.setup('api/docs', app, SwaggerModule.createDocument(app, config));
+    SwaggerModule.setup('api/docs', app, SwaggerModule.createDocument(app, config));
+  }
 
-  await app.init();
+  console.log('NestJS: Starting app.init() with 15s timeout...');
+  // Hard timeout for app.init to prevent lambda hang
+  const initTimeout = new Promise((_, reject) => 
+    setTimeout(() => reject(new Error('app.init() timed out after 15s')), 15000)
+  );
+
+  await Promise.race([app.init(), initTimeout]);
+  console.log('NestJS: app.init() finished.');
   return app;
 }
 
