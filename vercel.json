@@ -2,7 +2,9 @@
   "buildCommand": "pnpm exec prisma generate --schema=apps/api/prisma/schema.prisma && pnpm build --filter @ems/api",
   "functions": {
     "api/main.js": {
-      "includeFiles": "dist/api/**"
+      "includeFiles": "dist/api/**",
+      "memory": 1024,
+      "maxDuration": 60
     }
   },
   "rewrites": [
