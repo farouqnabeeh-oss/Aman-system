@@ -1,55 +1,50 @@
-const fs = require('fs');
-const path = require('path');
+/**
+ * Vercel Serverless Function Wrapper for NestJS API
+ */
+console.log('API Wrapper: Initializing...');
+console.log('API Wrapper: __dirname:', __dirname);
+console.log('API Wrapper: cwd:', process.cwd());
 
-const mainPath = path.join(process.cwd(), 'dist/api/main');
+try {
+    const mainPath = require('path').join(__dirname, 'apps/api/dist/apps/api/src/main');
+    console.log('API Wrapper: Attempting to require main from:', mainPath);
+    // Add log for env variable presence (safe)
+    console.log('API Wrapper: DATABASE_URL present:', !!process.env.DATABASE_URL);
+    console.log('API Wrapper: DATABASE_URL prefix:', process.env.DATABASE_URL?.split(':')[0]);
 
-console.log('Unified API: Booting...');
+    const main = require(mainPath);
+    console.log('API Wrapper: Main module loaded successfully');
 
-module.exports = async (req, res) => {
-    const { url } = req;
-    console.log(`Unified API: Handling ${url}`);
+    const handler = main.default || main;
 
-    // Route: /api/info
-    if (url === '/api/info') {
-        return res.status(200).json({
-            status: 'online',
-            cwd: process.cwd(),
-            dirname: __dirname,
-            node: process.version,
-            mainExists: fs.existsSync(mainPath + '.js')
-        });
-    }
+    module.exports = async (req, res) => {
+        console.log(`API Wrapper: Request received: ${req.method} ${req.url}`);
 
-    // Route: /api/debug
-    if (url === '/api/debug') {
+        // Timeout safeguard for the request handler
+        const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Request Timeout (10s Safeguard)')), 10000)
+        );
+
         try {
-            const files = fs.readdirSync(process.cwd());
-            const distExists = fs.existsSync(path.join(process.cwd(), 'dist'));
-            const distApi = distExists ? fs.readdirSync(path.join(process.cwd(), 'dist/api')) : 'none';
-            return res.status(200).json({ root: files, distApi });
-        } catch (e) {
-            return res.status(500).json({ error: e.message });
+            return await Promise.race([handler(req, res), timeoutPromise]);
+        } catch (err) {
+            console.error('API Wrapper: Runtime Error:', err);
+            res.status(500).json({
+                statusCode: 500,
+                message: 'Internal Server Error (Wrapper Catch)',
+                error: err.message,
+                stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+            });
         }
-    }
-
-    // Default: NestJS Application
-    try {
-        console.log('Unified API: Requiring NestJS...');
-        const main = require(mainPath);
-        const handler = main.default || main.handler || main;
-        
-        if (typeof handler !== 'function') {
-            throw new Error('Loaded main is not a function/handler');
-        }
-
-        console.log('Unified API: Executing handler...');
-        return await handler(req, res);
-    } catch (err) {
-        console.error('Unified API Panic:', err);
-        return res.status(500).json({
-            error: 'NestJS Bootstrap Failed',
-            message: err.message,
+    };
+} catch (err) {
+    console.error('API Wrapper: Bootstrap Error:', err);
+    module.exports = (req, res) => {
+        res.status(500).json({
+            statusCode: 500,
+            message: 'Failed to bootstrap API',
+            error: err.message,
             stack: err.stack
         });
-    }
-};
+    };
+}

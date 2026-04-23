@@ -1,0 +1,212 @@
+'use server';
+
+import { prisma } from '@/lib/prisma';
+import { logAction } from '@/lib/audit';
+import { z } from 'zod';
+import * as bcrypt from 'bcrypt';
+import { revalidatePath } from 'next/cache';
+import { UserRole, UserStatus, Department } from '@ems/shared';
+import { getSession } from '@/lib/actions/auth';
+
+// --- SCHEMAS ---
+
+const UserFiltersSchema = z.object({
+  search: z.string().optional(),
+  role: z.nativeEnum(UserRole).optional(),
+  status: z.nativeEnum(UserStatus).optional(),
+  department: z.nativeEnum(Department).optional(),
+  page: z.number().default(1),
+  limit: z.number().default(20),
+  sortBy: z.enum(['firstName', 'lastName', 'email', 'createdAt', 'role']).default('createdAt'),
+  sortOrder: z.enum(['asc', 'desc']).default('desc'),
+});
+
+const CreateUserSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8),
+  firstName: z.string().min(1).max(50),
+  lastName: z.string().min(1).max(50),
+  role: z.nativeEnum(UserRole).default(UserRole.EMPLOYEE),
+  department: z.nativeEnum(Department).nullable().optional(),
+  position: z.string().max(100).nullable().optional(),
+  phone: z.string().nullable().optional(),
+});
+
+const UpdateUserSchema = z.object({
+  firstName: z.string().min(1).max(50).optional(),
+  lastName: z.string().min(1).max(50).optional(),
+  role: z.nativeEnum(UserRole).optional(),
+  status: z.nativeEnum(UserStatus).optional(),
+  department: z.nativeEnum(Department).nullable().optional(),
+  position: z.string().max(100).nullable().optional(),
+  phone: z.string().nullable().optional(),
+  password: z.string().min(8).optional(),
+  avatarUrl: z.string().url().optional().nullable(),
+});
+
+// --- ACTIONS ---
+
+export async function getUsers(filters: z.infer<typeof UserFiltersSchema>) {
+  try {
+    const { search, role, status, department, page, limit, sortBy, sortOrder } = filters;
+    
+    const where: any = {
+      deletedAt: null,
+      ...(search ? {
+        OR: [
+          { firstName: { contains: search } },
+          { lastName: { contains: search } },
+          { email: { contains: search } },
+          { position: { contains: search } },
+        ],
+      } : {}),
+      ...(role ? { role } : {}),
+      ...(status ? { status } : {}),
+      ...(department ? { department } : {}),
+    };
+
+    const [total, users] = await Promise.all([
+      prisma.user.count({ where }),
+      prisma.user.findMany({
+        where,
+        select: {
+          id: true, email: true, role: true, status: true,
+          firstName: true, lastName: true, avatarUrl: true, phone: true,
+          department: true, position: true, emailVerified: true,
+          lastLoginAt: true, createdAt: true, updatedAt: true,
+          _count: {
+            select: { assignedTasks: true, managedProjects: true, leaveRequests: true }
+          }
+        },
+        orderBy: { [sortBy]: sortOrder },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+    ]);
+
+    const items = users.map(({ _count, ...u }) => ({
+      ...u,
+      tasksCount: _count.assignedTasks,
+      projectsCount: _count.managedProjects,
+      pendingLeaves: _count.leaveRequests,
+    }));
+
+    return { success: true, data: { items, total } };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function createUser(data: z.infer<typeof CreateUserSchema>) {
+  try {
+    const session = await getSession();
+    if (!session || !['ADMIN', 'SUPER_ADMIN'].includes(session.role)) {
+      throw new Error('Unauthorized');
+    }
+
+    const val = CreateUserSchema.parse(data);
+    
+    const existing = await prisma.user.findUnique({ where: { email: val.email.toLowerCase() } });
+    if (existing) throw new Error('Email already exists');
+
+    const passwordHash = await bcrypt.hash(val.password, 12);
+    
+    const user = await prisma.user.create({
+      data: {
+        ...val,
+        email: val.email.toLowerCase(),
+        passwordHash,
+        emailVerified: true,
+        status: 'ACTIVE',
+        createdById: session.userId,
+      },
+    });
+
+    await logAction({
+      userId: session.userId,
+      action: 'CREATE',
+      entity: 'users',
+      entityId: user.id,
+      newValues: { email: user.email, role: user.role },
+    });
+
+    revalidatePath('/users');
+    return { success: true, data: user };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function updateUser(id: string, data: z.infer<typeof UpdateUserSchema>) {
+  try {
+    const session = await getSession();
+    if (!session) throw new Error('Unauthorized');
+
+    const user = await prisma.user.findUnique({ where: { id, deletedAt: null } });
+    if (!user) throw new Error('User not found');
+
+    // Permissions check
+    if (session.role === 'EMPLOYEE' && session.userId !== id) {
+      throw new Error('Forbidden');
+    }
+
+    if (!['ADMIN', 'SUPER_ADMIN'].includes(session.role)) {
+      if (data.role && data.role !== user.role) throw new Error('Only admins can change roles');
+      if (data.status && data.status !== user.status) throw new Error('Only admins can change status');
+      if (data.department && data.department !== user.department) throw new Error('Only admins can change department');
+    }
+
+    const { password, ...updateData } = data;
+    const finalData: any = { ...updateData };
+
+    if (password) {
+      finalData.passwordHash = await bcrypt.hash(password, 12);
+    }
+
+    const updated = await prisma.user.update({
+      where: { id },
+      data: finalData,
+    });
+
+    await logAction({
+      userId: session.userId,
+      action: 'UPDATE',
+      entity: 'users',
+      entityId: id,
+      newValues: data as any,
+    });
+
+    revalidatePath('/users');
+    return { success: true, data: updated };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function deleteUser(id: string) {
+  try {
+    const session = await getSession();
+    if (!session || !['ADMIN', 'SUPER_ADMIN'].includes(session.role)) {
+      throw new Error('Unauthorized');
+    }
+
+    if (id === session.userId) throw new Error('Cannot delete self');
+
+    await prisma.user.update({
+      where: { id },
+      data: { deletedAt: new Date(), status: 'INACTIVE' },
+    });
+
+    await logAction({
+      userId: session.userId,
+      action: 'DELETE',
+      entity: 'users',
+      entityId: id,
+    });
+
+    revalidatePath('/users');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
