@@ -38,7 +38,7 @@ export class DashboardController {
   @Get('recent-activity')
   @Roles('MANAGER', 'ADMIN', 'SUPER_ADMIN')
   @ApiOperation({ summary: 'Get recent system activity feed' })
-  async getRecentActivity(@Query('limit') limit = 15) {
+  async getRecentActivity(@Query('limit') limit: string = '15') {
     const data = await this.dashboardService.getRecentActivity(+limit);
     return { success: true, data };
   }

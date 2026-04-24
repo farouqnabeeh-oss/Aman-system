@@ -11,8 +11,8 @@ export class CreateUserDto {
   @ApiProperty() @IsString() @MinLength(8) password!: string;
   @ApiProperty() @IsString() @MinLength(1) @MaxLength(50) firstName!: string;
   @ApiProperty() @IsString() @MinLength(1) @MaxLength(50) lastName!: string;
-  @ApiPropertyOptional({ enum: UserRole }) @IsEnum(UserRole) @IsOptional() role?: UserRole;
-  @ApiPropertyOptional({ enum: Department }) @IsEnum(Department) @IsOptional() department?: Department;
+  @ApiPropertyOptional({ enum: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'] }) @IsEnum(UserRole) @IsOptional() role?: UserRole;
+  @ApiPropertyOptional({ enum: ['ENGINEERING', 'FINANCE', 'HR', 'MARKETING', 'OPERATIONS', 'SALES', 'LEGAL', 'PRODUCT'] }) @IsEnum(Department) @IsOptional() department?: Department;
   @ApiPropertyOptional() @IsString() @MaxLength(100) @IsOptional() position?: string;
   @ApiPropertyOptional() @IsString() @IsOptional() phone?: string;
 }
@@ -20,9 +20,9 @@ export class CreateUserDto {
 export class UpdateUserDto {
   @ApiPropertyOptional() @IsString() @MinLength(1) @MaxLength(50) @IsOptional() firstName?: string;
   @ApiPropertyOptional() @IsString() @MinLength(1) @MaxLength(50) @IsOptional() lastName?: string;
-  @ApiPropertyOptional({ enum: UserRole }) @IsEnum(UserRole) @IsOptional() role?: UserRole;
-  @ApiPropertyOptional({ enum: UserStatus }) @IsEnum(UserStatus) @IsOptional() status?: UserStatus;
-  @ApiPropertyOptional({ enum: Department }) @IsEnum(Department) @IsOptional() department?: Department;
+  @ApiPropertyOptional({ enum: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'] }) @IsEnum(UserRole) @IsOptional() role?: UserRole;
+  @ApiPropertyOptional({ enum: ['ACTIVE', 'INACTIVE', 'PENDING', 'SUSPENDED'] }) @IsEnum(UserStatus) @IsOptional() status?: UserStatus;
+  @ApiPropertyOptional({ enum: ['ENGINEERING', 'FINANCE', 'HR', 'MARKETING', 'OPERATIONS', 'SALES', 'LEGAL', 'PRODUCT'] }) @IsEnum(Department) @IsOptional() department?: Department;
   @ApiPropertyOptional() @IsString() @MaxLength(100) @IsOptional() position?: string;
   @ApiPropertyOptional() @IsString() @IsOptional() phone?: string;
   @ApiPropertyOptional() @IsString() @MinLength(8) @IsOptional() password?: string;

@@ -6,14 +6,14 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { TransactionType, TransactionStatus, InvoiceStatus, Department, PaymentMethod } from '@ems/shared';
 
 export class CreateTransactionDto {
-  @ApiProperty({ enum: TransactionType }) @IsEnum(TransactionType) type!: TransactionType;
+  @ApiProperty({ enum: ['INCOME', 'EXPENSE', 'TRANSFER', 'REFUND'] }) @IsEnum(TransactionType) type!: TransactionType;
   @ApiProperty() @IsNumber() @Min(0.01) amount!: number;
   @ApiPropertyOptional() @IsString() @IsOptional() currency?: string;
   @ApiProperty() @IsString() description!: string;
   @ApiProperty() @IsString() category!: string;
-  @ApiPropertyOptional({ enum: Department }) @IsEnum(Department) @IsOptional() department?: Department;
+  @ApiPropertyOptional({ enum: ['ENGINEERING', 'FINANCE', 'HR', 'MARKETING', 'OPERATIONS', 'SALES', 'LEGAL', 'PRODUCT'] }) @IsEnum(Department) @IsOptional() department?: Department;
   @ApiPropertyOptional() @IsString() @IsOptional() reference?: string;
-  @ApiPropertyOptional({ enum: PaymentMethod }) @IsEnum(PaymentMethod) @IsOptional() paymentMethod?: PaymentMethod;
+  @ApiPropertyOptional({ enum: ['BANK_TRANSFER', 'CREDIT_CARD', 'CASH', 'CHECK', 'DIGITAL_WALLET'] }) @IsEnum(PaymentMethod) @IsOptional() paymentMethod?: PaymentMethod;
   @ApiPropertyOptional() @IsString() @IsOptional() invoiceId?: string;
   @ApiPropertyOptional() @IsString() @IsOptional() transactionDate?: string;
 }

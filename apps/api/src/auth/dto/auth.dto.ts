@@ -35,12 +35,12 @@ export class RegisterDto {
   @MaxLength(50)
   lastName!: string;
 
-  @ApiPropertyOptional({ enum: UserRole })
+  @ApiPropertyOptional({ enum: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'] })
   @IsEnum(UserRole)
   @IsOptional()
   role?: UserRole;
 
-  @ApiPropertyOptional({ enum: Department })
+  @ApiPropertyOptional({ enum: ['ENGINEERING', 'FINANCE', 'HR', 'MARKETING', 'OPERATIONS', 'SALES', 'LEGAL', 'PRODUCT'] })
   @IsEnum(Department)
   @IsOptional()
   department?: Department;
