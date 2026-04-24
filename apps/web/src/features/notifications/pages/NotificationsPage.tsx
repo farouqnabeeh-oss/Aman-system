@@ -1,15 +1,16 @@
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, Check, CheckCheck, Trash2, ExternalLink, Inbox } from 'lucide-react';
+import { Bell, Check, CheckCheck, Trash2, ExternalLink, Inbox, User, Layers } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { clsx } from 'clsx';
 import api from '../../../lib/axios';
 import { useUIStore } from '@/store/ui.store';
+import { useAuthStore } from '../../../store/auth.store';
 import { PageHeader, EmptyState } from '../../../components/ui/States';
 import { Skeleton } from '../../../components/ui/Skeleton';
 import { Modal } from '../../../components/ui/Modal';
 import { Input, Select, Textarea } from '../../../components/ui/Input';
-import { User, Layers } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const TRANSLATIONS = {
@@ -38,6 +39,7 @@ const TRANSLATIONS = {
 export function NotificationsPage() {
   const qc = useQueryClient();
   const { language } = useUIStore();
+  const isRtl = language === 'ar';
   const t = TRANSLATIONS[language];
 
   const { data, isLoading } = useQuery({
@@ -62,7 +64,12 @@ export function NotificationsPage() {
 
   const [broadcastOpen, setBroadcastOpen] = useState(false);
   const [bForm, setBForm] = useState({ title: '', message: '', userId: '' });
-  const { data: users } = useQuery({ queryKey:['users-minimal'], queryFn:()=>api.get<any>('/users',{params:{limit:100}}).then(r=>r.data.data.items), enabled: !!(useAuthStore.getState().user?.role !== 'EMPLOYEE') });
+  const user = useAuthStore(s => s.user);
+  const { data: users } = useQuery({ 
+    queryKey:['users-minimal'], 
+    queryFn:()=>api.get<any>('/users',{params:{limit:100}}).then(r=>r.data.data.items), 
+    enabled: !!(user?.role !== 'EMPLOYEE') 
+  });
 
   const broadcastMutation = useMutation({
     mutationFn: () => api.post('/notifications/broadcast', null, { params: bForm }),
@@ -74,8 +81,7 @@ export function NotificationsPage() {
     },
   });
 
-  const userRole = useAuthStore.getState().user?.role;
-  const isManager = userRole && ['ADMIN', 'SUPER_ADMIN', 'MANAGER'].includes(userRole);
+  const isManager = user?.role && ['ADMIN', 'SUPER_ADMIN', 'MANAGER'].includes(user.role);
 
   const items = data?.items ?? [];
   const unreadCount = data?.unreadCount ?? 0;
@@ -151,7 +157,7 @@ export function NotificationsPage() {
                label={isRtl ? 'المستلم (اختياري - الكل إذا كان فارغاً)' : 'Target Operator (Optional)'} 
                icon={User} 
                value={bForm.userId} 
-               options={[{value:'', label: isRtl ? 'الكل' : 'All Personnel'}, ...(users ?? []).map((u:any)=>({value:u.id, label:`${u.firstName} ${u.lastName}`}))]} 
+               options={[{value:'', label: isRtl ? 'الكل' : 'All Personnel'}, ...(users ?? []).map((u: any)=>({value:u.id, label:`${u.firstName} ${u.lastName}`}))]} 
                onChange={(e: any) => setBForm(f => ({...f, userId: e.target.value}))} 
             />
             <Input label={isRtl ? 'عنوان الرسالة' : 'Broadcast Title'} icon={Bell} value={bForm.title} onChange={(e: any) => setBForm(f => ({...f, title: e.target.value}))} />

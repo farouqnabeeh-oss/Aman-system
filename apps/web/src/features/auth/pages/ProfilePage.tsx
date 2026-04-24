@@ -4,8 +4,8 @@ import { useAuthStore } from '../../../store/auth.store';
 import { useUIStore } from '@/store/ui.store';
 import api from '../../../lib/axios';
 import { 
-  Mail, Phone, Shield, Building, Globe, Fingerprint, 
-  Calendar, Edit3, User, Briefcase, Key, Camera,
+  Mail, Phone, Building, Fingerprint, 
+  Edit3, User, Briefcase, Key, Camera,
   CheckCircle2, Target, Zap, Clock, ShieldCheck, Lock
 } from 'lucide-react';
 import { PageHeader } from '../../../components/ui/States';

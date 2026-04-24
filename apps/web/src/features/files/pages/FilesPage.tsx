@@ -66,7 +66,7 @@ export function FilesPage() {
   });
 
   const uploadMutation = useMutation({
-    uploadMutation: (file: File) => {
+    mutationFn: (file: File) => {
       const fd = new FormData();
       fd.append('file', file);
       fd.append('folderPath', folder);
