@@ -7,44 +7,63 @@
 
 @layer base {
   :root {
-    --brand:       14 58 93;
-    --brand-light: 30 100 160;
-    --brand-glow:  rgba(14, 58, 93, 0.6);
+    /* Brand: Lighter, more vibrant blue */
+    --brand:       37 99 235;
+    --brand-light: 96 165 250;
+    --brand-glow:  rgba(37, 99, 235, 0.4);
+    
     --teal:        20 184 166;
     --indigo:      99 102 241;
     --rose:        244 63 94;
     --amber:       245 158 11;
 
-    --bg-base:   #050810;
+    /* Dark Mode Defaults (Base) */
+    --bg-base:   #040712;
     --bg-surface:#0a0e1a;
-    --bg-card:   rgba(10, 15, 28, 0.8);
-    --bg-glass:  rgba(255,255,255,0.03);
+    --bg-card:   rgba(12, 18, 36, 0.85);
+    --bg-glass:  rgba(255, 255, 255, 0.03);
 
-    --border:    rgba(255,255,255,0.06);
-    --border-hover: rgba(255,255,255,0.15);
+    --border:       rgba(255, 255, 255, 0.08);
+    --border-hover: rgba(255, 255, 255, 0.18);
 
-    --text-1: #f1f5f9;
+    --text-1: #f8fafc;
     --text-2: #94a3b8;
-    --text-3: #475569;
-    --text-4: #1e293b;
+    --text-3: #64748b;
+    --text-4: #334155;
+
+    --gradient-1: radial-gradient(ellipse 80% 50% at 20% -10%, rgba(37, 99, 235, 0.4) 0%, transparent 60%);
+    --gradient-2: radial-gradient(ellipse 60% 40% at 80% 110%, rgba(99, 102, 241, 0.15) 0%, transparent 60%);
+  }
+
+  :root.light {
+    --bg-base:    #f8fafc;
+    --bg-surface: #ffffff;
+    --bg-card:    rgba(255, 255, 255, 0.9);
+    --bg-glass:   rgba(0, 0, 0, 0.02);
+
+    --border:       rgba(0, 0, 0, 0.08);
+    --border-hover: rgba(0, 0, 0, 0.15);
+
+    --text-1: #0f172a;
+    --text-2: #475569;
+    --text-3: #94a3b8;
+    --text-4: #cbd5e1;
+
+    --gradient-1: radial-gradient(ellipse 80% 50% at 20% -10%, rgba(37, 99, 235, 0.1) 0%, transparent 60%);
+    --gradient-2: radial-gradient(ellipse 60% 40% at 80% 110%, rgba(99, 102, 241, 0.05) 0%, transparent 60%);
   }
 
   * { box-sizing: border-box; }
-
   html { scroll-behavior: smooth; }
 
   body {
     background-color: var(--bg-base);
-    background-image:
-      radial-gradient(ellipse 80% 50% at 20% -10%, rgba(14,58,93,0.5) 0%, transparent 60%),
-      radial-gradient(ellipse 60% 40% at 80% 110%, rgba(99,102,241,0.15) 0%, transparent 60%),
-      radial-gradient(ellipse 50% 50% at 50% 50%, rgba(20,184,166,0.04) 0%, transparent 80%);
+    background-image: var(--gradient-1), var(--gradient-2);
     background-attachment: fixed;
     color: var(--text-1);
     font-family: 'Inter', 'Noto Sans Arabic', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    letter-spacing: -0.011em;
+    transition: background-color 0.4s ease, color 0.4s ease;
     min-height: 100dvh;
   }
 

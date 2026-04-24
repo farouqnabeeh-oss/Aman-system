@@ -124,7 +124,18 @@ export function TasksPage() {
       <PageHeader
         title={t.tasks}
         description={t.tasksSub}
-        action={user?.role !== 'EMPLOYEE' && <button onClick={() => { setEditingId(null); setForm({ title: '', description: '', priority: 'MEDIUM', projectId: '', assigneeId: '', dueDate: '', status: 'TODO' }); setEditOpen(true); }} className="clean-btn-primary h-12 gap-2 text-xs uppercase tracking-widest"><Plus size={16} /> {t.newTask}</button>}
+        action={
+          <div className="flex gap-3">
+            <button onClick={exportTasks} className="clean-btn-secondary h-12 gap-2 text-xs uppercase tracking-widest">
+              <Download size={16} /> {isRtl ? 'تصدير' : 'Export'}
+            </button>
+            {isAdminOrManager && (
+              <button onClick={() => { setEditingId(null); setForm({ title: '', description: '', priority: 'MEDIUM', projectId: '', assigneeId: '', dueDate: '', status: 'TODO' }); setEditOpen(true); }} className="clean-btn-primary h-12 gap-2 text-xs uppercase tracking-widest">
+                <Plus size={16} /> {t.newTask}
+              </button>
+            )}
+          </div>
+        }
       />
 
       <div className="flex flex-wrap items-center gap-4">
@@ -145,6 +156,7 @@ export function TasksPage() {
         <div className="flex bg-white/5 rounded-2xl border border-white/10 p-1">
           <button onClick={() => setViewMode('kanban')} className={clsx('p-2.5 rounded-xl transition-all', viewMode === 'kanban' ? 'bg-white text-black' : 'text-slate-500 hover:text-white')}><LayoutGrid size={16} /></button>
           <button onClick={() => setViewMode('list')} className={clsx('p-2.5 rounded-xl transition-all', viewMode === 'list' ? 'bg-white text-black' : 'text-slate-500 hover:text-white')}><ListIcon size={16} /></button>
+          <button onClick={() => setViewMode('calendar')} className={clsx('p-2.5 rounded-xl transition-all', viewMode === 'calendar' ? 'bg-white text-black' : 'text-slate-500 hover:text-white')}><CalendarIcon size={16} /></button>
         </div>
       </div>
 
@@ -166,12 +178,15 @@ export function TasksPage() {
 
                 <div className="space-y-4">
                   {colTasks.map((task: any) => (
-                    <motion.div key={task.id} layout className="clean-card group !p-6 cursor-pointer hover:bg-white/[0.02]">
+                    <motion.div key={task.id} layout className="clean-card group !p-6 cursor-pointer hover:bg-white/[0.02]" onClick={() => handleEdit(task)}>
                       <div className="flex justify-between items-start mb-6">
                         <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest truncate max-w-[120px]">{task.project?.name}</span>
-                        {priorityBadge(task.priority)}
+                        <div className="flex gap-2">
+                           {task._count?.comments > 0 && <span className="flex items-center gap-1 text-[10px] text-slate-500 font-bold"><MessageSquare size={10}/> {task._count.comments}</span>}
+                           {priorityBadge(task.priority)}
+                        </div>
                       </div>
-                      <h4 className="text-sm font-bold text-white leading-relaxed mb-8 group-hover:text-indigo-400 transition-colors" onClick={() => handleEdit(task)}>{task.title}</h4>
+                      <h4 className="text-sm font-bold text-white leading-relaxed mb-8 group-hover:text-indigo-400 transition-colors">{task.title}</h4>
 
                       <div className="flex items-center justify-between pt-6 border-t border-white/5">
                         {task.assignee ? (
@@ -183,8 +198,8 @@ export function TasksPage() {
 
                         {isAdminOrManager && (
                           <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={() => handleEdit(task)} className="p-1.5 rounded-lg text-slate-500 hover:text-white"><Edit2 size={12} /></button>
-                            <button onClick={() => { if (confirm('Delete?')) deleteMutation.mutate(task.id) }} className="p-1.5 rounded-lg text-slate-500 hover:text-rose-500"><Trash2 size={12} /></button>
+                            <button onClick={(e) => { e.stopPropagation(); handleEdit(task); }} className="p-1.5 rounded-lg text-slate-500 hover:text-white"><Edit2 size={12} /></button>
+                            <button onClick={(e) => { e.stopPropagation(); if (confirm('Delete?')) deleteMutation.mutate(task.id) }} className="p-1.5 rounded-lg text-slate-500 hover:text-rose-500"><Trash2 size={12} /></button>
                           </div>
                         )}
                       </div>
@@ -195,6 +210,8 @@ export function TasksPage() {
             );
           })}
         </div>
+      ) : viewMode === 'calendar' ? (
+        <CalendarView tasks={tasks} onTaskClick={handleEdit} />
       ) : (
         <div className="clean-card !p-0 overflow-hidden">
           <Table columns={[
@@ -207,29 +224,124 @@ export function TasksPage() {
         </div>
       )}
 
-      <Modal open={editOpen} onClose={() => setEditOpen(false)} title={editingId ? t.editTask : t.newTask}>
-        <div className="space-y-8 pt-4">
-          <Input label={isRtl ? 'عنوان المهمة' : 'Task Designation'} icon={Target} value={form.title} onChange={(e: any) => setForm(f => ({ ...f, title: e.target.value }))} />
-          <Textarea label={isRtl ? 'تفاصيل العمل' : 'Operational Scope'} icon={Layers} value={form.description} onChange={(e: any) => setForm(f => ({ ...f, description: e.target.value }))} />
+      <Modal open={editOpen} onClose={() => setEditOpen(false)} title={editingId ? t.editTask : t.newTask} size="xl">
+        <div className="flex flex-col lg:flex-row gap-12 pt-4">
+          <div className="flex-1 space-y-8">
+            <Input label={isRtl ? 'عنوان المهمة' : 'Task Designation'} icon={Target} value={form.title} onChange={(e: any) => setForm(f => ({ ...f, title: e.target.value }))} />
+            <Textarea label={isRtl ? 'تفاصيل العمل' : 'Operational Scope'} icon={Layers} value={form.description} onChange={(e: any) => setForm(f => ({ ...f, description: e.target.value }))} />
 
-          <div className="grid grid-cols-2 gap-6">
-            <Select label={t.project} icon={Zap} value={form.projectId} options={(projects ?? []).map((p: any) => ({ value: p.id, label: p.name }))} onChange={(e: any) => setForm(f => ({ ...f, projectId: e.target.value }))} />
-            <Select label={t.priority} icon={AlertCircle} value={form.priority} options={PRIORITY_OPT(isRtl)} onChange={(e: any) => setForm(f => ({ ...f, priority: e.target.value }))} />
+            <div className="grid grid-cols-2 gap-6">
+              <Select label={t.project} icon={Zap} value={form.projectId} options={(projects ?? []).map((p: any) => ({ value: p.id, label: p.name }))} onChange={(e: any) => setForm(f => ({ ...f, projectId: e.target.value }))} />
+              <Select label={t.priority} icon={AlertCircle} value={form.priority} options={PRIORITY_OPT(isRtl)} onChange={(e: any) => setForm(f => ({ ...f, priority: e.target.value }))} />
+            </div>
+
+            <div className="grid grid-cols-2 gap-6">
+              <Select label={t.assignee} icon={Users} value={form.assigneeId} options={(users ?? []).map((u: any) => ({ value: u.id, label: `${u.firstName} ${u.lastName}` }))} onChange={(e: any) => setForm(f => ({ ...f, assigneeId: e.target.value }))} />
+              <Input label={t.dueDate} icon={CalendarIcon} type="date" value={form.dueDate} onChange={(e: any) => setForm(f => ({ ...f, dueDate: e.target.value }))} />
+            </div>
+
+            <Select label={t.status} icon={CheckCircle2} value={form.status} options={['TODO', 'IN_PROGRESS', 'IN_REVIEW', 'DONE'].map(s => ({ value: s, label: s }))} onChange={(e: any) => setForm(f => ({ ...f, status: e.target.value }))} />
+
+            <div className="flex justify-end gap-4 pt-12 border-t border-white/5">
+              <button className="clean-btn-secondary px-10" onClick={() => setEditOpen(false)}>{t.cancel}</button>
+              <button className="clean-btn-primary px-10" onClick={() => saveMutation.mutate()}>{t.save}</button>
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
-            <Select label={t.assignee} icon={Users} value={form.assigneeId} options={(users ?? []).map((u: any) => ({ value: u.id, label: `${u.firstName} ${u.lastName}` }))} onChange={(e: any) => setForm(f => ({ ...f, assigneeId: e.target.value }))} />
-            <Input label={t.dueDate} icon={Calendar} type="date" value={form.dueDate} onChange={(e: any) => setForm(f => ({ ...f, dueDate: e.target.value }))} />
-          </div>
+          {editingId && (
+            <div className="w-full lg:w-96 flex flex-col bg-white/[0.02] border border-white/5 rounded-3xl overflow-hidden">
+               <div className="p-6 border-b border-white/5 bg-white/[0.01]">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-3">
+                    <MessageSquare size={14} /> {isRtl ? 'النقاش' : 'Internal Thread'}
+                  </h3>
+               </div>
+               
+               <div className="flex-1 min-h-[400px] max-h-[600px] overflow-y-auto p-6 space-y-6">
+                  {commentsLoading ? <Skeleton className="h-32 rounded-2xl" /> : (comments ?? []).length === 0 ? (
+                    <div className="text-center py-12">
+                      <MessageSquare size={32} className="mx-auto text-slate-800 mb-4" />
+                      <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">{isRtl ? 'لا يوجد تعليقات بعد' : 'No entries found'}</p>
+                    </div>
+                  ) : comments.map((c: any) => (
+                    <div key={c.id} className="flex gap-4">
+                       <div className="w-8 h-8 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 font-bold text-xs shrink-0">{c.author.firstName[0]}</div>
+                       <div className="flex-1 bg-white/5 rounded-2xl p-4 border border-white/5">
+                          <div className="flex justify-between items-center mb-2">
+                             <span className="text-xs font-black text-white">{c.author.firstName}</span>
+                             <span className="text-[8px] font-medium text-slate-500">{new Date(c.createdAt).toLocaleDateString()}</span>
+                          </div>
+                          <p className="text-xs text-slate-400 leading-relaxed">{c.content}</p>
+                       </div>
+                    </div>
+                  ))}
+               </div>
 
-          <Select label={t.status} icon={CheckCircle2} value={form.status} options={['TODO', 'IN_PROGRESS', 'IN_REVIEW', 'DONE'].map(s => ({ value: s, label: s }))} onChange={(e: any) => setForm(f => ({ ...f, status: e.target.value }))} />
-
-          <div className="flex justify-end gap-4 mt-12 py-6 border-t border-white/5">
-            <button className="clean-btn-secondary px-10" onClick={() => setEditOpen(false)}>{t.cancel}</button>
-            <button className="clean-btn-primary px-10" onClick={() => saveMutation.mutate()}>{t.save}</button>
-          </div>
+               <div className="p-6 bg-white/[0.01] border-t border-white/5">
+                  <div className="relative">
+                    <textarea value={comment} onChange={(e) => setComment(e.target.value)} placeholder={isRtl ? 'اكتب ملاحظاتك...' : 'Add observation...'} className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 pr-12 text-xs text-white outline-none focus:border-indigo-500/50 transition-all resize-none h-24" />
+                    <button disabled={!comment.trim() || commentMutation.isPending} onClick={() => commentMutation.mutate(comment)} className="absolute right-4 bottom-4 p-2 rounded-xl bg-indigo-500 text-white hover:bg-indigo-400 disabled:opacity-50 transition-all">
+                       <Zap size={14} />
+                    </button>
+                  </div>
+               </div>
+            </div>
+          )}
         </div>
       </Modal>
+    </div>
+  );
+}
+
+function CalendarView({ tasks, onTaskClick }: { tasks: any[], onTaskClick: (t: any) => void }) {
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const month = currentDate.getMonth();
+  const year = currentDate.getFullYear();
+
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDay = new Date(year, month, 1).getDay();
+  
+  const days = Array.from({ length: 42 }, (_, i) => {
+    const day = i - firstDay + 1;
+    if (day <= 0 || day > daysInMonth) return null;
+    return new Date(year, month, day);
+  });
+
+  const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
+  const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
+
+  return (
+    <div className="clean-card !p-0 overflow-hidden flex flex-col h-[800px]">
+       <div className="p-8 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
+          <h3 className="text-lg font-bold text-white uppercase tracking-tight">{currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</h3>
+          <div className="flex gap-2">
+             <button onClick={prevMonth} className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all"><ChevronLeft size={18}/></button>
+             <button onClick={nextMonth} className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all"><ChevronRight size={18}/></button>
+          </div>
+       </div>
+
+       <div className="grid grid-cols-7 border-b border-white/5 bg-white/[0.01]">
+          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
+            <div key={d} className="py-4 text-center text-[10px] font-black text-slate-500 uppercase tracking-widest border-r border-white/5 last:border-0">{d}</div>
+          ))}
+       </div>
+
+       <div className="flex-1 grid grid-cols-7 grid-rows-6">
+          {days.map((date, i) => {
+            if (!date) return <div key={i} className="border-r border-b border-white/5 bg-white/[0.01]" />;
+            const dayTasks = tasks.filter(t => t.dueDate && new Date(t.dueDate).toDateString() === date.toDateString());
+            
+            return (
+              <div key={i} className="border-r border-b border-white/5 p-3 hover:bg-white/[0.02] transition-all group overflow-hidden flex flex-col gap-2">
+                 <span className={clsx("text-[10px] font-bold w-6 h-6 flex items-center justify-center rounded-lg", date.toDateString() === new Date().toDateString() ? "bg-indigo-500 text-white" : "text-slate-600 group-hover:text-white")}>{date.getDate()}</span>
+                 <div className="flex-1 overflow-y-auto space-y-1 no-scrollbar">
+                    {dayTasks.map(t => (
+                      <div key={t.id} onClick={() => onTaskClick(t)} className="px-2 py-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-[9px] font-bold text-indigo-400 truncate cursor-pointer hover:bg-indigo-500/20 transition-all">{t.title}</div>
+                    ))}
+                 </div>
+              </div>
+            );
+          })}
+       </div>
     </div>
   );
 }

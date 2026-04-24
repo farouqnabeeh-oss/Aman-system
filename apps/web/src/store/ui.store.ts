@@ -5,10 +5,11 @@ interface UIState {
   sidebarOpen: boolean;
   sidebarCollapsed: boolean;
   language: 'ar' | 'en';
-  toggleSidebar: () => void;
+  theme: 'dark' | 'light';
   setSidebarOpen: (open: boolean) => void;
   toggleCollapsed: () => void;
   setLanguage: (lang: 'ar' | 'en') => void;
+  toggleTheme: () => void;
 }
 
 export const useUIStore = create<UIState>()(
@@ -17,11 +18,15 @@ export const useUIStore = create<UIState>()(
       sidebarOpen: false,
       sidebarCollapsed: false,
       language: 'ar',
-
-      toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
+      theme: 'dark',
       setSidebarOpen: (open) => set({ sidebarOpen: open }),
-      toggleCollapsed: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
+      toggleCollapsed: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
       setLanguage: (lang) => set({ language: lang }),
+      toggleTheme: () => set((state) => {
+        const newTheme = state.theme === 'dark' ? 'light' : 'dark';
+        document.documentElement.classList.toggle('light', newTheme === 'light');
+        return { theme: newTheme };
+      }),
     }),
     {
       name: 'ems-ui',

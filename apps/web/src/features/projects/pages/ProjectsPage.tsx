@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { Plus, FolderKanban, Calendar, Target, Layers, Users, Search, LayoutGrid, List, Edit2, Trash2, Zap, DollarSign } from 'lucide-react';
+import { Plus, FolderKanban, Calendar, Target, Layers, Users, Search, LayoutGrid, List, Edit2, Trash2, Zap, DollarSign, Download } from 'lucide-react';
 import { clsx } from 'clsx';
 import api from '../../../lib/axios';
 import { useUIStore } from '@/store/ui.store';
@@ -62,6 +62,20 @@ export function ProjectsPage() {
   const isRtl = language === 'ar';
   const t = TRANSLATIONS[language];
 
+  const exportProjects = () => {
+    const csv = [
+      ['Name', 'Department', 'Status', 'Progress', 'Budget', 'Manager'],
+      ...projects.map((p: any) => [p.name, p.department, p.status, p.progress, p.budget, p.manager?.firstName])
+    ].map(e => e.join(",")).join("\n");
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `projects_report_${new Date().toISOString().slice(0,10)}.csv`);
+    link.click();
+    toast.success(isRtl ? 'تم تصدير البيانات' : 'Projects exported');
+  };
+
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
@@ -103,7 +117,12 @@ export function ProjectsPage() {
       <PageHeader
         title={t.projects}
         description={t.projectsSub}
-        action={<button onClick={() => { setEditingId(null); setForm({ name: '', description: '', managerId: '', department: '', startDate: '', endDate: '', budget: '' }); setEditOpen(true); }} className="clean-btn-primary h-12 gap-2 text-xs uppercase tracking-widest"><Plus size={16} /> {t.newProject}</button>}
+        action={
+          <div className="flex gap-3">
+             <button onClick={exportProjects} className="clean-btn-secondary h-12 gap-2 text-xs uppercase tracking-widest"><Download size={16}/> {isRtl ? 'تصدير' : 'Export'}</button>
+             {isAdminOrManager && <button onClick={() => { setEditingId(null); setForm({ name: '', description: '', managerId: '', department: '', startDate: '', endDate: '', budget: '' }); setEditOpen(true); }} className="clean-btn-primary h-12 gap-2 text-xs uppercase tracking-widest"><Plus size={16} /> {t.newProject}</button>}
+          </div>
+        }
       />
 
       <div className="flex flex-wrap gap-4 items-center">

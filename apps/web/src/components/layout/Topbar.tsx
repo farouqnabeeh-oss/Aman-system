@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, Bell, Search, LogOut, User, ChevronDown, Languages, Command, Zap } from 'lucide-react';
+import { Menu, Bell, Search, LogOut, User, ChevronDown, Languages, Command, Zap, Sun, Moon } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUIStore } from '../../store/ui.store';
@@ -14,7 +14,7 @@ const TRANSLATIONS = {
 };
 
 export function Topbar({ onOpenCommand }: { onOpenCommand?: () => void }) {
-  const { toggleSidebar, language, setLanguage } = useUIStore();
+  const { toggleSidebar, language, setLanguage, theme, toggleTheme } = useUIStore();
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
@@ -34,6 +34,11 @@ export function Topbar({ onOpenCommand }: { onOpenCommand?: () => void }) {
     mutationFn: () => api.post('/auth/logout'),
     onSettled: () => { logout(); navigate('/login'); },
   });
+
+  // Sync theme
+  useEffect(() => {
+    document.documentElement.classList.toggle('light', theme === 'light');
+  }, [theme]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -91,6 +96,15 @@ export function Topbar({ onOpenCommand }: { onOpenCommand?: () => void }) {
 
       {/* Right: Actions */}
       <div className="flex items-center gap-2">
+        {/* Theme Toggle */}
+        <button
+          onClick={toggleTheme}
+          className="btn-icon text-amber-400"
+          title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+        >
+          {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} className="text-indigo-400" />}
+        </button>
+
         {/* Language toggle */}
         <button
           onClick={() => setLanguage(language === 'ar' ? 'en' : 'ar')}

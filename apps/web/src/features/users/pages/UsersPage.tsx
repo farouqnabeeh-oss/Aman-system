@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { UserPlus, Trash2, Search, Filter, Mail, LayoutGrid, List, Edit2, ShieldCheck, Zap } from 'lucide-react';
+import { UserPlus, Trash2, Search, Filter, Mail, LayoutGrid, List, Edit2, ShieldCheck, Zap, Download } from 'lucide-react';
 import api from '../../../lib/axios';
 import { useUIStore } from '@/store/ui.store';
 import { PageHeader, StatCard } from '../../../components/ui/States';
@@ -97,6 +97,20 @@ export function UsersPage() {
     setEditOpen(true);
   };
 
+  const exportUsers = () => {
+    const csv = [
+      ['Name', 'Email', 'Role', 'Department', 'Position'],
+      ...users.map((u: any) => [`${u.firstName} ${u.lastName}`, u.email, u.role, u.department, u.position])
+    ].map(e => e.join(",")).join("\n");
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `team_report_${new Date().toISOString().slice(0,10)}.csv`);
+    link.click();
+    toast.success(isRtl ? 'تم تصدير الفريق' : 'Team exported');
+  };
+
   const users = data?.items || [];
 
   return (
@@ -104,7 +118,12 @@ export function UsersPage() {
       <PageHeader
         title={t.users}
         description={t.usersSub}
-        action={isAdminOrManager && <button onClick={() => { setEditingId(null); setForm({ firstName: '', lastName: '', email: '', password: '', role: 'EMPLOYEE', department: '', position: '' }); setEditOpen(true); }} className="clean-btn-primary h-12 gap-2 text-[10px] uppercase tracking-widest"><UserPlus size={16} /> {t.addUser}</button>}
+        action={
+          <div className="flex gap-3">
+             <button onClick={exportUsers} className="clean-btn-secondary h-12 gap-2 text-[10px] uppercase tracking-widest"><Download size={16}/> {isRtl ? 'تصدير' : 'Export'}</button>
+             {isAdminOrManager && <button onClick={() => { setEditingId(null); setForm({ firstName: '', lastName: '', email: '', password: '', role: 'EMPLOYEE', department: '', position: '' }); setEditOpen(true); }} className="clean-btn-primary h-12 gap-2 text-[10px] uppercase tracking-widest"><UserPlus size={16} /> {t.addUser}</button>}
+          </div>
+        }
       />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
