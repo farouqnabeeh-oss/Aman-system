@@ -39,11 +39,11 @@ export class NotificationsController {
   @Post('broadcast')
   async broadcast(@CurrentUser() user: RequestUser, @Query('userId') userId?: string, @Query('title') title?: string, @Query('message') message?: string) {
     if (userId) {
-      await this.notificationsService.create(userId, title || 'System Alert', message || '', 'SYSTEM');
+      await this.notificationsService.create({ userId, title: title || 'System Alert', message: message || '', type: 'SYSTEM' });
     } else {
       const users = await (this.notificationsService as any).prisma.user.findMany({ where: { deletedAt: null } });
       for (const u of users) {
-        await this.notificationsService.create(u.id, title || 'Broadcast', message || '', 'SYSTEM');
+        await this.notificationsService.create({ userId: u.id, title: title || 'Broadcast', message: message || '', type: 'SYSTEM' });
       }
     }
     return { success: true };
