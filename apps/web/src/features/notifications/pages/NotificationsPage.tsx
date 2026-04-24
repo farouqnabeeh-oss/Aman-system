@@ -158,13 +158,13 @@ export function NotificationsPage() {
             <Textarea label={isRtl ? 'محتوى التعميم' : 'Operational Message'} icon={Layers} value={bForm.message} onChange={(e: any) => setBForm(f => ({...f, message: e.target.value}))} />
             
             <div className="flex justify-end gap-4 mt-12 py-6 border-t border-white/5">
-               <button className="clean-btn-secondary px-10" onClick={() => setBroadcastOpen(false)}>{isRtl ? 'إلغاء' : 'Abort'}</button>
+               <button className="clean-btn-secondary px-10" onClick={() => setBroadcastOpen(false)}>{language === 'ar' ? 'إلغاء' : 'Abort'}</button>
                <button 
                   className="clean-btn-primary px-10 bg-sky-500" 
                   onClick={() => broadcastMutation.mutate()}
                   disabled={broadcastMutation.isPending}
                >
-                  {broadcastMutation.isPending ? '...' : (isRtl ? 'إرسال الآن' : 'Deploy Now')}
+                  {broadcastMutation.isPending ? '...' : (language === 'ar' ? 'إرسال الآن' : 'Deploy Now')}
                </button>
             </div>
          </div>
