@@ -62,31 +62,28 @@ export function Sidebar() {
       transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
       className={clsx(
         'fixed top-0 bottom-0 z-50 flex flex-col',
-        'border-white/[0.06]',
+        'border-[var(--border)]',
         isRtl ? 'right-0 border-l' : 'left-0 border-r',
         'transition-transform duration-300 lg:translate-x-0',
         isRtl
           ? (sidebarOpen ? 'translate-x-0' : 'translate-x-full')
           : (sidebarOpen ? 'translate-x-0' : '-translate-x-full'),
       )}
-      style={{ background: 'linear-gradient(180deg, #0a0e1a 0%, #060810 100%)' }}
+      style={{ background: 'var(--bg-sidebar)' }}
     >
       {/* Grid overlay */}
       <div className="absolute inset-0 bg-grid opacity-30 pointer-events-none" />
 
-      {/* Top ambient */}
-      <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-blue-900/20 to-transparent pointer-events-none" />
-
       {/* Brand */}
       <div className={clsx(
-        'relative flex items-center h-16 px-4 border-b border-white/[0.05] flex-shrink-0',
+        'relative flex items-center h-16 px-4 border-b border-[var(--border)] flex-shrink-0',
         sidebarCollapsed ? 'justify-center' : 'gap-3'
       )}>
         <div className="relative flex-shrink-0">
           <div className="w-9 h-9 rounded-xl overflow-hidden ring-1 ring-white/10">
             <img src="/logo.png" alt="Logo" className="w-full h-full object-cover" />
           </div>
-          <div className="absolute -inset-1 bg-blue-500/20 blur-md rounded-xl -z-10" />
+          <div className="absolute -inset-1 bg-brand/20 blur-md rounded-xl -z-10" />
         </div>
         <AnimatePresence>
           {!sidebarCollapsed && (
@@ -96,8 +93,8 @@ export function Sidebar() {
               exit={{ opacity: 0, x: -10 }}
               transition={{ duration: 0.2 }}
             >
-              <p className="text-sm font-bold text-white tracking-tight leading-none">{t.brand}</p>
-              <p className="text-[10px] text-slate-500 mt-0.5 uppercase tracking-widest">v3.0 Tactical</p>
+              <p className="text-sm font-bold text-[var(--text-1)] tracking-tight leading-none">{t.brand}</p>
+              <p className="text-[10px] text-[var(--text-3)] mt-0.5 uppercase tracking-widest">v3.0 Tactical</p>
             </motion.div>
           )}
         </AnimatePresence>
@@ -127,7 +124,7 @@ export function Sidebar() {
                   sidebarCollapsed && 'justify-center px-0'
                 )}
               >
-                <span className={clsx('nav-icon flex-shrink-0', active ? item.color : 'text-slate-600 group-hover:text-slate-400')}>
+                <span className={clsx('nav-icon flex-shrink-0', active ? item.color : 'text-[var(--text-3)] group-hover:text-[var(--text-1)]')}>
                   <Icon size={18} />
                 </span>
                 <AnimatePresence>
@@ -142,28 +139,13 @@ export function Sidebar() {
                     </motion.span>
                   )}
                 </AnimatePresence>
-                {/* Notification badge */}
                 {isNotif && unread > 0 && (
-                  <AnimatePresence>
-                    <motion.span
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className={clsx(
-                        'flex-shrink-0 h-5 min-w-5 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center px-1',
-                        sidebarCollapsed && 'absolute top-1 right-1 h-4 min-w-4 text-[8px]'
-                      )}
-                    >
-                      {unread > 9 ? '9+' : unread}
-                    </motion.span>
-                  </AnimatePresence>
-                )}
-                {/* Active indicator */}
-                {active && !sidebarCollapsed && (
-                  <div className={clsx(
-                    'absolute flex-shrink-0 w-1 h-6 rounded-full',
-                    isRtl ? 'left-0' : 'right-0',
-                    'bg-gradient-to-b from-sky-400 to-blue-600'
-                  )} />
+                  <span className={clsx(
+                    'flex-shrink-0 h-5 min-w-5 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center px-1',
+                    sidebarCollapsed && 'absolute top-1 right-1 h-4 min-w-4 text-[8px]'
+                  )}>
+                    {unread > 9 ? '9+' : unread}
+                  </span>
                 )}
               </Link>
             </motion.div>
@@ -172,16 +154,16 @@ export function Sidebar() {
       </nav>
 
       {/* Profile footer */}
-      <div className="relative border-t border-white/[0.05] p-3 flex-shrink-0">
+      <div className="relative border-t border-[var(--border)] p-3 flex-shrink-0 bg-[var(--bg-glass)]">
         <Link
           to="/profile"
           className={clsx(
-            'flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition-all group',
+            'flex items-center gap-3 p-2 rounded-xl hover:bg-brand/5 transition-all group',
             sidebarCollapsed && 'justify-center'
           )}
         >
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500/30 to-indigo-600/30 border border-white/10 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
-            {user?.firstName?.[0]}{user?.lastName?.[0]}
+          <div className="w-8 h-8 rounded-xl bg-brand/10 border border-brand/20 flex items-center justify-center text-brand font-bold text-xs flex-shrink-0">
+            {user?.firstName?.[0]}
           </div>
           <AnimatePresence>
             {!sidebarCollapsed && (
@@ -191,8 +173,8 @@ export function Sidebar() {
                 exit={{ opacity: 0 }}
                 className="flex-1 min-w-0"
               >
-                <p className="text-xs font-semibold text-white truncate">{user?.firstName} {user?.lastName}</p>
-                <p className="text-[10px] text-slate-500 truncate uppercase tracking-wider">{user?.role?.replace('_', ' ')}</p>
+                <p className="text-xs font-semibold text-[var(--text-1)] truncate">{user?.firstName} {user?.lastName}</p>
+                <p className="text-[10px] text-[var(--text-3)] truncate uppercase tracking-wider">{user?.role?.replace('_', ' ')}</p>
               </motion.div>
             )}
           </AnimatePresence>
@@ -204,7 +186,7 @@ export function Sidebar() {
         onClick={toggleCollapsed}
         className={clsx(
           'hidden lg:flex absolute top-[60px] w-5 h-5 rounded-full items-center justify-center z-10',
-          'bg-slate-800 border border-white/10 text-slate-400 hover:text-white hover:border-white/20 transition-all',
+          'bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text-3)] hover:text-brand hover:border-brand/40 transition-all',
           isRtl ? 'left-[-10px]' : 'right-[-10px]'
         )}
       >

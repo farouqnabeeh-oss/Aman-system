@@ -25,27 +25,33 @@
     --text-3: #64748b;
     --text-4: #334155;
 
+    --bg-sidebar: linear-gradient(180deg, #0a0e1a 0%, #060810 100%);
+    --bg-topbar: rgba(5, 8, 16, 0.7);
+
     --gradient-1: radial-gradient(ellipse 80% 50% at 20% -10%, rgba(14, 165, 233, 0.3) 0%, transparent 60%);
     --gradient-2: radial-gradient(ellipse 60% 40% at 80% 110%, rgba(56, 189, 248, 0.1) 0%, transparent 60%);
   }
 
   :root.light {
     /* Sky Blue Theme - Light Mode */
-    --bg-base:    #f0f9ff; /* Very soft sky blue */
+    --bg-base:    #f8fafc; /* Lighter background */
     --bg-surface: #ffffff;
-    --bg-card:    rgba(255, 255, 255, 0.9);
-    --bg-glass:   rgba(14, 165, 233, 0.05);
+    --bg-card:    rgba(255, 255, 255, 0.8);
+    --bg-glass:   rgba(14, 165, 233, 0.04);
 
-    --border:       rgba(14, 165, 233, 0.1);
-    --border-hover: rgba(14, 165, 233, 0.2);
+    --border:       rgba(14, 165, 233, 0.15);
+    --border-hover: rgba(14, 165, 233, 0.3);
 
     --text-1: #0f172a;
     --text-2: #334155;
     --text-3: #64748b;
     --text-4: #94a3b8;
 
-    --gradient-1: radial-gradient(ellipse 80% 50% at 20% -10%, rgba(14, 165, 233, 0.1) 0%, transparent 60%);
-    --gradient-2: radial-gradient(ellipse 60% 40% at 80% 110%, rgba(14, 165, 233, 0.05) 0%, transparent 60%);
+    --bg-sidebar: #ffffff;
+    --bg-topbar:  rgba(255, 255, 255, 0.8);
+
+    --gradient-1: radial-gradient(ellipse 80% 50% at 20% -10%, rgba(14, 165, 233, 0.15) 0%, transparent 60%);
+    --gradient-2: radial-gradient(ellipse 60% 40% at 80% 110%, rgba(14, 165, 233, 0.1) 0%, transparent 60%);
   }
 
   * { box-sizing: border-box; }
@@ -137,14 +143,19 @@
 
   /* ─── Inputs ───────────────────────────────────────────────────── */
   .hud-input {
-    @apply w-full rounded-xl border px-4 py-2.5 text-sm text-slate-100 outline-none transition-all duration-200;
+    @apply w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition-all duration-200;
+    @apply text-slate-100 dark:text-slate-100; /* Fallback but responsive */
     background: rgba(255,255,255,0.04);
     border-color: var(--border);
   }
+  .light .hud-input {
+    background: #ffffff;
+    @apply text-slate-900;
+  }
   .hud-input:focus {
-    border-color: rgb(var(--indigo) / 0.6);
+    border-color: rgb(var(--brand) / 0.6);
     background: rgba(255,255,255,0.07);
-    box-shadow: 0 0 0 3px rgb(var(--indigo) / 0.12);
+    box-shadow: 0 0 0 3px rgb(var(--brand) / 0.12);
   }
   .hud-input::placeholder { color: var(--text-4); }
 
@@ -190,6 +201,12 @@
 @layer utilities {
   /* Gradients */
   .text-gradient {
+    background: linear-gradient(135deg, var(--text-1) 0%, var(--text-2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .dark .text-gradient {
     background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;

@@ -79,6 +79,7 @@ export class HrService {
       create: { userId, date: today, status: 'PRESENT', checkIn: new Date() },
       update: { checkIn: new Date() },
     });
+    await this.audit.log({ userId, action: 'CHECK_IN', entity: 'attendance', entityId: record.id });
     return record;
   }
 
@@ -87,7 +88,9 @@ export class HrService {
     const record = await this.prisma.attendanceRecord.findUnique({ where: { userId_date: { userId, date: today } } });
     if (!record?.checkIn) throw new BadRequestException({ code: 'CONFLICT', message: 'Must check in before checking out' });
 
-    return this.prisma.attendanceRecord.update({ where: { id: record.id }, data: { checkOut: new Date() } });
+    const updated = await this.prisma.attendanceRecord.update({ where: { id: record.id }, data: { checkOut: new Date() } });
+    await this.audit.log({ userId, action: 'CHECK_OUT', entity: 'attendance', entityId: updated.id });
+    return updated;
   }
 
   private serializeLeave = (l: any) => ({
