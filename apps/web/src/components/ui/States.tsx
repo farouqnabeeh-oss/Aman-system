@@ -10,14 +10,14 @@ export function ErrorState({ message = 'Something went wrong', onRetry }: ErrorS
   return (
     <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
       <div className="w-14 h-14 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
-        <AlertTriangle className="w-7 h-7 text-rose-400" />
+        <AlertTriangle className="w-7 h-7 text-rose-500" />
       </div>
       <div>
-        <p className="font-semibold text-white mb-1">Something went wrong</p>
-        <p className="text-sm text-slate-500 max-w-xs">{message}</p>
+        <p className="font-bold text-[var(--text-1)] mb-1">Something went wrong</p>
+        <p className="text-sm text-[var(--text-3)] max-w-xs">{message}</p>
       </div>
       {onRetry && (
-        <button onClick={onRetry} className="btn-ghost mt-2">
+        <button onClick={onRetry} className="btn-ghost mt-2 border-[var(--border)]">
           <RefreshCw size={14} /> Retry
         </button>
       )}
@@ -29,13 +29,13 @@ export function EmptyState({ title = 'No results', description, icon, action }: 
   return (
     <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
       {icon && (
-        <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-600">
+        <div className="w-16 h-16 rounded-2xl bg-[var(--bg-glass)] border border-[var(--border)] flex items-center justify-center text-[var(--text-4)]">
           {icon}
         </div>
       )}
       <div>
-        <p className="font-semibold text-white mb-1">{title}</p>
-        {description && <p className="text-sm text-slate-500 max-w-xs mx-auto">{description}</p>}
+        <p className="font-bold text-[var(--text-1)] mb-1">{title}</p>
+        {description && <p className="text-sm text-[var(--text-3)] max-w-xs mx-auto font-medium">{description}</p>}
       </div>
       {action}
     </div>
@@ -51,24 +51,24 @@ export function PageHeader({
   badge?: { label: string; color?: 'blue' | 'green' | 'yellow' | 'red' };
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 mb-6">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10">
       <div>
-        <div className="flex items-center gap-3 mb-1">
-          <h1 className="text-xl font-bold text-white">{title}</h1>
+        <div className="flex items-center gap-3 mb-2">
+          <h1 className="text-2xl font-black text-[var(--text-1)] tracking-tight uppercase">{title}</h1>
           {badge && (
-            <span className={clsx('badge', {
-              'badge-blue': badge.color === 'blue' || !badge.color,
-              'badge-green': badge.color === 'green',
-              'badge-amber': badge.color === 'yellow',
-              'badge-rose': badge.color === 'red',
+            <span className={clsx('px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest border', {
+              'bg-blue-500/10 border-blue-500/20 text-blue-500': badge.color === 'blue' || !badge.color,
+              'bg-emerald-500/10 border-emerald-500/20 text-emerald-500': badge.color === 'green',
+              'bg-amber-500/10 border-amber-500/20 text-amber-500': badge.color === 'yellow',
+              'bg-rose-500/10 border-rose-500/20 text-rose-500': badge.color === 'red',
             })}>
               {badge.label}
             </span>
           )}
         </div>
-        {description && <p className="text-sm text-slate-500">{description}</p>}
+        {description && <p className="text-sm text-[var(--text-3)] font-medium max-w-2xl">{description}</p>}
       </div>
-      {action && <div className="flex items-center gap-2 flex-shrink-0">{action}</div>}
+      {action && <div className="flex items-center gap-3 flex-shrink-0">{action}</div>}
     </div>
   );
 }
@@ -85,19 +85,19 @@ export function StatCard({
 }) {
   return (
     <motion.div
-      whileHover={{ y: -2 }}
-      className="stat-card group"
+      whileHover={{ y: -3 }}
+      className="stat-card"
     >
-      <div className="flex items-start justify-between mb-4">
-        <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/8 flex items-center justify-center text-slate-400">
+      <div className="flex items-start justify-between mb-5">
+        <div className="w-11 h-11 rounded-2xl bg-[var(--bg-glass)] border border-[var(--border)] flex items-center justify-center text-brand">
           {icon}
         </div>
         {delta && (
           <div className={clsx(
-            'flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-lg',
-            trend === 'up' && 'text-emerald-400 bg-emerald-500/10',
-            trend === 'down' && 'text-rose-400 bg-rose-500/10',
-            trend === 'neutral' && 'text-slate-400 bg-slate-700/30',
+            'flex items-center gap-1.5 text-[10px] font-black px-2.5 py-1 rounded-xl uppercase tracking-wider border',
+            trend === 'up' && 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
+            trend === 'down' && 'text-rose-500 bg-rose-500/10 border-rose-500/20',
+            trend === 'neutral' && 'text-[var(--text-4)] bg-[var(--bg-glass)] border-[var(--border)]',
           )}>
             {trend === 'up' && <TrendingUp size={11} />}
             {trend === 'down' && <TrendingDown size={11} />}
@@ -105,9 +105,9 @@ export function StatCard({
           </div>
         )}
       </div>
-      <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">{label}</p>
-      <p className="text-2xl font-bold text-white">{value}</p>
-      {description && <p className="text-xs text-slate-600 mt-1">{description}</p>}
+      <p className="text-[10px] text-[var(--text-4)] font-black uppercase tracking-[0.2em] mb-1.5">{label}</p>
+      <p className="text-3xl font-black text-[var(--text-1)] tracking-tight">{value}</p>
+      {description && <p className="text-[11px] text-[var(--text-4)] mt-2 font-medium">{description}</p>}
     </motion.div>
   );
 }
@@ -115,16 +115,16 @@ export function StatCard({
 export function Spinner({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
   const s = { sm: 'w-4 h-4 border-2', md: 'w-8 h-8 border-2', lg: 'w-12 h-12 border-[3px]' }[size];
   return (
-    <div className={`${s} border-white/10 border-t-blue-500 rounded-full animate-spin`} />
+    <div className={`${s} border-[var(--border)] border-t-brand rounded-full animate-spin`} />
   );
 }
 
 export function SectionHeader({ title, subtitle, action }: { title: string; subtitle?: string; action?: ReactNode }) {
   return (
-    <div className="flex items-center justify-between mb-4">
+    <div className="flex items-center justify-between mb-6">
       <div>
-        <h2 className="text-base font-semibold text-white">{title}</h2>
-        {subtitle && <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>}
+        <h2 className="text-sm font-black text-[var(--text-1)] uppercase tracking-widest">{title}</h2>
+        {subtitle && <p className="text-xs text-[var(--text-4)] mt-1 font-medium">{subtitle}</p>}
       </div>
       {action}
     </div>

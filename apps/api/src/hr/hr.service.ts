@@ -70,25 +70,46 @@ export class HrService {
   }
 
   async checkIn(userId: string) {
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const existing = await this.prisma.attendanceRecord.findUnique({ where: { userId_date: { userId, date: today } } });
-    if (existing?.checkIn) throw new ConflictException({ code: 'CONFLICT', message: 'Already checked in today' });
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0];
+    const normalizedDate = new Date(`${dateStr}T00:00:00.000Z`);
+
+    const existing = await this.prisma.attendanceRecord.findUnique({ 
+      where: { userId_date: { userId, date: normalizedDate } } 
+    });
+    
+    if (existing?.checkIn) {
+      throw new ConflictException({ code: 'CONFLICT', message: 'Already checked in today' });
+    }
 
     const record = await this.prisma.attendanceRecord.upsert({
-      where: { userId_date: { userId, date: today } },
-      create: { userId, date: today, status: 'PRESENT', checkIn: new Date() },
-      update: { checkIn: new Date() },
+      where: { userId_date: { userId, date: normalizedDate } },
+      create: { userId, date: normalizedDate, status: 'PRESENT', checkIn: now },
+      update: { checkIn: now, status: 'PRESENT' },
     });
+    
     await this.audit.log({ userId, action: 'CHECK_IN', entity: 'attendance', entityId: record.id });
     return record;
   }
 
   async checkOut(userId: string) {
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const record = await this.prisma.attendanceRecord.findUnique({ where: { userId_date: { userId, date: today } } });
-    if (!record?.checkIn) throw new BadRequestException({ code: 'CONFLICT', message: 'Must check in before checking out' });
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0];
+    const normalizedDate = new Date(`${dateStr}T00:00:00.000Z`);
 
-    const updated = await this.prisma.attendanceRecord.update({ where: { id: record.id }, data: { checkOut: new Date() } });
+    const record = await this.prisma.attendanceRecord.findUnique({ 
+      where: { userId_date: { userId, date: normalizedDate } } 
+    });
+
+    if (!record?.checkIn) {
+      throw new BadRequestException({ code: 'CONFLICT', message: 'Must check in before checking out' });
+    }
+
+    const updated = await this.prisma.attendanceRecord.update({ 
+      where: { id: record.id }, 
+      data: { checkOut: now } 
+    });
+    
     await this.audit.log({ userId, action: 'CHECK_OUT', entity: 'attendance', entityId: updated.id });
     return updated;
   }

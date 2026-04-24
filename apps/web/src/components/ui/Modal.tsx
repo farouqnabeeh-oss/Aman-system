@@ -38,7 +38,7 @@ export function Modal({ open, onClose, title, subtitle, children, size = 'md', f
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="absolute inset-0 bg-black/70 backdrop-blur-md"
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={onClose}
           />
 
@@ -49,36 +49,31 @@ export function Modal({ open, onClose, title, subtitle, children, size = 'md', f
             exit={{ opacity: 0, scale: 0.97, y: 8 }}
             transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
             className={clsx(
-              'relative w-full flex flex-col max-h-[90vh] rounded-2xl overflow-hidden z-10',
+              'relative w-full flex flex-col max-h-[90vh] rounded-3xl overflow-hidden z-10 border border-[var(--border)] shadow-2xl',
               sizes[size]
             )}
             style={{
-              background: 'linear-gradient(180deg, #111827 0%, #0d1520 100%)',
-              border: '1px solid rgba(255,255,255,0.09)',
-              boxShadow: '0 40px 100px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04)',
+              background: 'var(--bg-surface)',
             }}
             onClick={e => e.stopPropagation()}
           >
-            {/* Top glow line */}
-            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/40 to-transparent" />
-
             {/* Header */}
             {title && (
-              <div className="flex items-center justify-between px-6 py-5 border-b border-white/[0.06] flex-shrink-0">
-                <div className="flex items-center gap-3">
+              <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--border)] flex-shrink-0 bg-[var(--bg-glass)]">
+                <div className="flex items-center gap-4">
                   {icon && (
-                    <div className="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+                    <div className="w-10 h-10 rounded-2xl bg-brand/10 border border-brand/20 flex items-center justify-center text-brand">
                       {icon}
                     </div>
                   )}
                   <div>
-                    <h2 className="text-base font-semibold text-white leading-none">{title}</h2>
-                    {subtitle && <p className="text-xs text-slate-500 mt-1">{subtitle}</p>}
+                    <h2 className="text-lg font-bold text-[var(--text-1)] leading-none">{title}</h2>
+                    {subtitle && <p className="text-xs text-[var(--text-4)] mt-1.5 font-medium">{subtitle}</p>}
                   </div>
                 </div>
                 <button
                   onClick={onClose}
-                  className="w-8 h-8 rounded-xl bg-white/5 border border-white/8 flex items-center justify-center text-slate-500 hover:text-white hover:bg-white/10 transition-all"
+                  className="btn-icon w-9 h-9 bg-[var(--bg-glass)] border-[var(--border)]"
                 >
                   <X size={15} />
                 </button>
@@ -86,13 +81,13 @@ export function Modal({ open, onClose, title, subtitle, children, size = 'md', f
             )}
 
             {/* Body */}
-            <div className="flex-1 overflow-y-auto px-6 py-5 no-scrollbar">
+            <div className="flex-1 overflow-y-auto px-6 py-6 no-scrollbar bg-[var(--bg-surface)]">
               {children}
             </div>
 
             {/* Footer */}
             {footer && (
-              <div className="flex justify-end gap-3 px-6 py-4 border-t border-white/[0.06] flex-shrink-0">
+              <div className="flex justify-end gap-3 px-6 py-4 border-t border-[var(--border)] flex-shrink-0 bg-[var(--bg-glass)]">
                 {footer}
               </div>
             )}

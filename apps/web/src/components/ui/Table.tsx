@@ -25,10 +25,10 @@ export function Table<T>({ columns, data, keyFn, onRowClick, loading, emptyMessa
     return (
       <div className="w-full">
         {[1,2,3,4,5].map(i => (
-          <div key={i} className="flex gap-4 px-5 py-4 border-b border-white/[0.04] animate-pulse">
-            <div className="h-4 w-1/4 bg-white/5 rounded-lg" />
-            <div className="h-4 w-1/3 bg-white/5 rounded-lg" />
-            <div className="h-4 w-1/5 bg-white/5 rounded-lg" />
+          <div key={i} className="flex gap-4 px-5 py-4 border-b border-[var(--border)] animate-pulse">
+            <div className="h-4 w-1/4 bg-[var(--bg-glass)] rounded-lg" />
+            <div className="h-4 w-1/3 bg-[var(--bg-glass)] rounded-lg" />
+            <div className="h-4 w-1/5 bg-[var(--bg-glass)] rounded-lg" />
           </div>
         ))}
       </div>
@@ -38,7 +38,7 @@ export function Table<T>({ columns, data, keyFn, onRowClick, loading, emptyMessa
   if (!data.length) {
     return (
       <div className="py-16 text-center">
-        <p className="text-slate-600 text-sm">{emptyMessage}</p>
+        <p className="text-[var(--text-3)] text-sm">{emptyMessage}</p>
       </div>
     );
   }
@@ -47,13 +47,13 @@ export function Table<T>({ columns, data, keyFn, onRowClick, loading, emptyMessa
     <div className="w-full overflow-x-auto">
       <table className="w-full">
         <thead>
-          <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+          <tr className="border-b border-[var(--border)]">
             {columns.map(col => (
               <th
                 key={col.key}
                 style={{ width: col.width }}
                 className={clsx(
-                  'px-5 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap',
+                  'px-5 py-3 text-left text-[11px] font-bold text-[var(--text-3)] uppercase tracking-wider whitespace-nowrap',
                   col.align === 'center' && 'text-center',
                   col.align === 'right' && 'text-right',
                 )}
@@ -63,7 +63,7 @@ export function Table<T>({ columns, data, keyFn, onRowClick, loading, emptyMessa
             ))}
           </tr>
         </thead>
-        <tbody>
+        <tbody className="divide-y divide-[var(--border)]">
           {data.map((row, idx) => (
             <motion.tr
               key={keyFn(row, idx)}
@@ -73,17 +73,14 @@ export function Table<T>({ columns, data, keyFn, onRowClick, loading, emptyMessa
               onClick={() => onRowClick?.(row)}
               className={clsx(
                 'group transition-colors duration-150',
-                onRowClick && 'cursor-pointer',
+                onRowClick && 'cursor-pointer hover:bg-[var(--bg-glass)]',
               )}
-              style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.025)'; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; }}
             >
               {columns.map(col => (
                 <td
                   key={col.key}
                   className={clsx(
-                    'px-5 py-3.5 text-sm text-slate-300 whitespace-nowrap',
+                    'px-5 py-3.5 text-sm text-[var(--text-2)] whitespace-nowrap group-hover:text-[var(--text-1)] transition-colors',
                     col.align === 'center' && 'text-center',
                     col.align === 'right' && 'text-right',
                   )}
@@ -127,37 +124,37 @@ export function Pagination({ page, totalPages, total, limit, onPage }: Paginatio
   };
 
   return (
-    <div className="flex items-center justify-between px-5 py-3 border-t border-white/[0.05]">
-      <p className="text-xs text-slate-600">
-        Showing <span className="text-slate-400 font-medium">{from}–{to}</span> of <span className="text-slate-400 font-medium">{total}</span>
+    <div className="flex items-center justify-between px-5 py-3 border-t border-[var(--border)] bg-[var(--bg-glass)]">
+      <p className="text-xs text-[var(--text-4)] font-medium">
+        Showing <span className="text-[var(--text-2)] font-bold">{from}–{to}</span> of <span className="text-[var(--text-2)] font-bold">{total}</span>
       </p>
       <div className="flex items-center gap-1">
-        <button onClick={() => onPage(1)} disabled={page === 1} className="btn-icon disabled:opacity-30 disabled:cursor-not-allowed w-8 h-8">
+        <button onClick={() => onPage(1)} disabled={page === 1} className="btn-icon disabled:opacity-20 disabled:cursor-not-allowed w-8 h-8 border-[var(--border)]">
           <ChevronsLeft size={13} />
         </button>
-        <button onClick={() => onPage(page - 1)} disabled={page === 1} className="btn-icon disabled:opacity-30 disabled:cursor-not-allowed w-8 h-8">
+        <button onClick={() => onPage(page - 1)} disabled={page === 1} className="btn-icon disabled:opacity-20 disabled:cursor-not-allowed w-8 h-8 border-[var(--border)]">
           <ChevronLeft size={13} />
         </button>
         {pages().map((p, i) => (
           p === '...'
-            ? <span key={`dot-${i}`} className="px-1 text-slate-600 text-xs">…</span>
+            ? <span key={`dot-${i}`} className="px-1 text-[var(--text-4)] text-xs">…</span>
             : <button
                 key={p}
                 onClick={() => onPage(p)}
                 className={clsx(
-                  'w-8 h-8 rounded-lg text-xs font-medium transition-all',
+                  'w-8 h-8 rounded-lg text-xs font-bold transition-all',
                   page === p
-                    ? 'bg-blue-600 text-white border border-blue-500/40'
-                    : 'text-slate-400 hover:text-white hover:bg-white/8'
+                    ? 'bg-brand text-white shadow-lg shadow-brand/20'
+                    : 'text-[var(--text-3)] hover:text-[var(--text-1)] hover:bg-[var(--bg-glass)]'
                 )}
               >
                 {p}
               </button>
         ))}
-        <button onClick={() => onPage(page + 1)} disabled={page === totalPages} className="btn-icon disabled:opacity-30 disabled:cursor-not-allowed w-8 h-8">
+        <button onClick={() => onPage(page + 1)} disabled={page === totalPages} className="btn-icon disabled:opacity-20 disabled:cursor-not-allowed w-8 h-8 border-[var(--border)]">
           <ChevronRight size={13} />
         </button>
-        <button onClick={() => onPage(totalPages)} disabled={page === totalPages} className="btn-icon disabled:opacity-30 disabled:cursor-not-allowed w-8 h-8">
+        <button onClick={() => onPage(totalPages)} disabled={page === totalPages} className="btn-icon disabled:opacity-20 disabled:cursor-not-allowed w-8 h-8 border-[var(--border)]">
           <ChevronsRight size={13} />
         </button>
       </div>

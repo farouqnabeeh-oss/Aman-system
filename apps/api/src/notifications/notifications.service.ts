@@ -37,4 +37,25 @@ export class NotificationsService {
   async getUnreadCount(userId: string): Promise<number> {
     return this.prisma.notification.count({ where: { userId, isRead: false } });
   }
+
+  async broadcast(params: { title: string; message: string; targetUserId?: string; type?: NotificationType }) {
+    if (params.targetUserId) {
+      return this.create({
+        userId: params.targetUserId,
+        type: params.type || 'SYSTEM',
+        title: params.title,
+        message: params.message,
+      });
+    }
+
+    const users = await this.prisma.user.findMany({ where: { deletedAt: null }, select: { id: true } });
+    const notifications = users.map((u) => ({
+      userId: u.id,
+      type: params.type || 'SYSTEM',
+      title: params.title,
+      message: params.message,
+    }));
+
+    return this.prisma.notification.createMany({ data: notifications });
+  }
 }

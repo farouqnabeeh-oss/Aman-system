@@ -16,8 +16,8 @@ import toast from 'react-hot-toast';
 
 const TRANSLATIONS = {
   ar: {
-    projects: 'إدارة العمليات',
-    projectsSub: 'متابعة المشاريع الاستراتيجية والجدول الزمني',
+    projects: 'مركز العمليات الاستراتيجية',
+    projectsSub: 'متابعة المشاريع والجدول الزمني التشغيلي',
     newProject: 'مشروع جديد',
     search: 'بحث عن مشروع...',
     allStatus: 'كل الحالات',
@@ -31,7 +31,7 @@ const TRANSLATIONS = {
     progress: 'نسبة الإنجاز',
   },
   en: {
-    projects: 'Project Hub',
+    projects: 'Strategic Hub',
     projectsSub: 'Track strategic projects and operational timelines',
     newProject: 'New Project',
     search: 'Search project...',
@@ -96,7 +96,14 @@ export function ProjectsPage() {
 
   const saveMutation = useMutation({
     mutationFn: () => editingId ? api.patch(`/projects/${editingId}`, { ...form, budget: parseFloat(form.budget) }) : api.post('/projects', { ...form, budget: parseFloat(form.budget) }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['projects'] }); setEditOpen(false); toast.success('Success'); },
+    onSuccess: () => { 
+      qc.invalidateQueries({ queryKey: ['projects'] }); 
+      setEditOpen(false); 
+      toast.success(isRtl ? 'تم التحديث بنجاح' : 'Success'); 
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || 'Action Failed');
+    }
   });
 
   const deleteMutation = useMutation({
@@ -119,88 +126,88 @@ export function ProjectsPage() {
         description={t.projectsSub}
         action={
           <div className="flex gap-3">
-             <button onClick={exportProjects} className="clean-btn-secondary h-12 gap-2 text-xs uppercase tracking-widest"><Download size={16}/> {isRtl ? 'تصدير' : 'Export'}</button>
-             {isAdminOrManager && <button onClick={() => { setEditingId(null); setForm({ name: '', description: '', managerId: '', department: '', startDate: '', endDate: '', budget: '' }); setEditOpen(true); }} className="clean-btn-primary h-12 gap-2 text-xs uppercase tracking-widest"><Plus size={16} /> {t.newProject}</button>}
+             <button onClick={exportProjects} className="btn-ghost h-12 gap-2 text-[10px] uppercase tracking-widest border-[var(--border)]"><Download size={16}/> {isRtl ? 'تصدير' : 'Export'}</button>
+             {isAdminOrManager && <button onClick={() => { setEditingId(null); setForm({ name: '', description: '', managerId: '', department: '', startDate: '', endDate: '', budget: '' }); setEditOpen(true); }} className="btn-primary h-12 gap-2 text-[10px] uppercase tracking-widest bg-brand shadow-brand/20"><Plus size={16} /> {t.newProject}</button>}
           </div>
         }
       />
 
       <div className="flex flex-wrap gap-4 items-center">
-        <div className="flex-1 flex items-center gap-3 bg-white/[0.03] border border-white/[0.05] rounded-2xl px-5 py-3 focus-within:border-white/20 transition-all">
-          <Search size={16} className="text-slate-600" />
-          <input value={search} onChange={(e: any) => { setSearch(e.target.value); setPage(1); }} placeholder={t.search} className="bg-transparent text-sm text-white outline-none w-full font-medium" />
+        <div className="flex-1 flex items-center gap-3 bg-[var(--bg-glass)] border border-[var(--border)] rounded-2xl px-5 py-3 focus-within:border-brand/40 transition-all">
+          <Search size={16} className="text-[var(--text-4)]" />
+          <input value={search} onChange={(e: any) => { setSearch(e.target.value); setPage(1); }} placeholder={t.search} className="bg-transparent text-sm text-[var(--text-1)] outline-none w-full font-bold" />
         </div>
 
-        <select value={status} onChange={(e: any) => { setStatus(e.target.value); setPage(1); }} className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-xs font-semibold text-slate-400 outline-none">
+        <select value={status} onChange={(e: any) => { setStatus(e.target.value); setPage(1); }} className="bg-[var(--bg-glass)] border border-[var(--border)] rounded-2xl px-4 py-3 text-[10px] font-black uppercase tracking-wider text-[var(--text-3)] outline-none">
           <option value="">{t.allStatus}</option>
           {STATUS_OPTS(isRtl).map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
         </select>
 
-        <div className="flex bg-white/5 rounded-2xl border border-white/10 p-1">
-          <button onClick={() => setViewMode('grid')} className={clsx('p-2.5 rounded-xl transition-all', viewMode === 'grid' ? 'bg-white text-black' : 'text-slate-500 hover:text-white')}><LayoutGrid size={16} /></button>
-          <button onClick={() => setViewMode('list')} className={clsx('p-2.5 rounded-xl transition-all', viewMode === 'list' ? 'bg-white text-black' : 'text-slate-500 hover:text-white')}><List size={16} /></button>
+        <div className="flex bg-[var(--bg-glass)] rounded-2xl border border-[var(--border)] p-1">
+          <button onClick={() => setViewMode('grid')} className={clsx('p-2.5 rounded-xl transition-all', viewMode === 'grid' ? 'bg-brand text-white' : 'text-[var(--text-4)] hover:text-brand')}><LayoutGrid size={16} /></button>
+          <button onClick={() => setViewMode('list')} className={clsx('p-2.5 rounded-xl transition-all', viewMode === 'list' ? 'bg-brand text-white' : 'text-[var(--text-4)] hover:text-brand')}><List size={16} /></button>
         </div>
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-64 rounded-3xl" />)}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-72 rounded-[2.5rem]" />)}
         </div>
       ) : projects.length === 0 ? (
-        <EmptyState icon={<FolderKanban size={40} />} title={isRtl ? 'لا يوجد مشاريع' : 'No projects detected'} />
+        <EmptyState icon={<FolderKanban size={40} />} title={isRtl ? 'لا يوجد مشاريع استراتيجية' : 'No projects detected'} />
       ) : viewMode === 'grid' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {projects.map((p: any) => (
-            <div key={p.id} className="clean-card group hover:bg-white/[0.02] flex flex-col p-8">
-              <div className="flex justify-between items-start mb-6">
+            <div key={p.id} className="clean-card group hover:bg-brand/[0.02] flex flex-col p-8 border-[var(--border)]">
+              <div className="flex justify-between items-start mb-8">
                 <div className="flex-1 min-w-0">
-                  <h4 className="text-lg font-bold text-white truncate group-hover:text-indigo-400 transition-colors uppercase tracking-tight">{p.name}</h4>
-                  <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mt-1">{p.department}</p>
+                  <h4 className="text-lg font-black text-[var(--text-1)] truncate group-hover:text-brand transition-colors uppercase tracking-tight">{p.name}</h4>
+                  <p className="text-[10px] font-black text-[var(--text-4)] uppercase tracking-widest mt-1.5">{p.department}</p>
                 </div>
                 {statusBadge(p.status)}
               </div>
 
-              <div className="mb-8">
-                <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">
+              <div className="mb-10">
+                <div className="flex justify-between items-center text-[10px] font-black text-[var(--text-4)] uppercase tracking-[0.2em] mb-3">
                   <span>{t.progress}</span>
-                  <span className="text-white">{p.progress}%</span>
+                  <span className="text-brand">{p.progress}%</span>
                 </div>
-                <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
-                  <motion.div initial={{ width: 0 }} animate={{ width: `${p.progress}%` }} className="h-full bg-white" />
+                <div className="w-full h-1.5 bg-[var(--bg-glass)] rounded-full overflow-hidden border border-[var(--border)]">
+                  <motion.div initial={{ width: 0 }} animate={{ width: `${p.progress}%` }} className="h-full bg-brand shadow-lg shadow-brand/40" />
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest border-t border-white/5 pt-6 mt-auto">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center text-slate-400">{p.manager?.firstName[0]}</div>
-                  <span>{p.manager?.firstName}</span>
+              <div className="flex items-center gap-4 text-[10px] font-black text-[var(--text-4)] uppercase tracking-widest border-t border-[var(--border)] pt-8 mt-auto">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-brand/10 border border-brand/20 flex items-center justify-center text-brand font-black text-xs">{p.manager?.firstName[0]}</div>
+                  <span className="font-bold text-[var(--text-3)]">{p.manager?.firstName}</span>
                 </div>
-                {p.budget && <div className="ml-auto text-white">${(p.budget / 1000).toFixed(0)}K</div>}
+                {p.budget && <div className="ml-auto text-[var(--text-1)] font-black">${(p.budget / 1000).toFixed(0)}K</div>}
               </div>
 
               {isAdminOrManager && (
                 <div className="flex justify-end gap-2 mt-6 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => handleEdit(p)} className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-all"><Edit2 size={14} /></button>
-                  <button onClick={() => { if (confirm('Delete?')) deleteMutation.mutate(p.id) }} className="p-2 rounded-lg hover:bg-rose-500/10 text-slate-400 hover:text-rose-500 transition-all"><Trash2 size={14} /></button>
+                  <button onClick={() => handleEdit(p)} className="p-2 rounded-xl hover:bg-brand/10 text-[var(--text-4)] hover:text-brand transition-all"><Edit2 size={15} /></button>
+                  <button onClick={() => { if (confirm('Delete?')) deleteMutation.mutate(p.id) }} className="p-2 rounded-xl hover:bg-rose-500/10 text-[var(--text-4)] hover:text-rose-500 transition-all"><Trash2 size={15} /></button>
                 </div>
               )}
             </div>
           ))}
         </div>
       ) : (
-        <div className="clean-card !p-0 overflow-hidden">
+        <div className="clean-card !p-0 overflow-hidden border-[var(--border)]">
           <Table
             columns={[
-              { key: 'name', label: t.name, render: (p: any) => <div className="flex flex-col"><span className="text-sm font-bold text-white">{p.name}</span><span className="text-[10px] font-black text-slate-600 uppercase tracking-widest mt-1">{p.department}</span></div> },
-              { key: 'manager', label: t.manager, render: (p: any) => <span className="text-xs font-bold text-slate-400">{p.manager?.firstName} {p.manager?.lastName}</span> },
+              { key: 'name', label: t.name, render: (p: any) => <div className="flex flex-col"><span className="text-sm font-bold text-[var(--text-1)]">{p.name}</span><span className="text-[10px] font-black text-[var(--text-4)] uppercase tracking-widest mt-1.5">{p.department}</span></div> },
+              { key: 'manager', label: t.manager, render: (p: any) => <span className="text-xs font-bold text-[var(--text-3)]">{p.manager?.firstName} {p.manager?.lastName}</span> },
               { key: 'status', label: t.projects, render: (p: any) => statusBadge(p.status) },
-              { key: 'progress', label: t.progress, render: (p: any) => <div className="flex items-center gap-3"><div className="w-24 h-1 bg-white/5 rounded-full overflow-hidden"><div className="h-full bg-white" style={{ width: `${p.progress}%` }} /></div><span className="text-[10px] font-black text-white">{p.progress}%</span></div> },
-              { key: 'budget', label: t.budget, render: (p: any) => <span className="text-xs font-bold text-slate-500">{p.budget ? `$${p.budget.toLocaleString()}` : '—'}</span> },
+              { key: 'progress', label: t.progress, render: (p: any) => <div className="flex items-center gap-4"><div className="w-32 h-1.5 bg-[var(--bg-glass)] rounded-full overflow-hidden border border-[var(--border)]"><div className="h-full bg-brand" style={{ width: `${p.progress}%` }} /></div><span className="text-[10px] font-black text-[var(--text-1)]">{p.progress}%</span></div> },
+              { key: 'budget', label: t.budget, render: (p: any) => <span className="text-xs font-bold text-[var(--text-4)]">{p.budget ? `$${p.budget.toLocaleString()}` : '—'}</span> },
               isAdminOrManager && {
                 key: 'actions', label: '', render: (p: any) => (
-                  <div className="flex justify-end gap-2">
-                    <button onClick={() => handleEdit(p)} className="p-2 rounded-lg hover:bg-white/10 text-slate-600 hover:text-white"><Edit2 size={14} /></button>
-                    <button onClick={() => { if (confirm('Delete?')) deleteMutation.mutate(p.id) }} className="p-2 rounded-lg hover:bg-rose-500/10 text-slate-600 hover:text-rose-500"><Trash2 size={14} /></button>
+                  <div className="flex justify-end gap-3">
+                    <button onClick={() => handleEdit(p)} className="p-2 rounded-xl hover:bg-brand/10 text-[var(--text-4)] hover:text-brand transition-colors"><Edit2 size={15} /></button>
+                    <button onClick={() => { if (confirm('Delete?')) deleteMutation.mutate(p.id) }} className="p-2 rounded-xl hover:bg-rose-500/10 text-[var(--text-4)] hover:text-rose-500 transition-colors"><Trash2 size={15} /></button>
                   </div>
                 )
               }
@@ -215,7 +222,7 @@ export function ProjectsPage() {
       <Modal open={editOpen} onClose={() => setEditOpen(false)} title={editingId ? t.edit : t.newProject}>
         <div className="space-y-8 pt-4">
           <Input label={t.name} icon={Target} value={form.name} onChange={(e: any) => setForm(f => ({ ...f, name: e.target.value }))} />
-          <Textarea label={isRtl ? 'وصف المشروع' : 'Execution Details'} icon={Layers} value={form.description} onChange={(e: any) => setForm(f => ({ ...f, description: e.target.value }))} />
+          <Textarea label={isRtl ? 'وصف المهمة الاستراتيجية' : 'Execution Details'} icon={Layers} value={form.description} onChange={(e: any) => setForm(f => ({ ...f, description: e.target.value }))} />
 
           <div className="grid grid-cols-2 gap-6">
             <Select label={t.manager} icon={Users} value={form.managerId} onChange={(e: any) => setForm(f => ({ ...f, managerId: e.target.value }))} options={(userData ?? []).map((u: any) => ({ value: u.id, label: `${u.firstName} ${u.lastName}` }))} />
@@ -223,15 +230,15 @@ export function ProjectsPage() {
           </div>
 
           <div className="grid grid-cols-2 gap-6">
-            <Input label={isRtl ? 'تاريخ البدء' : 'Deployment Date'} icon={Calendar} type="date" value={form.startDate} onChange={(e: any) => setForm(f => ({ ...f, startDate: e.target.value }))} />
-            <Input label={isRtl ? 'تاريخ الانتهاء' : 'Succession Date'} icon={Calendar} type="date" value={form.endDate} onChange={(e: any) => setForm(f => ({ ...f, endDate: e.target.value }))} />
+            <Input label={isRtl ? 'تاريخ التدشين' : 'Deployment Date'} icon={Calendar} type="date" value={form.startDate} onChange={(e: any) => setForm(f => ({ ...f, startDate: e.target.value }))} />
+            <Input label={isRtl ? 'تاريخ الإنجاز المتوقع' : 'Succession Date'} icon={Calendar} type="date" value={form.endDate} onChange={(e: any) => setForm(f => ({ ...f, endDate: e.target.value }))} />
           </div>
 
           <Input label={t.budget} icon={DollarSign} type="number" value={form.budget} onChange={(e: any) => setForm(f => ({ ...f, budget: e.target.value }))} />
 
-          <div className="flex justify-end gap-4 mt-12 py-6 border-t border-white/5">
-            <button className="clean-btn-secondary px-10" onClick={() => setEditOpen(false)}>{t.cancel}</button>
-            <button className="clean-btn-primary px-10" onClick={() => saveMutation.mutate()}>{t.save}</button>
+          <div className="flex justify-end gap-4 mt-12 py-6 border-t border-[var(--border)]">
+            <button className="btn-ghost px-10 h-12" onClick={() => setEditOpen(false)}>{t.cancel}</button>
+            <button className="btn-primary px-10 h-12 shadow-brand/20" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>{t.save}</button>
           </div>
         </div>
       </Modal>

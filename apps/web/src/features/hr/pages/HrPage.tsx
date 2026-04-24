@@ -86,9 +86,9 @@ export function HrPage() {
       toast.dismiss('att-toast');
       toast.success(isRtl ? 'تم تسجيل الحضور' : 'Clocked In'); 
     },
-    onError: () => {
+    onError: (err: any) => {
       toast.dismiss('att-toast');
-      toast.error(isRtl ? 'فشل تسجيل الحضور' : 'Clock In Failed');
+      toast.error(err.response?.data?.message || (isRtl ? 'فشل تسجيل الحضور' : 'Clock In Failed'));
     }
   });
 
@@ -99,9 +99,9 @@ export function HrPage() {
       toast.dismiss('att-toast');
       toast.success(isRtl ? 'تم تسجيل الانصراف' : 'Clocked Out'); 
     },
-    onError: () => {
+    onError: (err: any) => {
       toast.dismiss('att-toast');
-      toast.error(isRtl ? 'فشل تسجيل الانصراف' : 'Clock Out Failed');
+      toast.error(err.response?.data?.message || (isRtl ? 'فشل تسجيل الانصراف' : 'Clock Out Failed'));
     }
   });
 
@@ -110,20 +110,20 @@ export function HrPage() {
   const attCols = [
      { key: 'user', label: t.employee, render: (a: any) => (
         <div className="flex items-center gap-3">
-           <div className="w-8 h-8 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center font-bold text-[10px] text-slate-500">{a.user?.firstName[0]}</div>
+           <div className="w-8 h-8 rounded-xl bg-[var(--bg-glass)] border border-[var(--border)] flex items-center justify-center font-bold text-[10px] text-[var(--text-3)]">{a.user?.firstName[0]}</div>
            <div className="flex flex-col">
-              <span className="text-sm font-bold text-white">{a.user?.firstName} {a.user?.lastName}</span>
-              <span className="text-[10px] font-medium text-slate-600 uppercase tracking-widest">{a.user?.position || 'Operator'}</span>
+              <span className="text-sm font-bold text-[var(--text-1)]">{a.user?.firstName} {a.user?.lastName}</span>
+              <span className="text-[10px] font-medium text-[var(--text-4)] uppercase tracking-widest">{a.user?.position || 'Operator'}</span>
            </div>
         </div>
      )},
-     { key: 'date', label: 'Protocol Date', render: (a: any) => <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">{new Date(a.date).toLocaleDateString(language)}</span> },
-     { key: 'in', label: 'In', render: (a: any) => a.checkIn && <div className="flex items-center gap-2 text-white"><Clock size={12} className="text-indigo-400" /> <span className="text-sm font-bold">{new Date(a.checkIn).toLocaleTimeString(language, {hour:'2-digit', minute:'2-digit'})}</span></div> },
-     { key: 'out', label: 'Out', render: (a: any) => a.checkOut && <div className="flex items-center gap-2 text-slate-500 font-bold text-sm">{new Date(a.checkOut).toLocaleTimeString(language, {hour:'2-digit', minute:'2-digit'})}</div> },
+     { key: 'date', label: 'Protocol Date', render: (a: any) => <span className="text-[11px] font-black text-[var(--text-3)] uppercase tracking-widest">{new Date(a.date).toLocaleDateString(language)}</span> },
+     { key: 'in', label: 'In', render: (a: any) => a.checkIn && <div className="flex items-center gap-2 text-[var(--text-1)]"><Clock size={12} className="text-brand" /> <span className="text-sm font-bold">{new Date(a.checkIn).toLocaleTimeString(language, {hour:'2-digit', minute:'2-digit'})}</span></div> },
+     { key: 'out', label: 'Out', render: (a: any) => a.checkOut && <div className="flex items-center gap-2 text-[var(--text-3)] font-bold text-sm">{new Date(a.checkOut).toLocaleTimeString(language, {hour:'2-digit', minute:'2-digit'})}</div> },
      { key: 'duration', label: 'Duty Duration', render: (a: any) => {
         if(!a.checkIn || !a.checkOut) return '—';
         const hours = (new Date(a.checkOut).getTime() - new Date(a.checkIn).getTime()) / (1000 * 3600);
-        return <span className="text-[10px] font-black text-slate-700 bg-white/5 px-2 py-1 rounded-lg">{hours.toFixed(1)} hrs</span>;
+        return <span className="text-[10px] font-black text-brand bg-brand/5 px-2 py-1 rounded-lg">{hours.toFixed(1)} hrs</span>;
      }},
      { key: 'status', label: t.status, render: (a: any) => statusBadge(a.status) },
   ];
@@ -139,43 +139,43 @@ export function HrPage() {
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-8 pt-4">
-         <div className="flex bg-white/[0.02] p-1.5 rounded-[1.5rem] border border-white/[0.05]">
-            <button onClick={() => setTab('attendance')} className={clsx('px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all', tab === 'attendance' ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/20' : 'text-slate-600 hover:text-white')}>{t.attendance}</button>
-            <button onClick={() => setTab('leaves')} className={clsx('px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all', tab === 'leaves' ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/20' : 'text-slate-600 hover:text-white')}>{t.leaves}</button>
+         <div className="flex bg-[var(--bg-glass)] p-1.5 rounded-[1.5rem] border border-[var(--border)]">
+            <button onClick={() => setTab('attendance')} className={clsx('px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all', tab === 'attendance' ? 'bg-brand text-white shadow-lg shadow-brand/20' : 'text-[var(--text-3)] hover:text-[var(--text-1)]')}>{t.attendance}</button>
+            <button onClick={() => setTab('leaves')} className={clsx('px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all', tab === 'leaves' ? 'bg-brand text-white shadow-lg shadow-brand/20' : 'text-[var(--text-3)] hover:text-[var(--text-1)]')}>{t.leaves}</button>
          </div>
 
          <div className="flex items-center gap-4">
-            <div className="flex items-center bg-sky-500/5 border border-sky-500/10 rounded-2xl p-1 shadow-inner">
+            <div className="flex items-center bg-brand/5 border border-brand/10 rounded-2xl p-1 shadow-inner">
                <button 
                  onClick={() => {
                    checkInMutation.mutate();
                    toast.loading(isRtl ? 'جاري تسجيل الحضور...' : 'Logging In...', { id: 'att-toast' });
                  }} 
-                 className="h-10 px-8 text-[10px] font-black uppercase tracking-widest text-sky-400 hover:bg-sky-500/10 rounded-xl transition-all"
+                 className="h-10 px-8 text-[10px] font-black uppercase tracking-widest text-brand hover:bg-brand/10 rounded-xl transition-all"
                >
                  {t.checkIn}
                </button>
-               <div className="w-px h-4 bg-sky-500/20" />
+               <div className="w-px h-4 bg-brand/20" />
                <button 
                  onClick={() => {
                    checkOutMutation.mutate();
                    toast.loading(isRtl ? 'جاري تسجيل الانصراف...' : 'Logging Out...', { id: 'att-toast' });
                  }} 
-                 className="h-10 px-8 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-sky-500/10 rounded-xl transition-all"
+                 className="h-10 px-8 text-[10px] font-black uppercase tracking-widest text-[var(--text-3)] hover:bg-brand/10 rounded-xl transition-all"
                >
                  {t.checkOut}
                </button>
             </div>
             
             {isOps && (
-               <button onClick={() => setManualAttOpen(true)} className="clean-btn-secondary h-12 gap-2 text-[10px] uppercase tracking-widest border-sky-500/10"><Monitor size={16}/> {t.manualEntry}</button>
+               <button onClick={() => setManualAttOpen(true)} className="clean-btn-secondary h-12 gap-2 text-[10px] uppercase tracking-widest border-[var(--border)]"><Monitor size={16}/> {t.manualEntry}</button>
             )}
-            <button onClick={() => setCreateLeaveOpen(true)} className="clean-btn-primary h-12 gap-2 text-[10px] uppercase tracking-widest bg-sky-500 shadow-sky-500/20"><Plus size={16}/> {t.newLeave}</button>
+            <button onClick={() => setCreateLeaveOpen(true)} className="clean-btn-primary h-12 gap-2 text-[10px] uppercase tracking-widest bg-brand shadow-brand/20"><Plus size={16}/> {t.newLeave}</button>
          </div>
       </div>
 
-      <div className="clean-card !p-0 overflow-hidden relative border-sky-500/5">
-         <div className="absolute top-8 left-1/2 -translate-x-1/2 text-[9px] font-black text-sky-500/20 uppercase tracking-[0.5em] pointer-events-none">Aman Tactical Stream v4.0</div>
+      <div className="clean-card !p-0 overflow-hidden relative border-[var(--border)]">
+         <div className="absolute top-8 left-1/2 -translate-x-1/2 text-[9px] font-black text-brand/20 uppercase tracking-[0.5em] pointer-events-none">Aman Tactical Stream v4.0</div>
          {tab === 'attendance' ? (
             <>
                {attLoading ? <SkeletonTable rows={10} cols={6} /> : (
@@ -187,11 +187,11 @@ export function HrPage() {
             <>
                {leavesLoading ? <SkeletonTable rows={10} cols={5} /> : (
                   <Table columns={[
-                     { key: 'user', label: t.employee, render: (l: any) => <span className="text-sm font-bold text-white">{l.user?.firstName} {l.user?.lastName}</span> },
-                     { key: 'type', label: t.type, render: (l: any) => <span className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em]">{l.type}</span> },
-                     { key: 'dates', label: t.dates, render: (l: any) => <span className="text-xs font-bold text-slate-500">{new Date(l.startDate).toLocaleDateString()} — {new Date(l.endDate).toLocaleDateString()}</span> },
+                     { key: 'user', label: t.employee, render: (l: any) => <span className="text-sm font-bold text-[var(--text-1)]">{l.user?.firstName} {l.user?.lastName}</span> },
+                     { key: 'type', label: t.type, render: (l: any) => <span className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em]">{l.type}</span> },
+                     { key: 'dates', label: t.dates, render: (l: any) => <span className="text-xs font-bold text-[var(--text-3)]">{new Date(l.startDate).toLocaleDateString()} — {new Date(l.endDate).toLocaleDateString()}</span> },
                      { key: 'status', label: t.status, render: (l: any) => statusBadge(l.status) },
-                     { key: 'actions', label: '', render: (l: any) => l.status === 'PENDING' && isOps && <div className="flex justify-end gap-2"><button className="p-2 rounded-xl bg-white/5 text-slate-500 hover:text-white"><Check size={14}/></button></div>}
+                     { key: 'actions', label: '', render: (l: any) => l.status === 'PENDING' && isOps && <div className="flex justify-end gap-2"><button className="p-2 rounded-xl bg-[var(--bg-glass)] text-[var(--text-3)] hover:text-brand"><Check size={14}/></button></div>}
                   ]} data={leaves?.items || []} keyFn={l => l.id} />
                )}
             </>
@@ -206,7 +206,7 @@ export function HrPage() {
                <Input label={isRtl ? 'تاريخ الانتهاء' : 'Protocol End'} icon={Calendar} type="date" value={leaveForm.endDate} onChange={(e: any) => setLeaveForm(f => ({...f, endDate: e.target.value}))} />
             </div>
             <Textarea label={isRtl ? 'السبب' : 'Operational Reason'} icon={Layers} value={leaveForm.reason} onChange={(e: any) => setLeaveForm(f => ({...f, reason: e.target.value}))} />
-            <div className="flex justify-end gap-4 mt-12 py-6 border-t border-white/5">
+            <div className="flex justify-end gap-4 mt-12 py-6 border-t border-[var(--border)]">
                <button className="clean-btn-secondary px-10" onClick={() => setCreateLeaveOpen(false)}>{t.cancel}</button>
                <button className="clean-btn-primary px-10" onClick={() => createMutation.mutate()}>{t.save}</button>
             </div>
@@ -221,7 +221,7 @@ export function HrPage() {
                <Input label="Clock In" icon={Clock} type="time" value={manualForm.checkIn} onChange={(e: any) => setManualForm(f => ({...f, checkIn: e.target.value}))} />
                <Input label="Clock Out" icon={Clock} type="time" value={manualForm.checkOut} onChange={(e: any) => setManualForm(f => ({...f, checkOut: e.target.value}))} />
             </div>
-            <div className="flex justify-end gap-4 mt-12 py-6 border-t border-white/5">
+            <div className="flex justify-end gap-4 mt-12 py-6 border-t border-[var(--border)]">
                <button className="clean-btn-secondary px-10" onClick={() => setManualAttOpen(false)}>{t.cancel}</button>
                <button className="clean-btn-primary px-10" onClick={() => {}}>{t.save}</button>
             </div>

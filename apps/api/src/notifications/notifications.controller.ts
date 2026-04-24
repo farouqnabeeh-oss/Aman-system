@@ -1,9 +1,11 @@
-import { Controller, Get, Post, Patch, Delete, Param, Query, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Query, UseGuards, HttpCode, HttpStatus, Body } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { NotificationsService } from './notifications.service';
 import { RolesGuard } from '../common/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { RequestUser } from '../common/decorators/current-user.decorator';
+import type { NotificationType } from '@ems/shared';
 
 
 
@@ -36,17 +38,10 @@ export class NotificationsController {
     return { success: true, data };
   }
 
-  @Post('broadcast')
-  async broadcast(@CurrentUser() user: RequestUser, @Query('userId') userId?: string, @Query('title') title?: string, @Query('message') message?: string) {
-    if (userId) {
-      await this.notificationsService.create({ userId, title: title || 'System Alert', message: message || '', type: 'SYSTEM' });
-    } else {
-      const users = await (this.notificationsService as any).prisma.user.findMany({ where: { deletedAt: null } });
-      for (const u of users) {
-        await this.notificationsService.create({ userId: u.id, title: title || 'Broadcast', message: message || '', type: 'SYSTEM' });
-      }
-    }
-    return { success: true };
+  @Post('broadcast') @Roles('MANAGER', 'ADMIN', 'SUPER_ADMIN')
+  async broadcast(@Body() body: { title: string; message: string; targetUserId?: string; type?: NotificationType }) {
+    await this.notificationsService.broadcast(body);
+    return { success: true, data: { message: 'Broadcast sent successfully' } };
   }
 
   @Delete(':id') @HttpCode(HttpStatus.OK)
