@@ -79,8 +79,31 @@ export function HrPage() {
     onSuccess: () => { qc.invalidateQueries({ queryKey:['leaves'] }); setCreateLeaveOpen(false); toast.success('Protocol Sent'); },
   });
 
-  const checkInMutation = useMutation({ mutationFn: () => api.post('/hr/attendance/check-in'), onSuccess: () => { qc.invalidateQueries({ queryKey:['attendance'] }); toast.success('Clocked In'); } });
-  const checkOutMutation = useMutation({ mutationFn: () => api.post('/hr/attendance/check-out'), onSuccess: () => { qc.invalidateQueries({ queryKey:['attendance'] }); toast.success('Clocked Out'); } });
+  const checkInMutation = useMutation({ 
+    mutationFn: () => api.post('/hr/attendance/check-in'), 
+    onSuccess: () => { 
+      qc.invalidateQueries({ queryKey:['attendance'] }); 
+      toast.dismiss('att-toast');
+      toast.success(isRtl ? 'تم تسجيل الحضور' : 'Clocked In'); 
+    },
+    onError: () => {
+      toast.dismiss('att-toast');
+      toast.error(isRtl ? 'فشل تسجيل الحضور' : 'Clock In Failed');
+    }
+  });
+
+  const checkOutMutation = useMutation({ 
+    mutationFn: () => api.post('/hr/attendance/check-out'), 
+    onSuccess: () => { 
+      qc.invalidateQueries({ queryKey:['attendance'] }); 
+      toast.dismiss('att-toast');
+      toast.success(isRtl ? 'تم تسجيل الانصراف' : 'Clocked Out'); 
+    },
+    onError: () => {
+      toast.dismiss('att-toast');
+      toast.error(isRtl ? 'فشل تسجيل الانصراف' : 'Clock Out Failed');
+    }
+  });
 
   const isOps = user && ['ADMIN', 'SUPER_ADMIN', 'MANAGER'].includes(user.role);
 
@@ -110,33 +133,49 @@ export function HrPage() {
       <PageHeader title={t.hr} description={t.hrSub} />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-         <StatCard label={t.totalPresent} value={attendance?.items?.filter((a:any)=>a.status==='PRESENT').length || 0} icon={<UserCheck size={24}/>} trend="up" delta="Safe" />
-         <StatCard label={t.totalLate} value={attendance?.items?.filter((a:any)=>a.status==='LATE').length || 0} icon={<Clock size={24}/>} trend="down" delta="Check" />
-         <StatCard label={t.onLeave} value={leaves?.items?.filter((l:any)=>l.status==='APPROVED').length || 0} icon={<Briefcase size={24}/>} />
+         <StatCard label={t.totalPresent} value={attendance?.items?.filter((a:any)=>a.status==='PRESENT').length || 0} icon={<UserCheck size={24} className="text-sky-400" />} />
+         <StatCard label={t.totalLate} value={attendance?.items?.filter((a:any)=>a.status==='LATE').length || 0} icon={<Clock size={24} className="text-amber-400" />} />
+         <StatCard label={t.onLeave} value={leaves?.items?.filter((l:any)=>l.status==='APPROVED').length || 0} icon={<Briefcase size={24} className="text-indigo-400" />} />
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-8 pt-4">
          <div className="flex bg-white/[0.02] p-1.5 rounded-[1.5rem] border border-white/[0.05]">
-            <button onClick={() => setTab('attendance')} className={clsx('px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all', tab === 'attendance' ? 'bg-white text-black' : 'text-slate-600 hover:text-white')}>{t.attendance}</button>
-            <button onClick={() => setTab('leaves')} className={clsx('px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all', tab === 'leaves' ? 'bg-white text-black' : 'text-slate-600 hover:text-white')}>{t.leaves}</button>
+            <button onClick={() => setTab('attendance')} className={clsx('px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all', tab === 'attendance' ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/20' : 'text-slate-600 hover:text-white')}>{t.attendance}</button>
+            <button onClick={() => setTab('leaves')} className={clsx('px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all', tab === 'leaves' ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/20' : 'text-slate-600 hover:text-white')}>{t.leaves}</button>
          </div>
 
          <div className="flex items-center gap-4">
-            <div className="flex items-center bg-white/5 border border-white/10 rounded-2xl px-2">
-               <button onClick={() => checkInMutation.mutate()} className="h-10 px-6 text-[10px] font-black uppercase tracking-widest text-indigo-400 hover:bg-white/5 rounded-xl transition-all">{t.checkIn}</button>
-               <div className="w-px h-4 bg-white/10" />
-               <button onClick={() => checkOutMutation.mutate()} className="h-10 px-6 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-white/5 rounded-xl transition-all">{t.checkOut}</button>
+            <div className="flex items-center bg-sky-500/5 border border-sky-500/10 rounded-2xl p-1 shadow-inner">
+               <button 
+                 onClick={() => {
+                   checkInMutation.mutate();
+                   toast.loading(isRtl ? 'جاري تسجيل الحضور...' : 'Logging In...', { id: 'att-toast' });
+                 }} 
+                 className="h-10 px-8 text-[10px] font-black uppercase tracking-widest text-sky-400 hover:bg-sky-500/10 rounded-xl transition-all"
+               >
+                 {t.checkIn}
+               </button>
+               <div className="w-px h-4 bg-sky-500/20" />
+               <button 
+                 onClick={() => {
+                   checkOutMutation.mutate();
+                   toast.loading(isRtl ? 'جاري تسجيل الانصراف...' : 'Logging Out...', { id: 'att-toast' });
+                 }} 
+                 className="h-10 px-8 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-sky-500/10 rounded-xl transition-all"
+               >
+                 {t.checkOut}
+               </button>
             </div>
             
             {isOps && (
-               <button onClick={() => setManualAttOpen(true)} className="clean-btn-secondary h-12 gap-2 text-[10px] uppercase tracking-widest"><Monitor size={16}/> {t.manualEntry}</button>
+               <button onClick={() => setManualAttOpen(true)} className="clean-btn-secondary h-12 gap-2 text-[10px] uppercase tracking-widest border-sky-500/10"><Monitor size={16}/> {t.manualEntry}</button>
             )}
-            <button onClick={() => setCreateLeaveOpen(true)} className="clean-btn-primary h-12 gap-2 text-[10px] uppercase tracking-widest"><Plus size={16}/> {t.newLeave}</button>
+            <button onClick={() => setCreateLeaveOpen(true)} className="clean-btn-primary h-12 gap-2 text-[10px] uppercase tracking-widest bg-sky-500 shadow-sky-500/20"><Plus size={16}/> {t.newLeave}</button>
          </div>
       </div>
 
-      <div className="clean-card !p-0 overflow-hidden relative">
-         <div className="absolute top-8 left-1/2 -translate-x-1/2 text-[10px] font-black text-slate-800 uppercase tracking-[0.5em] pointer-events-none">Secure Stream Protocol v4.0</div>
+      <div className="clean-card !p-0 overflow-hidden relative border-sky-500/5">
+         <div className="absolute top-8 left-1/2 -translate-x-1/2 text-[9px] font-black text-sky-500/20 uppercase tracking-[0.5em] pointer-events-none">Aman Tactical Stream v4.0</div>
          {tab === 'attendance' ? (
             <>
                {attLoading ? <SkeletonTable rows={10} cols={6} /> : (

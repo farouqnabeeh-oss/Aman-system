@@ -36,6 +36,19 @@ export class NotificationsController {
     return { success: true, data };
   }
 
+  @Post('broadcast')
+  async broadcast(@CurrentUser() user: RequestUser, @Query('userId') userId?: string, @Query('title') title?: string, @Query('message') message?: string) {
+    if (userId) {
+      await this.notificationsService.create(userId, title || 'System Alert', message || '', 'SYSTEM');
+    } else {
+      const users = await (this.notificationsService as any).prisma.user.findMany({ where: { deletedAt: null } });
+      for (const u of users) {
+        await this.notificationsService.create(u.id, title || 'Broadcast', message || '', 'SYSTEM');
+      }
+    }
+    return { success: true };
+  }
+
   @Delete(':id') @HttpCode(HttpStatus.OK)
   async delete(@Param('id') id: string, @CurrentUser() user: RequestUser) {
     await this.notificationsService.delete(id, user.id);

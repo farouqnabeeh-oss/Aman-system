@@ -66,18 +66,26 @@ export function FilesPage() {
   });
 
   const uploadMutation = useMutation({
-    mutationFn: (file: File) => {
+    uploadMutation: (file: File) => {
       const fd = new FormData();
       fd.append('file', file);
       fd.append('folderPath', folder);
       return api.post('/files/upload', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['files'] }); toast.success('Uploaded'); },
+    onSuccess: () => { 
+      qc.invalidateQueries({ queryKey: ['files'] }); 
+      toast.dismiss('upload-toast');
+      toast.success(isRtl ? 'تم الرفع بنجاح' : 'Asset Deployed'); 
+    },
+    onError: () => {
+      toast.dismiss('upload-toast');
+      toast.error(isRtl ? 'فشل الرفع' : 'Upload Failed');
+    }
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/files/${id}`),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['files'] }); toast.success('Removed'); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['files'] }); toast.success(isRtl ? 'تم الحذف' : 'Terminated'); },
   });
 
   const files = data?.items ?? [];
@@ -90,8 +98,20 @@ export function FilesPage() {
         description={t.filesSub}
         action={
           <>
-            <input ref={fileInputRef} type="file" multiple className="hidden" onChange={e => Array.from(e.target.files||[]).forEach(f => uploadMutation.mutate(f))} />
-            <button onClick={() => fileInputRef.current?.click()} className="clean-btn-primary h-12 gap-2 text-xs uppercase tracking-widest"><Upload size={16} /> {t.upload}</button>
+            <input 
+              ref={fileInputRef} 
+              type="file" 
+              multiple 
+              className="hidden" 
+              onChange={e => {
+                const files = Array.from(e.target.files||[]);
+                if(files.length > 0) {
+                  toast.loading(isRtl ? 'جاري الرفع...' : 'Uploading Asset...', { id: 'upload-toast' });
+                  files.forEach(f => uploadMutation.mutate(f));
+                }
+              }} 
+            />
+            <button onClick={() => fileInputRef.current?.click()} className="clean-btn-primary h-12 gap-2 text-xs uppercase tracking-widest bg-sky-500 shadow-sky-500/20"><Upload size={16} /> {t.upload}</button>
           </>
         }
       />
@@ -99,15 +119,15 @@ export function FilesPage() {
       <div className="flex flex-col lg:flex-row gap-10">
         {/* Sidebar Folders */}
         <div className="w-full lg:w-64 space-y-8">
-           <h3 className="text-[10px] font-black text-slate-600 uppercase tracking-widest px-2">{t.folders}</h3>
+           <h3 className="text-[10px] font-black text-sky-400 uppercase tracking-widest px-2">{t.folders}</h3>
            <div className="space-y-2">
               {folders.map((f:any) => (
                 <button
                   key={f}
                   onClick={() => setFolder(f)}
-                  className={clsx('flex items-center gap-4 w-full px-4 py-3 rounded-2xl text-sm font-bold transition-all', folder === f ? 'bg-white text-black' : 'text-slate-500 hover:text-white hover:bg-white/5')}
+                  className={clsx('flex items-center gap-4 w-full px-4 py-3 rounded-2xl text-sm font-bold transition-all', folder === f ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/20' : 'text-slate-500 hover:text-white hover:bg-sky-500/10')}
                 >
-                  <Folder size={16} />
+                  <Folder size={16} className={folder === f ? 'text-white' : 'text-sky-500'} />
                   <span className="truncate">{f === '/' ? (isRtl ? 'الرئيسية' : 'Root') : f.replace('/','')}</span>
                 </button>
               ))}
@@ -116,8 +136,8 @@ export function FilesPage() {
 
         {/* Main View */}
         <div className="flex-1 space-y-8">
-           <div className="flex items-center gap-4 bg-white/[0.03] border border-white/[0.05] rounded-2xl px-5 py-3 focus-within:border-white/20 transition-all">
-              <Search size={16} className="text-slate-600" />
+           <div className="flex items-center gap-4 bg-sky-500/5 border border-sky-500/10 rounded-2xl px-5 py-3 focus-within:border-sky-500/30 transition-all">
+              <Search size={16} className="text-sky-500" />
               <input value={search} onChange={e => {setSearch(e.target.value); setPage(1);}} placeholder={t.search} className="bg-transparent text-sm text-white outline-none w-full font-medium" />
            </div>
 
@@ -127,18 +147,18 @@ export function FilesPage() {
               </div>
            ) : files.length === 0 ? (
               <div className="py-32 flex flex-col items-center gap-6">
-                 <div className="w-20 h-20 rounded-[2.5rem] bg-white/5 border border-white/10 flex items-center justify-center text-slate-700"><Folder size={32} /></div>
+                 <div className="w-20 h-20 rounded-[2.5rem] bg-sky-500/5 border border-sky-500/10 flex items-center justify-center text-sky-500"><Folder size={32} /></div>
                  <p className="text-xs font-black text-slate-600 uppercase tracking-widest">{t.empty}</p>
               </div>
            ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                  {files.map((file: any) => (
-                   <div key={file.id} className="clean-card group !p-6 hover:bg-white/[0.02]">
+                   <div key={file.id} className="clean-card group !p-6 hover:bg-sky-500/[0.02] border-sky-500/5 hover:border-sky-500/20">
                       <div className="flex justify-between items-start mb-6">
-                         <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/5">{fileIcon(file.mimeType)}</div>
+                         <div className="w-10 h-10 rounded-xl bg-sky-500/10 flex items-center justify-center border border-sky-500/10">{fileIcon(file.mimeType)}</div>
                          <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <a href={file.publicUrl} target="_blank" rel="noreferrer" className="p-2 rounded-lg hover:bg-white/10 text-slate-500 hover:text-white transition-all"><ExternalLink size={14}/></a>
-                            <button onClick={() => {if(confirm('Delete?')) deleteMutation.mutate(file.id)}} className="p-2 rounded-lg hover:bg-rose-500/10 text-slate-500 hover:text-rose-500 transition-all"><Trash2 size={14}/></button>
+                            <a href={file.publicUrl} target="_blank" rel="noreferrer" className="p-2 rounded-lg hover:bg-sky-500/10 text-slate-500 hover:text-sky-400 transition-all"><ExternalLink size={14}/></a>
+                            <button onClick={() => {if(confirm(isRtl ? 'هل أنت متأكد من الحذف؟' : 'Terminate Asset?')) deleteMutation.mutate(file.id)}} className="p-2 rounded-lg hover:bg-rose-500/10 text-slate-500 hover:text-rose-500 transition-all"><Trash2 size={14}/></button>
                          </div>
                       </div>
                       <div className="min-w-0 mb-4">
@@ -146,8 +166,8 @@ export function FilesPage() {
                          <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mt-1">{formatSize(file.sizeBytes)}</p>
                       </div>
                       <div className="flex items-center gap-2 pt-4 border-t border-white/5">
-                         <div className="w-5 h-5 rounded-lg bg-slate-800 flex items-center justify-center text-[8px] font-black text-slate-500">{file.uploadedBy?.firstName?.[0]}</div>
-                         <span className="text-[10px] font-bold text-slate-600 truncate">{file.uploadedBy?.firstName}</span>
+                         <div className="w-5 h-5 rounded-lg bg-sky-500/10 flex items-center justify-center text-[8px] font-black text-sky-400">{file.uploadedBy?.firstName?.[0]}</div>
+                         <span className="text-[10px] font-bold text-slate-500 truncate">{file.uploadedBy?.firstName}</span>
                          <span className="ml-auto text-[9px] font-black text-slate-700 uppercase">{new Date(file.createdAt).toLocaleDateString(language)}</span>
                       </div>
                    </div>

@@ -7,6 +7,9 @@ import api from '../../../lib/axios';
 import { useUIStore } from '@/store/ui.store';
 import { PageHeader, EmptyState } from '../../../components/ui/States';
 import { Skeleton } from '../../../components/ui/Skeleton';
+import { Modal } from '../../../components/ui/Modal';
+import { Input, Select, Textarea } from '../../../components/ui/Input';
+import { User, Layers } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const TRANSLATIONS = {
@@ -57,6 +60,23 @@ export function NotificationsPage() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['notifications'] }); },
   });
 
+  const [broadcastOpen, setBroadcastOpen] = useState(false);
+  const [bForm, setBForm] = useState({ title: '', message: '', userId: '' });
+  const { data: users } = useQuery({ queryKey:['users-minimal'], queryFn:()=>api.get<any>('/users',{params:{limit:100}}).then(r=>r.data.data.items), enabled: !!(useAuthStore.getState().user?.role !== 'EMPLOYEE') });
+
+  const broadcastMutation = useMutation({
+    mutationFn: () => api.post('/notifications/broadcast', null, { params: bForm }),
+    onSuccess: () => { 
+      qc.invalidateQueries({ queryKey:['notifications'] }); 
+      setBroadcastOpen(false); 
+      setBForm({ title: '', message: '', userId: '' });
+      toast.success(isRtl ? 'تم إرسال الرسالة بنجاح' : 'Broadcast Deployed'); 
+    },
+  });
+
+  const userRole = useAuthStore.getState().user?.role;
+  const isManager = userRole && ['ADMIN', 'SUPER_ADMIN', 'MANAGER'].includes(userRole);
+
   const items = data?.items ?? [];
   const unreadCount = data?.unreadCount ?? 0;
 
@@ -65,9 +85,16 @@ export function NotificationsPage() {
       <PageHeader
         title={t.title}
         description={unreadCount > 0 ? `${unreadCount} ${t.unread}` : t.allRead}
-        action={unreadCount > 0 && (
-          <button onClick={() => markAllRead.mutate()} className="clean-btn-primary h-12 gap-2 text-xs uppercase tracking-widest px-6"><CheckCheck size={16} /> {t.markAll}</button>
-        )}
+        action={
+          <div className="flex gap-4">
+             {isManager && (
+               <button onClick={() => setBroadcastOpen(true)} className="clean-btn-secondary h-12 gap-2 text-xs uppercase tracking-widest px-6 border-sky-500/20"><Bell size={16} /> {isRtl ? 'إرسال تعميم' : 'Send Broadcast'}</button>
+             )}
+             {unreadCount > 0 && (
+               <button onClick={() => markAllRead.mutate()} className="clean-btn-primary h-12 gap-2 text-xs uppercase tracking-widest px-6 bg-sky-500 shadow-sky-500/20"><CheckCheck size={16} /> {t.markAll}</button>
+             )}
+          </div>
+        }
       />
 
       {isLoading ? (
@@ -118,6 +145,30 @@ export function NotificationsPage() {
            </AnimatePresence>
         </div>
       )}
+      <Modal open={broadcastOpen} onClose={() => setBroadcastOpen(false)} title={isRtl ? 'إرسال تعميم جديد' : 'Strategic Broadcast'}>
+         <div className="space-y-8 pt-4">
+            <Select 
+               label={isRtl ? 'المستلم (اختياري - الكل إذا كان فارغاً)' : 'Target Operator (Optional)'} 
+               icon={User} 
+               value={bForm.userId} 
+               options={[{value:'', label: isRtl ? 'الكل' : 'All Personnel'}, ...(users ?? []).map((u:any)=>({value:u.id, label:`${u.firstName} ${u.lastName}`}))]} 
+               onChange={(e: any) => setBForm(f => ({...f, userId: e.target.value}))} 
+            />
+            <Input label={isRtl ? 'عنوان الرسالة' : 'Broadcast Title'} icon={Bell} value={bForm.title} onChange={(e: any) => setBForm(f => ({...f, title: e.target.value}))} />
+            <Textarea label={isRtl ? 'محتوى التعميم' : 'Operational Message'} icon={Layers} value={bForm.message} onChange={(e: any) => setBForm(f => ({...f, message: e.target.value}))} />
+            
+            <div className="flex justify-end gap-4 mt-12 py-6 border-t border-white/5">
+               <button className="clean-btn-secondary px-10" onClick={() => setBroadcastOpen(false)}>{isRtl ? 'إلغاء' : 'Abort'}</button>
+               <button 
+                  className="clean-btn-primary px-10 bg-sky-500" 
+                  onClick={() => broadcastMutation.mutate()}
+                  disabled={broadcastMutation.isPending}
+               >
+                  {broadcastMutation.isPending ? '...' : (isRtl ? 'إرسال الآن' : 'Deploy Now')}
+               </button>
+            </div>
+         </div>
+      </Modal>
     </div>
   );
 }
