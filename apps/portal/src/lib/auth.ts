@@ -8,11 +8,13 @@ const REFRESH_SECRET = new TextEncoder().encode(
   process.env['JWT_REFRESH_SECRET'] || 'default-refresh-secret-change-me'
 );
 
+const ACCESS_EXPIRY = process.env['JWT_ACCESS_EXPIRY'] || '1h';
+
 export async function signAccessToken(payload: IJwtPayload): Promise<string> {
   return new SignJWT({ ...payload })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
-    .setExpirationTime('15m')
+    .setExpirationTime(ACCESS_EXPIRY)
     .sign(ACCESS_SECRET);
 }
 

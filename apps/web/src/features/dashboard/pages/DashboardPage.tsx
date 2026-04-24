@@ -56,10 +56,9 @@ function KpiCard({ label, value, delta, icon, color, bg, trend }: any) {
         <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${bg}`}>
           <span className={color}>{icon}</span>
         </div>
-        <div className={`flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-lg ${
-          trend === 'up' ? 'text-emerald-400 bg-emerald-500/10' : trend === 'down' ? 'text-rose-400 bg-rose-500/10' : 'text-slate-400 bg-slate-700/30'
-        }`}>
-          {trend === 'up' ? <TrendingUp size={11}/> : trend === 'down' ? <TrendingDown size={11}/> : null}
+        <div className={`flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-lg ${trend === 'up' ? 'text-emerald-400 bg-emerald-500/10' : trend === 'down' ? 'text-rose-400 bg-rose-500/10' : 'text-slate-400 bg-slate-700/30'
+          }`}>
+          {trend === 'up' ? <TrendingUp size={11} /> : trend === 'down' ? <TrendingDown size={11} /> : null}
           {delta}
         </div>
       </div>
@@ -132,17 +131,17 @@ export function DashboardPage() {
       {/* KPI cards */}
       <motion.div variants={stagger} initial="hidden" animate="show" className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {kpisLoading ? (
-          [1,2,3,4].map(i => <Skeleton key={i} className="h-32 rounded-2xl" />)
+          [1, 2, 3, 4].map(i => <Skeleton key={i} className="h-32 rounded-2xl" />)
         ) : (
           <>
-            <KpiCard label={t.revenue} value={`$${((kpis?.totalRevenue||0)/1000).toFixed(1)}k`}
-              delta="+12.4%" trend="up" icon={<DollarSign size={18}/>} color="text-emerald-400" bg="bg-emerald-500/10" />
+            <KpiCard label={t.revenue} value={`$${((kpis?.totalRevenue || 0) / 1000).toFixed(1)}k`}
+              delta="+12.4%" trend="up" icon={<DollarSign size={18} />} color="text-emerald-400" bg="bg-emerald-500/10" />
             <KpiCard label={t.users} value={kpis?.activeUsers ?? 0}
-              delta="+4" trend="up" icon={<Users size={18}/>} color="text-blue-400" bg="bg-blue-500/10" />
+              delta="+4" trend="up" icon={<Users size={18} />} color="text-blue-400" bg="bg-blue-500/10" />
             <KpiCard label={t.tasks} value={kpis?.pendingTasks ?? 0}
-              delta="Active" icon={<CheckCircle size={18}/>} color="text-amber-400" bg="bg-amber-500/10" />
+              delta="Active" icon={<CheckCircle size={18} />} color="text-amber-400" bg="bg-amber-500/10" />
             <KpiCard label={t.invoices} value={kpis?.overdueInvoices ?? 0}
-              delta="Alert" trend="down" icon={<AlertCircle size={18}/>} color="text-rose-400" bg="bg-rose-500/10" />
+              delta="Alert" trend="down" icon={<AlertCircle size={18} />} color="text-rose-400" bg="bg-rose-500/10" />
           </>
         )}
       </motion.div>
@@ -296,7 +295,7 @@ export function DashboardPage() {
 
           <div className="flex-1 space-y-0">
             {activityLoading ? (
-              [1,2,3,4,5].map(i => <Skeleton key={i} className="h-14 rounded-xl mb-2" />)
+              [1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-14 rounded-xl mb-2" />)
             ) : (
               (activity ?? []).slice(0, 6).map((a: any, idx: number) => (
                 <motion.div
@@ -342,10 +341,10 @@ export function DashboardPage() {
       {/* Bottom stats row */}
       <motion.div variants={fadeIn} className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Completion Rate', value: '87%', icon: <CheckCircle size={14} className="text-emerald-400"/>, color: 'text-emerald-400' },
-          { label: 'Avg Response', value: '2.4h', icon: <Clock size={14} className="text-blue-400"/>, color: 'text-blue-400' },
-          { label: 'Active Projects', value: kpis?.activeProjects ?? 12, icon: <Target size={14} className="text-amber-400"/>, color: 'text-amber-400' },
-          { label: 'Revenue Growth', value: '+8.2%', icon: <ArrowUpRight size={14} className="text-teal-400"/>, color: 'text-teal-400' },
+          { label: 'Completion Rate', value: '87%', icon: <CheckCircle size={14} className="text-emerald-400" />, color: 'text-emerald-400' },
+          { label: 'Avg Response', value: '2.4h', icon: <Clock size={14} className="text-blue-400" />, color: 'text-blue-400' },
+          { label: 'Active Projects', value: kpis?.activeProjects ?? 12, icon: <Target size={14} className="text-amber-400" />, color: 'text-amber-400' },
+          { label: 'Revenue Growth', value: '+8.2%', icon: <ArrowUpRight size={14} className="text-teal-400" />, color: 'text-teal-400' },
         ].map(s => (
           <div key={s.label} className="glass-card p-4 flex items-center gap-3 hover-lift">
             <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0">{s.icon}</div>

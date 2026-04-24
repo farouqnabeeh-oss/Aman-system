@@ -17,9 +17,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   async onModuleInit(): Promise<void> {
     this.logger.log('Database connection attempt starting...');
     try {
-      // Temporarily disabled for diagnosis to isolate bootstrap hang
-      // await this.$connect();
-      this.logger.log('Database connected successfully (SKIPPED FOR DIAGNOSIS)');
+      await this.$connect();
+      this.logger.log('Database connected successfully');
     } catch (err) {
       this.logger.error('Database connection failed:', err);
       throw err;
@@ -35,10 +34,12 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     if (process.env['NODE_ENV'] !== 'test') {
       throw new Error('cleanDb() can only be called in test environment');
     }
-    const tablenames = await this.$queryRaw<Array<{ name: string }>>`
-      SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_prisma_%'
+    
+    const tables = await this.$queryRaw<Array<{ name: string }>>`
+      SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE '_prisma_%'
     `;
-    for (const { name } of tablenames) {
+
+    for (const { name } of tables) {
       await this.$executeRawUnsafe(`DELETE FROM "${name}"`);
     }
   }

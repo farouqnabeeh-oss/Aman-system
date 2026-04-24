@@ -9,7 +9,7 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { ExpressAdapter, NestExpressApplication } from '@nestjs/platform-express';
-import express from 'express';
+import * as express from 'express';
 
 let server: any;
 
