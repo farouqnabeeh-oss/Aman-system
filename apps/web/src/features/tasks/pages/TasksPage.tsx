@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { Plus, Calendar, Search, LayoutGrid, List as ListIcon, CheckCircle2, Circle, Clock, AlertCircle, Edit2, Trash2, Target, Layers, Users, Zap } from 'lucide-react';
+import { Plus, Search, LayoutGrid, List as ListIcon, CheckCircle2, Circle, Clock, AlertCircle, Edit2, Trash2, Target, Layers, Users, Zap, MessageSquare, Download, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { clsx } from 'clsx';
 import api from '../../../lib/axios';
 import { useUIStore } from '@/store/ui.store';
@@ -78,13 +78,40 @@ export function TasksPage() {
   const isRtl = language === 'ar';
   const t = TRANSLATIONS[language];
 
-  const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
+  const [viewMode, setViewMode] = useState<'kanban' | 'list' | 'calendar'>('kanban');
   const [search, setSearch] = useState('');
   const [priorityF, setPriorityF] = useState('');
   const [myTasks, setMyTasks] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ title: '', description: '', priority: 'MEDIUM', projectId: '', assigneeId: '', dueDate: '', status: 'TODO' });
+
+  // Comments state
+  const [comment, setComment] = useState('');
+  const { data: comments, isLoading: commentsLoading } = useQuery({
+    queryKey: ['comments', editingId],
+    queryFn: () => api.get<any>(`/tasks/${editingId}/comments`).then(r => r.data),
+    enabled: !!editingId,
+  });
+
+  const commentMutation = useMutation({
+    mutationFn: (content: string) => api.post(`/tasks/${editingId}/comments`, { content }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['comments', editingId] }); setComment(''); },
+  });
+
+  const exportTasks = () => {
+    const csv = [
+      ['Title', 'Project', 'Assignee', 'Status', 'Priority', 'Due Date'],
+      ...tasks.map((t: any) => [t.title, t.project?.name, t.assignee?.firstName, t.status, t.priority, t.dueDate])
+    ].map(e => e.join(",")).join("\n");
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `tasks_report_${new Date().toISOString().slice(0,10)}.csv`);
+    link.click();
+    toast.success(isRtl ? 'تم تصدير البيانات بنجاح' : 'Tasks exported successfully');
+  };
 
   const STATUS_COLS = [
     { key: 'TODO', label: t.todo, icon: Circle, color: 'text-slate-600' },

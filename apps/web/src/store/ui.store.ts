@@ -7,6 +7,7 @@ interface UIState {
   language: 'ar' | 'en';
   theme: 'dark' | 'light';
   setSidebarOpen: (open: boolean) => void;
+  toggleSidebar: () => void;
   toggleCollapsed: () => void;
   setLanguage: (lang: 'ar' | 'en') => void;
   toggleTheme: () => void;
@@ -20,6 +21,7 @@ export const useUIStore = create<UIState>()(
       language: 'ar',
       theme: 'dark',
       setSidebarOpen: (open) => set({ sidebarOpen: open }),
+      toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
       toggleCollapsed: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
       setLanguage: (lang) => set({ language: lang }),
       toggleTheme: () => set((state) => {
