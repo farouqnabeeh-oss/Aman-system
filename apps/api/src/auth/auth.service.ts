@@ -188,14 +188,14 @@ export class AuthService {
     const accessToken = this.jwt.sign(payload, {
       secret: process.env['JWT_ACCESS_SECRET'],
       expiresIn: ACCESS_EXPIRES,
-    });
+    } as any);
     return { accessToken, expiresIn: 15 * 60 };
   }
 
   private async saveRefreshToken(userId: string, tokens: IAuthTokens): Promise<void> {
     const refreshToken = this.jwt.sign(
       { sub: userId },
-      { secret: process.env['JWT_REFRESH_SECRET'], expiresIn: REFRESH_EXPIRES },
+      { secret: process.env['JWT_REFRESH_SECRET'], expiresIn: REFRESH_EXPIRES } as any,
     );
     const hash = await bcrypt.hash(refreshToken, BCRYPT_ROUNDS);
     await this.prisma.user.update({ where: { id: userId }, data: { refreshToken: hash } });
