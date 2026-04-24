@@ -6,6 +6,19 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   private readonly logger = new Logger(PrismaService.name);
 
   constructor() {
+    let url = process.env['DATABASE_URL'] || '';
+    
+    // Strip UTF-8 BOM if present (\uFEFF or %EF%BB%BF)
+    if (url.startsWith('\uFEFF')) {
+      url = url.substring(1);
+    }
+    
+    if (url && !url.startsWith('postgresql://') && !url.startsWith('postgres://')) {
+      url = `postgresql://${url}`;
+    }
+    
+    process.env['DATABASE_URL'] = url;
+    
     super({
       log: [
         { level: 'error', emit: 'stdout' },

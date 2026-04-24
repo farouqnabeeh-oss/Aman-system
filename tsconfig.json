@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "module": "CommonJS",
+    "target": "ES2021",
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "baseUrl": ".",
+    "paths": {
+      "@ems/shared": ["packages/shared/src/index.ts"]
+    }
+  },
+  "include": ["api/**/*.ts", "packages/shared/src/**/*.ts"]
+}
