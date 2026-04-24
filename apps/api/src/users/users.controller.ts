@@ -10,8 +10,8 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { RequestUser } from '../common/decorators/current-user.decorator';
 
-@ApiTags('Users')
-@ApiBearerAuth('JWT')
+
+
 @UseGuards(RolesGuard)
 @Controller('users')
 export class UsersController {
@@ -19,7 +19,7 @@ export class UsersController {
 
   @Get()
   @Roles('MANAGER', 'ADMIN', 'SUPER_ADMIN')
-  @ApiOperation({ summary: 'Get all users with filters and pagination' })
+  
   async findAll(@Query() filters: UserFiltersDto) {
     const result = await this.usersService.findAll(filters);
     const totalPages = Math.ceil(result.total / filters.limit);
@@ -33,7 +33,7 @@ export class UsersController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get user by ID' })
+  
   async findOne(@Param('id') id: string, @CurrentUser() actor: RequestUser) {
     // Users can view themselves; managers+ can view all
     if (actor.role === 'EMPLOYEE' && actor.id !== id) {
@@ -45,7 +45,6 @@ export class UsersController {
 
   @Post()
   @Roles('MANAGER', 'ADMIN', 'SUPER_ADMIN')
-  @ApiOperation({ summary: 'Create new user (admin only)' })
   async create(@Body() dto: CreateUserDto, @CurrentUser() actor: RequestUser) {
     const data = await this.usersService.create(dto, actor.id);
     return { success: true, data };
@@ -54,14 +53,14 @@ export class UsersController {
   @Patch('bulk')
   @Roles('MANAGER', 'ADMIN', 'SUPER_ADMIN')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Bulk activate / deactivate / delete users' })
+  
   async bulkAction(@Body() dto: BulkActionDto, @CurrentUser() actor: RequestUser) {
     const data = await this.usersService.bulkAction(dto.ids, dto.action, actor.id);
     return { success: true, data };
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update user profile' })
+  
   async update(@Param('id') id: string, @Body() dto: UpdateUserDto, @CurrentUser() actor: RequestUser) {
     const data = await this.usersService.update(id, dto, actor.id, actor.role);
     return { success: true, data };
@@ -69,7 +68,7 @@ export class UsersController {
 
   @Delete(':id')
   @Roles('MANAGER', 'ADMIN', 'SUPER_ADMIN')
-  @ApiOperation({ summary: 'Soft-delete a user' })
+  
   async remove(@Param('id') id: string, @CurrentUser() actor: RequestUser) {
     await this.usersService.softDelete(id, actor.id);
     return { success: true, data: null };

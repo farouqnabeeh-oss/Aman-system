@@ -33,8 +33,8 @@ class UpdateTaskDto {
 
 class AddCommentDto { @IsString() content!: string; }
 
-@ApiTags('Tasks')
-@ApiBearerAuth('JWT')
+
+
 @UseGuards(RolesGuard)
 @Controller('tasks')
 export class TasksController {

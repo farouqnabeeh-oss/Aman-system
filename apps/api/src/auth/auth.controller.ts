@@ -19,7 +19,7 @@ const COOKIE_OPTIONS = {
   path: '/api/v1/auth',
 };
 
-@ApiTags('Auth')
+
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) { }
@@ -30,7 +30,7 @@ export class AuthController {
   @UseGuards(ThrottlerGuard)
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Login with email and password' })
+  
   async login(@Body() dto: LoginDto, @Ip() ip: string, @Res({ passthrough: true }) res: Response) {
     const result = await this.authService.login(dto, ip);
     const { _refreshToken } = result.tokens as typeof result.tokens & { _refreshToken?: string };
@@ -41,7 +41,7 @@ export class AuthController {
   @Public()
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Refresh access token using httpOnly cookie' })
+  
   async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const cookies = req.cookies as Record<string, string>;
     const refreshToken = cookies['refresh_token'];
@@ -58,8 +58,8 @@ export class AuthController {
 
   @Post('logout')
   @HttpCode(HttpStatus.OK)
-  @ApiBearerAuth('JWT')
-  @ApiOperation({ summary: 'Logout and revoke refresh token' })
+  
+  
   async logout(@CurrentUser() user: RequestUser, @Res({ passthrough: true }) res: Response) {
     await this.authService.logout(user.id);
     res.clearCookie('refresh_token', { path: '/api/v1/auth' });
@@ -67,8 +67,8 @@ export class AuthController {
   }
 
   @Get('me')
-  @ApiBearerAuth('JWT')
-  @ApiOperation({ summary: 'Get current authenticated user' })
+  
+  
   async getMe(@CurrentUser() user: RequestUser) {
     const data = await this.authService.getMe(user.id);
     return { success: true, data };
@@ -76,7 +76,7 @@ export class AuthController {
 
   @Public()
   @Get('verify-email')
-  @ApiOperation({ summary: 'Verify email address with token' })
+  
   async verifyEmail(@Req() req: Request) {
     const { token } = req.query as { token: string };
     await this.authService.verifyEmail(token);
@@ -87,7 +87,7 @@ export class AuthController {
   @UseGuards(ThrottlerGuard)
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Request password reset email' })
+  
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
     await this.authService.forgotPassword(dto);
     return { success: true, data: { message: 'If that email exists, a reset link has been sent' } };
@@ -96,7 +96,7 @@ export class AuthController {
   @Public()
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Reset password with token' })
+  
   async resetPassword(@Body() dto: ResetPasswordDto) {
     await this.authService.resetPassword(dto);
     return { success: true, data: { message: 'Password reset successfully' } };
@@ -104,8 +104,8 @@ export class AuthController {
 
   @Post('change-password')
   @HttpCode(HttpStatus.OK)
-  @ApiBearerAuth('JWT')
-  @ApiOperation({ summary: 'Change password for authenticated user' })
+  
+  
   async changePassword(@CurrentUser() user: RequestUser, @Body() dto: ChangePasswordDto) {
     await this.authService.changePassword(user.id, dto);
     return { success: true, data: { message: 'Password changed successfully' } };

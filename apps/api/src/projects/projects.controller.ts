@@ -30,8 +30,8 @@ class UpdateProjectDto {
   @IsNumber() @IsPositive() @IsOptional() budget?: number;
 }
 
-@ApiTags('Projects')
-@ApiBearerAuth('JWT')
+
+
 @UseGuards(RolesGuard)
 @Controller('projects')
 export class ProjectsController {

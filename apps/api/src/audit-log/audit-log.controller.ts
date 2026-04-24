@@ -4,8 +4,8 @@ import { AuditLogService } from './audit-log.service';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
 
-@ApiTags('Audit Logs')
-@ApiBearerAuth('JWT')
+
+
 @UseGuards(RolesGuard)
 @Controller('audit-logs')
 export class AuditLogController {
@@ -13,7 +13,6 @@ export class AuditLogController {
 
   @Get()  
   @Roles('MANAGER', 'ADMIN', 'SUPER_ADMIN')
-  @ApiOperation({ summary: 'Get paginated audit logs (manager/admin access)' })
   async findAll(
     @Query('page') page = 1,
     @Query('limit') limit = 20,

@@ -19,8 +19,8 @@ class ReviewLeaveDto {
   @IsString() @IsOptional() rejectionReason?: string;
 }
 
-@ApiTags('HR')
-@ApiBearerAuth('JWT')
+
+
 @UseGuards(RolesGuard)
 @Controller('hr')
 export class HrController {

@@ -19,8 +19,8 @@ class CreatePayrollDto {
   @IsString() @IsOptional() notes?: string;
 }
 
-@ApiTags('Payroll')
-@ApiBearerAuth('JWT')
+
+
 @UseGuards(RolesGuard)
 @Roles('MANAGER', 'ADMIN', 'SUPER_ADMIN')
 @Controller('payroll')

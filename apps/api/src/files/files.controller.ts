@@ -21,15 +21,15 @@ class UpdateFileDto {
   @IsString() @IsOptional() visibility?: string;
 }
 
-@ApiTags('Files')
-@ApiBearerAuth('JWT')
+
+
 @UseGuards(RolesGuard)
 @Controller('files')
 export class FilesController {
   constructor(private readonly filesService: FilesService) {}
 
   @Post('upload')
-  @ApiConsumes('multipart/form-data')
+  
   @UseInterceptors(FileInterceptor('file', { storage, limits: { fileSize: MAX_FILE_MB * 1024 * 1024 } }))
   async upload(
     @UploadedFile() file: Express.Multer.File,

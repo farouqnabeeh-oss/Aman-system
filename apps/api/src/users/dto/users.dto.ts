@@ -7,26 +7,26 @@ import { Type } from 'class-transformer';
 import { UserRole, UserStatus, Department } from '@ems/shared';
 
 export class CreateUserDto {
-  @ApiProperty() @IsEmail() email!: string;
-  @ApiProperty() @IsString() @MinLength(8) password!: string;
-  @ApiProperty() @IsString() @MinLength(1) @MaxLength(50) firstName!: string;
-  @ApiProperty() @IsString() @MinLength(1) @MaxLength(50) lastName!: string;
-  @ApiPropertyOptional({ enum: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'] }) @IsEnum(UserRole) @IsOptional() role?: UserRole;
-  @ApiPropertyOptional({ enum: ['ENGINEERING', 'FINANCE', 'HR', 'MARKETING', 'OPERATIONS', 'SALES', 'LEGAL', 'PRODUCT'] }) @IsEnum(Department) @IsOptional() department?: Department;
-  @ApiPropertyOptional() @IsString() @MaxLength(100) @IsOptional() position?: string;
-  @ApiPropertyOptional() @IsString() @IsOptional() phone?: string;
+   email!: string;
+   password!: string;
+   firstName!: string;
+   lastName!: string;
+   role?: UserRole;
+   department?: Department;
+   position?: string;
+   phone?: string;
 }
 
 export class UpdateUserDto {
-  @ApiPropertyOptional() @IsString() @MinLength(1) @MaxLength(50) @IsOptional() firstName?: string;
-  @ApiPropertyOptional() @IsString() @MinLength(1) @MaxLength(50) @IsOptional() lastName?: string;
-  @ApiPropertyOptional({ enum: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'] }) @IsEnum(UserRole) @IsOptional() role?: UserRole;
-  @ApiPropertyOptional({ enum: ['ACTIVE', 'INACTIVE', 'PENDING', 'SUSPENDED'] }) @IsEnum(UserStatus) @IsOptional() status?: UserStatus;
-  @ApiPropertyOptional({ enum: ['ENGINEERING', 'FINANCE', 'HR', 'MARKETING', 'OPERATIONS', 'SALES', 'LEGAL', 'PRODUCT'] }) @IsEnum(Department) @IsOptional() department?: Department;
-  @ApiPropertyOptional() @IsString() @MaxLength(100) @IsOptional() position?: string;
-  @ApiPropertyOptional() @IsString() @IsOptional() phone?: string;
-  @ApiPropertyOptional() @IsString() @MinLength(8) @IsOptional() password?: string;
-  @ApiPropertyOptional() @IsString() @IsOptional() avatarUrl?: string;
+   firstName?: string;
+   lastName?: string;
+   role?: UserRole;
+   status?: UserStatus;
+   department?: Department;
+   position?: string;
+   phone?: string;
+   password?: string;
+   avatarUrl?: string;
 }
 
 export class UserFiltersDto {
@@ -41,7 +41,7 @@ export class UserFiltersDto {
 }
 
 export class BulkActionDto {
-  @ApiProperty({ type: [String] }) @IsArray() @IsString({ each: true }) ids!: string[];
-  @ApiProperty({ enum: ['activate', 'deactivate', 'delete'] })
+   ids!: string[];
+  
   @IsIn(['activate', 'deactivate', 'delete']) action!: 'activate' | 'deactivate' | 'delete';
 }
