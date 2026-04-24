@@ -1,0 +1,401 @@
+generator client {
+  provider      = "prisma-client-js"
+  output        = "../src/generated/client"
+  binaryTargets = ["native", "rhel-openssl-1.0.x", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id                  String             @id @default(cuid())
+  email               String             @unique
+  passwordHash        String
+  role                String             @default("EMPLOYEE")
+  status              String             @default("PENDING")
+  firstName           String
+  lastName            String
+  avatarUrl           String?
+  phone               String?
+  department          String?
+  position            String?
+  refreshToken        String?
+  emailVerified       Boolean            @default(false)
+  emailVerifyToken    String?
+  pwResetToken        String?
+  pwResetExpires      DateTime?
+  lastLoginAt         DateTime?
+  createdById         String?
+  updatedById         String?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  deletedAt           DateTime?
+  attendanceRecords   AttendanceRecord[]
+  auditLogs           AuditLog[]
+  createdBudgets      BudgetAllocation[]
+  createdClients      Client[]
+  grantedFilePerms    FilePermission[]   @relation("FilePermissionGranter")
+  filePermissions     FilePermission[]   @relation("FilePermissionUser")
+  uploadedFiles       File[]
+  createdInvoices     Invoice[]
+  approvedLeaves      LeaveRequest[]     @relation("LeaveApprover")
+  leaveRequests       LeaveRequest[]     @relation("LeaveUser")
+  notifications       Notification[]
+  processedPayrolls   PayrollRecord[]    @relation("PayrollProcessor")
+  payrollRecords      PayrollRecord[]
+  createdProjects     Project[]          @relation("ProjectCreator")
+  managedProjects     Project[]          @relation("ProjectManager")
+  taskComments        TaskComment[]
+  reportedTasks       Task[]             @relation("TaskReporter")
+  assignedTasks       Task[]             @relation("TaskAssignee")
+  createdTransactions Transaction[]
+  createdBy           User?              @relation("UserCreatedBy", fields: [createdById], references: [id])
+  usersCreated        User[]             @relation("UserCreatedBy")
+
+  @@index([email])
+  @@index([role])
+  @@index([status])
+  @@index([department])
+  @@index([deletedAt])
+  @@map("users")
+}
+
+model Department {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  headId      String?
+  budget      Decimal  @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("departments")
+}
+
+model BudgetAllocation {
+  id          String   @id @default(cuid())
+  department  String
+  period      String   @default("MONTHLY")
+  year        Int
+  month       Int?
+  quarter     Int?
+  allocated   Decimal  @default(0)
+  spent       Decimal  @default(0)
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   User     @relation(fields: [createdById], references: [id])
+
+  @@index([department, period, year])
+  @@map("budget_allocations")
+}
+
+model Client {
+  id          String    @id @default(cuid())
+  name        String
+  email       String?   @unique
+  phone       String?
+  company     String?
+  address     String?
+  taxId       String?
+  createdById String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  createdBy   User      @relation(fields: [createdById], references: [id])
+  invoices    Invoice[]
+  projects    Project[]
+
+  @@index([email])
+  @@map("clients")
+}
+
+model Invoice {
+  id            String            @id @default(cuid())
+  invoiceNumber String            @unique
+  clientId      String
+  status        String            @default("DRAFT")
+  subtotal      Decimal           @default(0)
+  taxRate       Decimal           @default(0)
+  taxAmount     Decimal           @default(0)
+  discount      Decimal           @default(0)
+  total         Decimal           @default(0)
+  currency      String            @default("USD")
+  notes         String?
+  dueDate       DateTime
+  issuedAt      DateTime?
+  paidAt        DateTime?
+  createdById   String
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  lineItems     InvoiceLineItem[]
+  createdBy     User              @relation(fields: [createdById], references: [id])
+  client        Client            @relation(fields: [clientId], references: [id])
+  transactions  Transaction[]
+
+  @@index([clientId])
+  @@index([status])
+  @@index([dueDate])
+  @@map("invoices")
+}
+
+model InvoiceLineItem {
+  id          String  @id @default(cuid())
+  invoiceId   String
+  description String
+  quantity    Decimal @default(1)
+  unitPrice   Decimal
+  total       Decimal
+  sortOrder   Int     @default(0)
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@map("invoice_line_items")
+}
+
+model Transaction {
+  id              String   @id @default(cuid())
+  type            String
+  status          String   @default("COMPLETED")
+  amount          Decimal
+  currency        String   @default("USD")
+  description     String
+  category        String
+  department      String?
+  reference       String?
+  paymentMethod   String?
+  invoiceId       String?
+  transactionDate DateTime @default(now())
+  createdById     String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  createdBy       User     @relation(fields: [createdById], references: [id])
+  invoice         Invoice? @relation(fields: [invoiceId], references: [id])
+
+  @@index([type])
+  @@index([status])
+  @@index([transactionDate])
+  @@index([category])
+  @@index([department])
+  @@map("transactions")
+}
+
+model Project {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  status      String    @default("PLANNING")
+  managerId   String
+  clientId    String?
+  department  String?
+  startDate   DateTime
+  endDate     DateTime?
+  budget      Decimal?
+  progress    Int       @default(0)
+  createdById String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  createdBy   User      @relation("ProjectCreator", fields: [createdById], references: [id])
+  client      Client?   @relation(fields: [clientId], references: [id])
+  manager     User      @relation("ProjectManager", fields: [managerId], references: [id])
+  tasks       Task[]
+
+  @@index([managerId])
+  @@index([status])
+  @@index([department])
+  @@index([deletedAt])
+  @@map("projects")
+}
+
+model Task {
+  id             String        @id @default(cuid())
+  title          String
+  description    String?
+  status         String        @default("TODO")
+  priority       String        @default("MEDIUM")
+  projectId      String
+  assigneeId     String?
+  reporterId     String
+  dueDate        DateTime?
+  completedAt    DateTime?
+  estimatedHours Decimal?
+  actualHours    Decimal?
+  tags           String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  deletedAt      DateTime?
+  comments       TaskComment[]
+  reporter       User          @relation("TaskReporter", fields: [reporterId], references: [id])
+  assignee       User?         @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  project        Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([assigneeId])
+  @@index([status])
+  @@index([priority])
+  @@index([dueDate])
+  @@map("tasks")
+}
+
+model TaskComment {
+  id        String   @id @default(cuid())
+  taskId    String
+  authorId  String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@map("task_comments")
+}
+
+model File {
+  id           String           @id @default(cuid())
+  name         String
+  originalName String
+  mimeType     String
+  sizeBytes    Int
+  storagePath  String
+  publicUrl    String?
+  folderPath   String           @default("/")
+  visibility   String           @default("PRIVATE")
+  department   String?
+  entityType   String?
+  entityId     String?
+  uploadedById String
+  createdAt    DateTime         @default(now())
+  deletedAt    DateTime?
+  permissions  FilePermission[]
+  uploadedBy   User             @relation(fields: [uploadedById], references: [id])
+
+  @@index([uploadedById])
+  @@index([folderPath])
+  @@index([entityType, entityId])
+  @@map("files")
+}
+
+model FilePermission {
+  id          String   @id @default(cuid())
+  fileId      String
+  userId      String
+  canView     Boolean  @default(true)
+  canDownload Boolean  @default(false)
+  canDelete   Boolean  @default(false)
+  grantedById String
+  createdAt   DateTime @default(now())
+  grantedBy   User     @relation("FilePermissionGranter", fields: [grantedById], references: [id])
+  user        User     @relation("FilePermissionUser", fields: [userId], references: [id], onDelete: Cascade)
+  file        File     @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@unique([fileId, userId])
+  @@index([fileId])
+  @@index([userId])
+  @@map("file_permissions")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   @default("INFO")
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  actionUrl String?
+  metadata  String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  oldValues String?
+  newValues String?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([entity, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model PayrollRecord {
+  id            String    @id @default(cuid())
+  userId        String
+  month         Int
+  year          Int
+  baseSalary    Decimal
+  allowances    Decimal   @default(0)
+  deductions    Decimal   @default(0)
+  bonus         Decimal   @default(0)
+  netSalary     Decimal
+  isPaid        Boolean   @default(false)
+  paidAt        DateTime?
+  notes         String?
+  processedById String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  processedBy   User?     @relation("PayrollProcessor", fields: [processedById], references: [id])
+  user          User      @relation(fields: [userId], references: [id])
+
+  @@unique([userId, month, year])
+  @@index([userId])
+  @@index([year, month])
+  @@map("payroll_records")
+}
+
+model LeaveRequest {
+  id              String    @id @default(cuid())
+  userId          String
+  type            String
+  status          String    @default("PENDING")
+  startDate       DateTime
+  endDate         DateTime
+  daysCount       Decimal
+  reason          String?
+  approvedById    String?
+  approvedAt      DateTime?
+  rejectionReason String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  approvedBy      User?     @relation("LeaveApprover", fields: [approvedById], references: [id])
+  user            User      @relation("LeaveUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@map("leave_requests")
+}
+
+model AttendanceRecord {
+  id        String    @id @default(cuid())
+  userId    String
+  date      DateTime
+  status    String    @default("PRESENT")
+  checkIn   DateTime?
+  checkOut  DateTime?
+  notes     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@index([date])
+  @@map("attendance_records")
+}
