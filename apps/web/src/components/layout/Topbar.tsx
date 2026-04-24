@@ -32,7 +32,7 @@ export function Topbar({ onOpenCommand }: { onOpenCommand?: () => void }) {
 
   const logoutMutation = useMutation({
     mutationFn: () => api.post('/auth/logout'),
-    onSuccess: () => { logout(); navigate('/login'); },
+    onSettled: () => { logout(); navigate('/login'); },
   });
 
   // Close dropdown on outside click

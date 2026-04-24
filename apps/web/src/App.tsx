@@ -23,29 +23,33 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 
 // Simple Guest guard
 function RequireGuest({ children }: { children: React.ReactNode }) {
-  const isAuth = useAuthStore((s: any) => s.isAuthenticated);
-  if (isAuth === true) return <Navigate to="/dashboard" replace />;
+  const { isAuthenticated, user } = useAuthStore();
+  if (isAuthenticated === true) {
+    return <Navigate to={user?.role === 'EMPLOYEE' ? "/tasks" : "/dashboard"} replace />;
+  }
   return <>{children}</>;
 }
 
 export default function App() {
+  const user = useAuthStore(s => s.user);
+
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<RequireGuest><LoginPage /></RequireGuest>} />
         
         <Route path="/" element={<RequireAuth><AppLayout /></RequireAuth>}>
-          <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route path="dashboard" element={<DashboardPage />} />
+          <Route index element={<Navigate to={user?.role === 'EMPLOYEE' ? "/tasks" : "/dashboard"} replace />} />
+          <Route path="dashboard" element={user?.role === 'EMPLOYEE' ? <Navigate to="/tasks" replace /> : <DashboardPage />} />
           <Route path="users" element={<UsersPage />} />
-          <Route path="finance/*" element={<FinancePage />} />
+          <Route path="finance/*" element={user?.role === 'EMPLOYEE' ? <Navigate to="/tasks" replace /> : <FinancePage />} />
           <Route path="projects" element={<ProjectsPage />} />
           <Route path="tasks" element={<TasksPage />} />
           <Route path="files" element={<FilesPage />} />
           <Route path="notifications" element={<NotificationsPage />} />
           <Route path="hr" element={<HrPage />} />
-          <Route path="payroll" element={<PayrollPage />} />
-          <Route path="audit-logs" element={<AuditLogPage />} />
+          <Route path="payroll" element={user?.role === 'EMPLOYEE' ? <Navigate to="/tasks" replace /> : <PayrollPage />} />
+          <Route path="audit-logs" element={user?.role === 'EMPLOYEE' ? <Navigate to="/tasks" replace /> : <AuditLogPage />} />
           <Route path="profile" element={<ProfilePage />} />
         </Route>
 

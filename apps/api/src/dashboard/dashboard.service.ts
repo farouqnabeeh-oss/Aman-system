@@ -25,19 +25,19 @@ export class DashboardService {
       tasksCompletedThisMonth,
       overdueInvoices,
     ] = await Promise.all([
-      this.prisma.transaction.aggregate({
+      (this.prisma as any).transaction.aggregate({
         _sum: { amount: true },
         where: { type: 'INCOME', status: 'COMPLETED', transactionDate: { gte: startOfMonth } },
       }),
-      this.prisma.transaction.aggregate({
+      (this.prisma as any).transaction.aggregate({
         _sum: { amount: true },
         where: { type: 'INCOME', status: 'COMPLETED', transactionDate: { gte: startOfLastMonth, lte: endOfLastMonth } },
       }),
-      this.prisma.user.count({ where: { status: 'ACTIVE', deletedAt: null } }),
-      this.prisma.user.count({ where: { createdAt: { gte: startOfMonth }, deletedAt: null } }),
-      this.prisma.task.count({ where: { status: { in: ['TODO', 'IN_PROGRESS', 'IN_REVIEW'] }, deletedAt: null } }),
-      this.prisma.task.count({ where: { status: 'DONE', completedAt: { gte: startOfMonth } } }),
-      this.prisma.invoice.findMany({ where: { status: 'OVERDUE' }, select: { total: true } }),
+      (this.prisma as any).user.count({ where: { status: 'ACTIVE', deletedAt: null } }),
+      (this.prisma as any).user.count({ where: { createdAt: { gte: startOfMonth }, deletedAt: null } }),
+      (this.prisma as any).task.count({ where: { status: { in: ['TODO', 'IN_PROGRESS', 'IN_REVIEW'] }, deletedAt: null } }),
+      (this.prisma as any).task.count({ where: { status: 'DONE', completedAt: { gte: startOfMonth } } }),
+      (this.prisma as any).invoice.findMany({ where: { status: 'OVERDUE' }, select: { total: true } }),
     ]);
 
     const thisMonthRevenue = Number(totalRevenueThisMonth._sum.amount ?? 0);
@@ -54,7 +54,7 @@ export class DashboardService {
       pendingTasks,
       tasksCompletedThisMonth,
       overdueInvoices: overdueInvoices.length,
-      overdueAmount: overdueInvoices.reduce((s, i) => s + Number(i.total), 0),
+      overdueAmount: overdueInvoices.reduce((s: number, i: any) => s + Number(i.total), 0),
     };
   }
 
@@ -68,11 +68,11 @@ export class DashboardService {
       const end = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59);
 
       const [income, expense] = await Promise.all([
-        this.prisma.transaction.aggregate({
+        (this.prisma as any).transaction.aggregate({
           _sum: { amount: true },
           where: { type: 'INCOME', status: 'COMPLETED', transactionDate: { gte: start, lte: end } },
         }),
-        this.prisma.transaction.aggregate({
+        (this.prisma as any).transaction.aggregate({
           _sum: { amount: true },
           where: { type: 'EXPENSE', status: 'COMPLETED', transactionDate: { gte: start, lte: end } },
         }),
@@ -97,17 +97,17 @@ export class DashboardService {
     const month = now.getMonth() + 1;
 
     const [budgets, userCounts, projectCounts] = await Promise.all([
-      this.prisma.budgetAllocation.findMany({ where: { period: 'MONTHLY', year, month } }),
-      this.prisma.user.groupBy({ by: ['department'], _count: true, where: { deletedAt: null, status: 'ACTIVE', department: { not: null } } }),
-      this.prisma.project.groupBy({ by: ['department'], _count: true, where: { deletedAt: null, status: 'ACTIVE', department: { not: null } } }),
+      (this.prisma as any).budgetAllocation.findMany({ where: { period: 'MONTHLY', year, month } }),
+      (this.prisma as any).user.groupBy({ by: ['department'], _count: true, where: { deletedAt: null, status: 'ACTIVE', department: { not: null } } }),
+      (this.prisma as any).project.groupBy({ by: ['department'], _count: true, where: { deletedAt: null, status: 'ACTIVE', department: { not: null } } }),
     ]);
 
-    return budgets.map((b) => {
+    return budgets.map((b: any) => {
       const allocated = Number(b.allocated);
       const spent = Number(b.spent);
       const dept = b.department;
-      const empCount = userCounts.find((u) => u.department === dept)?._count ?? 0;
-      const projCount = projectCounts.find((p) => p.department === dept)?._count ?? 0;
+      const empCount = userCounts.find((u: any) => u.department === dept)?._count ?? 0;
+      const projCount = projectCounts.find((p: any) => p.department === dept)?._count ?? 0;
       return {
         department: dept as Department,
         budgetAllocated: allocated,
@@ -120,7 +120,7 @@ export class DashboardService {
   }
 
   async getRecentActivity(limit = 15): Promise<IRecentActivity[]> {
-    const logs = await this.prisma.auditLog.findMany({
+    const logs = await (this.prisma as any).auditLog.findMany({
       take: limit,
       orderBy: { createdAt: 'desc' },
       include: {
@@ -128,7 +128,7 @@ export class DashboardService {
       },
     });
 
-    return logs.map((log) => ({
+    return logs.map((log: any) => ({
       id: log.id,
       action: log.action,
       entity: log.entity,
