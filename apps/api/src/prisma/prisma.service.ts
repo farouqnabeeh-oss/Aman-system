@@ -35,12 +35,14 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       throw new Error('cleanDb() can only be called in test environment');
     }
     
-    const tables = await this.$queryRaw<Array<{ name: string }>>`
-      SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE '_prisma_%'
+    const tables = await this.$queryRaw<Array<{ tablename: string }>>`
+      SELECT tablename FROM pg_catalog.pg_tables 
+      WHERE schemaname = 'public' 
+      AND tablename NOT LIKE '_prisma_%'
     `;
 
-    for (const { name } of tables) {
-      await this.$executeRawUnsafe(`DELETE FROM "${name}"`);
+    for (const { tablename } of tables) {
+      await this.$executeRawUnsafe(`TRUNCATE TABLE "${tablename}" CASCADE`);
     }
   }
 }

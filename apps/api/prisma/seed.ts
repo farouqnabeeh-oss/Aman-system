@@ -5,7 +5,7 @@ import { addDays, subDays } from 'date-fns';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🧹 Cleaning local database...');
+  console.log('🧹 Cleaning database for production...');
 
   await prisma.auditLog.deleteMany({});
   await prisma.attendanceRecord.deleteMany({});
@@ -19,7 +19,7 @@ async function main() {
   await prisma.user.deleteMany({});
   await prisma.department.deleteMany({});
 
-  console.log('🌱 Seeding local database...');
+  console.log('🌱 Seeding production data...');
 
   const managerPass = await bcrypt.hash('aman@2026', 12);
 
@@ -64,7 +64,7 @@ async function main() {
     }
   });
 
-  console.log('✅ Local Seeding Complete.');
+  console.log('✅ Production Seeding Complete.');
   console.log('📋 Login: aman10@gmail.com / aman@2026');
 }
 
