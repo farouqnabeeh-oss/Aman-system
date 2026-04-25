@@ -7,26 +7,26 @@ import { Type } from 'class-transformer';
 import { UserRole, UserStatus, Department } from '@ems/shared';
 
 export class CreateUserDto {
-   email!: string;
-   password!: string;
-   firstName!: string;
-   lastName!: string;
-   role?: UserRole;
-   department?: Department;
-   position?: string;
-   phone?: string;
+  email!: string;
+  password!: string;
+  firstName!: string;
+  lastName!: string;
+  role?: UserRole;
+  department?: Department;
+  position?: string;
+  phone?: string;
 }
 
 export class UpdateUserDto {
-   firstName?: string;
-   lastName?: string;
-   role?: UserRole;
-   status?: UserStatus;
-   department?: Department;
-   position?: string;
-   phone?: string;
-   password?: string;
-   avatarUrl?: string;
+  firstName?: string;
+  lastName?: string;
+  role?: UserRole;
+  status?: UserStatus;
+  department?: Department;
+  position?: string;
+  phone?: string;
+  password?: string;
+  avatarUrl?: string;
 }
 
 export class UserFiltersDto {
@@ -41,7 +41,7 @@ export class UserFiltersDto {
 }
 
 export class BulkActionDto {
-   ids!: string[];
-  
+  ids!: string[];
+
   @IsIn(['activate', 'deactivate', 'delete']) action!: 'activate' | 'deactivate' | 'delete';
 }

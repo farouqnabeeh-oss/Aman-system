@@ -16,7 +16,7 @@ const T = {
     users: 'إدارة الكوادر البشرية',
     usersSub: 'التحكم في صلاحيات الفريق ومراقبة مستويات الأداء',
     addUser: 'إضافة عضو جديد',
-    search: 'البحث في قاعدة البيانات...',
+    search: 'البحث عن موظف...',
     allRoles: 'كل الصلاحيات',
     allStatus: 'كل الحالات',
     totalTeam: 'إجمالي الفريق',
@@ -41,7 +41,7 @@ const T = {
     users: 'Human Capital',
     usersSub: 'Strategic oversight of team permissions and operational velocity',
     addUser: 'Deploy Member',
-    search: 'Search personnel database...',
+    search: 'Search employee...',
     allRoles: 'All Protocols',
     allStatus: 'All Statuses',
     totalTeam: 'Total Personnel',
@@ -108,6 +108,7 @@ export default function UsersPage() {
   useEffect(() => { loadUsers(); }, [loadUsers]);
 
   const handleSave = async () => {
+    if (!confirm(isRtl ? 'هل أنت متأكد من حفظ البيانات؟' : 'Are you sure you want to save?')) return;
     setSaving(true);
     try {
       if (editingId) {

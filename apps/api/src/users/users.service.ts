@@ -114,8 +114,8 @@ export class UsersService {
     return this.toIUser(user);
   }
 
-  async update(id: string, dto: UpdateUserDto, actorId: string, actorRole: string): Promise<IUser> {
-    const user = await this.prisma.user.findUnique({ where: { id, deletedAt: null }, select: USER_SELECT });
+  async update(id: string, dto: any, actorId: string, actorRole: string): Promise<IUser> {
+    const user = await this.prisma.user.findUnique({ where: { id, deletedAt: null }, select: { ...USER_SELECT, passwordHash: true } });
     if (!user) throw new NotFoundException({ code: 'NOT_FOUND', message: 'User not found' });
 
     // Permissions check:
@@ -143,10 +143,15 @@ export class UsersService {
       }
     }
 
-    const { password, ...updateData } = dto;
+    const { password, currentPassword, ...updateData } = dto;
     const dataToUpdate: any = { ...updateData, updatedById: actorId };
 
     if (password) {
+      if (!currentPassword) {
+        throw new ForbiddenException({ code: 'FORBIDDEN', message: 'Current password is required to set a new password' });
+      }
+      const isValid = await bcrypt.compare(currentPassword, user.passwordHash);
+      if (!isValid) throw new ForbiddenException({ code: 'FORBIDDEN', message: 'Invalid current password' });
       dataToUpdate.passwordHash = await bcrypt.hash(password, 12);
     }
 

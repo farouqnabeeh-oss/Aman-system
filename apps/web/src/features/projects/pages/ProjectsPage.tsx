@@ -62,18 +62,24 @@ export function ProjectsPage() {
   const isRtl = language === 'ar';
   const t = TRANSLATIONS[language];
 
-  const exportProjects = () => {
-    const csv = [
-      ['Name', 'Department', 'Status', 'Progress', 'Budget', 'Manager'],
-      ...projects.map((p: any) => [p.name, p.department, p.status, p.progress, p.budget, p.manager?.firstName])
-    ].map(e => e.join(",")).join("\n");
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `projects_report_${new Date().toISOString().slice(0,10)}.csv`);
-    link.click();
-    toast.success(isRtl ? 'تم تصدير البيانات' : 'Projects exported');
+  const exportProjects = async () => {
+    try {
+      const res = await api.get('/projects', { params: { limit: 10000 } });
+      const allProjects = res.data.data.items || [];
+      const csv = [
+        ['Name', 'Department', 'Status', 'Progress', 'Budget', 'Manager'],
+        ...allProjects.map((p: any) => [`"${p.name}"`, `"${p.department}"`, `"${p.status}"`, `"${p.progress}"`, `"${p.budget}"`, `"${p.manager?.firstName || ''}"`])
+      ].map(e => e.join(",")).join("\n");
+      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `projects_report_${new Date().toISOString().slice(0,10)}.csv`);
+      link.click();
+      toast.success(isRtl ? 'تم تصدير البيانات' : 'Projects exported');
+    } catch (error) {
+      toast.error('Export failed');
+    }
   };
 
   const [page, setPage] = useState(1);
@@ -96,10 +102,11 @@ export function ProjectsPage() {
 
   const saveMutation = useMutation({
     mutationFn: () => editingId ? api.patch(`/projects/${editingId}`, { ...form, budget: parseFloat(form.budget) }) : api.post('/projects', { ...form, budget: parseFloat(form.budget) }),
-    onSuccess: () => { 
-      qc.invalidateQueries({ queryKey: ['projects'] }); 
-      setEditOpen(false); 
-      toast.success(isRtl ? 'تم التحديث بنجاح' : 'Success'); 
+    onSuccess: () => {
+      setEditOpen(false);
+      qc.invalidateQueries({ queryKey: ['projects'] });
+      setPage(1);
+      toast.success(isRtl ? 'تم التحديث بنجاح' : 'Success');
     },
     onError: (err: any) => {
       toast.error(err.response?.data?.message || 'Action Failed');
@@ -126,8 +133,8 @@ export function ProjectsPage() {
         description={t.projectsSub}
         action={
           <div className="flex gap-3">
-             <button onClick={exportProjects} className="btn-ghost h-12 gap-2 text-[10px] uppercase tracking-widest border-[var(--border)]"><Download size={16}/> {isRtl ? 'تصدير' : 'Export'}</button>
-             {isAdminOrManager && <button onClick={() => { setEditingId(null); setForm({ name: '', description: '', managerId: '', department: '', startDate: '', endDate: '', budget: '' }); setEditOpen(true); }} className="btn-primary h-12 gap-2 text-[10px] uppercase tracking-widest bg-brand shadow-brand/20"><Plus size={16} /> {t.newProject}</button>}
+             <button onClick={exportProjects} className="clean-btn-secondary h-12 gap-2 text-[10px] uppercase tracking-widest border-[var(--border)]"><Download size={16}/> {isRtl ? 'تصدير' : 'Export'}</button>
+             {isAdminOrManager && <button onClick={() => { setEditingId(null); setForm({ name: '', description: '', managerId: '', department: '', startDate: '', endDate: '', budget: '' }); setEditOpen(true); }} className="clean-btn-primary h-12 gap-2 text-[10px] uppercase tracking-widest bg-brand shadow-brand/20"><Plus size={16} /> {t.newProject}</button>}
           </div>
         }
       />
@@ -182,7 +189,7 @@ export function ProjectsPage() {
                   <div className="w-8 h-8 rounded-xl bg-brand/10 border border-brand/20 flex items-center justify-center text-brand font-black text-xs">{p.manager?.firstName[0]}</div>
                   <span className="font-bold text-[var(--text-3)]">{p.manager?.firstName}</span>
                 </div>
-                {p.budget && <div className="ml-auto text-[var(--text-1)] font-black">${(p.budget / 1000).toFixed(0)}K</div>}
+                {p.budget && <div className="ml-auto text-[var(--text-1)] font-black">₪{(p.budget / 1000).toFixed(0)}K</div>}
               </div>
 
               {isAdminOrManager && (
@@ -202,7 +209,7 @@ export function ProjectsPage() {
               { key: 'manager', label: t.manager, render: (p: any) => <span className="text-xs font-bold text-[var(--text-3)]">{p.manager?.firstName} {p.manager?.lastName}</span> },
               { key: 'status', label: t.projects, render: (p: any) => statusBadge(p.status) },
               { key: 'progress', label: t.progress, render: (p: any) => <div className="flex items-center gap-4"><div className="w-32 h-1.5 bg-[var(--bg-glass)] rounded-full overflow-hidden border border-[var(--border)]"><div className="h-full bg-brand" style={{ width: `${p.progress}%` }} /></div><span className="text-[10px] font-black text-[var(--text-1)]">{p.progress}%</span></div> },
-              { key: 'budget', label: t.budget, render: (p: any) => <span className="text-xs font-bold text-[var(--text-4)]">{p.budget ? `$${p.budget.toLocaleString()}` : '—'}</span> },
+              { key: 'budget', label: t.budget, render: (p: any) => <span className="text-xs font-bold text-[var(--text-4)]">{p.budget ? `₪${p.budget.toLocaleString()}` : '—'}</span> },
               isAdminOrManager && {
                 key: 'actions', label: '', render: (p: any) => (
                   <div className="flex justify-end gap-3">
@@ -237,8 +244,12 @@ export function ProjectsPage() {
           <Input label={t.budget} icon={DollarSign} type="number" value={form.budget} onChange={(e: any) => setForm(f => ({ ...f, budget: e.target.value }))} />
 
           <div className="flex justify-end gap-4 mt-12 py-6 border-t border-[var(--border)]">
-            <button className="btn-ghost px-10 h-12" onClick={() => setEditOpen(false)}>{t.cancel}</button>
-            <button className="btn-primary px-10 h-12 shadow-brand/20" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>{t.save}</button>
+            <button className="clean-btn-secondary px-10 h-12" onClick={() => setEditOpen(false)}>{t.cancel}</button>
+            <button className="clean-btn-primary px-10 h-12 shadow-brand/20" onClick={() => {
+              if (confirm(isRtl ? 'هل أنت متأكد من حفظ البيانات؟' : 'Are you sure you want to save?')) {
+                saveMutation.mutate();
+              }
+            }} disabled={saveMutation.isPending}>{t.save}</button>
           </div>
         </div>
       </Modal>

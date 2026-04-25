@@ -41,7 +41,7 @@ export function AuditLogPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['audit-logs', page, entity, action],
-    queryFn: () => api.get<any>('/audit-log', { 
+    queryFn: () => api.get<any>('/audit-logs', { 
       params: { 
         page, 
         limit, 

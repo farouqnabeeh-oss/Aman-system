@@ -3,10 +3,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../../store/auth.store';
 import { useUIStore } from '@/store/ui.store';
 import api from '../../../lib/axios';
-import { 
-  Mail, Phone, Building, Fingerprint, 
-  Edit3, User, Briefcase, Key, Camera,
-  CheckCircle2, Target, Zap, Clock, ShieldCheck, Lock
+import {
+   Mail, Phone, Building, Fingerprint,
+   Edit3, User, Briefcase, Key, Camera,
+   CheckCircle2, Target, Zap, Clock, ShieldCheck, Lock
 } from 'lucide-react';
 import { PageHeader } from '../../../components/ui/States';
 import { roleBadge } from '../../../components/ui/Badge';
@@ -74,7 +74,9 @@ export function ProfilePage() {
       lastName: '',
       phone: '',
       position: '',
+      currentPassword: '',
       password: '',
+      confirmPassword: '',
    });
 
    const { data: profile, isLoading } = useQuery({
@@ -89,7 +91,9 @@ export function ProfilePage() {
             lastName: profile.lastName || '',
             phone: profile.phone || '',
             position: profile.position || '',
+            currentPassword: '',
             password: '',
+            confirmPassword: '',
          });
       }
    }, [profile]);
@@ -97,7 +101,11 @@ export function ProfilePage() {
    const updateMutation = useMutation({
       mutationFn: (dto: any) => {
          const payload = { ...dto };
-         if (!payload.password) delete payload.password;
+         if (!payload.password) {
+            delete payload.password;
+            delete payload.currentPassword;
+            delete payload.confirmPassword;
+         }
          return api.patch(`/users/${user?.id}`, payload);
       },
       onSuccess: (res) => {
@@ -155,7 +163,7 @@ export function ProfilePage() {
                               </div>
                            )}
                         </div>
-                        <button 
+                        <button
                            onClick={() => fileInputRef.current?.click()}
                            className="absolute -bottom-2 -right-2 p-3 rounded-2xl bg-brand text-white shadow-xl hover:scale-110 active:scale-95 transition-all"
                         >
@@ -166,7 +174,7 @@ export function ProfilePage() {
 
                      <h2 className="text-2xl font-black text-[var(--text-1)]">{profile?.firstName} {profile?.lastName}</h2>
                      <p className="text-xs font-black text-brand uppercase tracking-widest mt-2">{profile?.position || t.pos}</p>
-                     
+
                      <div className="mt-8 w-full space-y-3">
                         {roleBadge(profile?.role)}
                         <div className="flex items-center justify-center gap-2 text-[10px] font-bold text-[var(--text-4)] uppercase">
@@ -176,7 +184,7 @@ export function ProfilePage() {
                   </div>
 
                   <div className="mt-10 pt-8 border-t border-[var(--border)] space-y-4">
-                     <button onClick={() => setEditOpen(true)} className="w-full btn-primary h-12 gap-2 text-[10px] uppercase tracking-widest">
+                     <button onClick={() => setEditOpen(true)} className="w-full clean-btn-primary h-12 gap-2 text-[10px] uppercase tracking-widest">
                         <Edit3 size={14} /> {t.edit}
                      </button>
                   </div>
@@ -216,22 +224,22 @@ export function ProfilePage() {
                   <h3 className="text-xs font-black text-[var(--text-3)] uppercase tracking-widest mb-10 pb-4 border-b border-[var(--border)]">
                      {t.personal}
                   </h3>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-[var(--text-4)] uppercase tracking-widest flex items-center gap-2"><Mail size={12}/> {t.email}</label>
+                        <label className="text-[10px] font-black text-[var(--text-4)] uppercase tracking-widest flex items-center gap-2"><Mail size={12} /> {t.email}</label>
                         <p className="text-sm font-bold text-[var(--text-1)] truncate">{profile?.email}</p>
                      </div>
                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-[var(--text-4)] uppercase tracking-widest flex items-center gap-2"><Phone size={12}/> {t.phone}</label>
+                        <label className="text-[10px] font-black text-[var(--text-4)] uppercase tracking-widest flex items-center gap-2"><Phone size={12} /> {t.phone}</label>
                         <p className="text-sm font-bold text-[var(--text-1)]">{profile?.phone || t.notSet}</p>
                      </div>
                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-[var(--text-4)] uppercase tracking-widest flex items-center gap-2"><Building size={12}/> {t.dept}</label>
+                        <label className="text-[10px] font-black text-[var(--text-4)] uppercase tracking-widest flex items-center gap-2"><Building size={12} /> {t.dept}</label>
                         <p className="text-sm font-bold text-[var(--text-1)]">{profile?.department || t.notSet}</p>
                      </div>
                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-[var(--text-4)] uppercase tracking-widest flex items-center gap-2"><Fingerprint size={12}/> ID Token</label>
+                        <label className="text-[10px] font-black text-[var(--text-4)] uppercase tracking-widest flex items-center gap-2"><Fingerprint size={12} /> ID Token</label>
                         <p className="text-[11px] font-mono text-[var(--text-4)] truncate">{profile?.id}</p>
                      </div>
                   </div>
@@ -249,11 +257,23 @@ export function ProfilePage() {
                   <Input label={t.phone} icon={Phone} value={form.phone} onChange={(e: any) => setForm(f => ({ ...f, phone: e.target.value }))} />
                   <Input label={t.pos} icon={Briefcase} value={form.position} onChange={(e: any) => setForm(f => ({ ...f, position: e.target.value }))} />
                </div>
-               <Input label={isRtl ? 'كلمة المرور' : 'Cipher Access'} icon={Key} type="password" value={form.password} onChange={(e: any) => setForm(f => ({ ...f, password: e.target.value }))} placeholder="••••••••" />
-               
+               <Input label={isRtl ? 'كلمة المرور الحالية' : 'Current Password'} icon={Lock} type="password" value={form.currentPassword} onChange={(e: any) => setForm(f => ({ ...f, currentPassword: e.target.value }))} placeholder="••••••••" />
+               <div className="grid grid-cols-2 gap-6">
+                  <Input label={isRtl ? 'كلمة المرور الجديدة' : 'New Password'} icon={Key} type="password" value={form.password} onChange={(e: any) => setForm(f => ({ ...f, password: e.target.value }))} placeholder="••••••••" />
+                  <Input label={isRtl ? 'تأكيد كلمة المرور' : 'Confirm Password'} icon={CheckCircle2} type="password" value={form.confirmPassword} onChange={(e: any) => setForm(f => ({ ...f, confirmPassword: e.target.value }))} placeholder="••••••••" />
+               </div>
+
                <div className="flex justify-end gap-4 pt-8 border-t border-[var(--border)]">
-                  <button className="btn-ghost px-10 h-12" onClick={() => setEditOpen(false)}>{t.cancel}</button>
-                  <button className="btn-primary px-10 h-12" onClick={() => updateMutation.mutate(form)} disabled={updateMutation.isPending}>{t.save}</button>
+                  <button className="clean-btn-secondary px-10 h-12" onClick={() => setEditOpen(false)}>{t.cancel}</button>
+                  <button className="clean-btn-primary px-10 h-12" onClick={() => {
+                     if (form.password) {
+                        if (!form.currentPassword) return toast.error(isRtl ? 'يرجى إدخال كلمة المرور الحالية' : 'Current password is required');
+                        if (form.password !== form.confirmPassword) return toast.error(isRtl ? 'كلمات المرور غير متطابقة' : 'Passwords do not match');
+                     }
+                     if (confirm(isRtl ? 'هل أنت متأكد من حفظ التغييرات؟' : 'Are you sure you want to save?')) {
+                        updateMutation.mutate(form);
+                     }
+                  }} disabled={updateMutation.isPending}>{t.save}</button>
                </div>
             </div>
          </Modal>

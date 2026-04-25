@@ -101,9 +101,9 @@ export function TasksPage() {
   const exportTasks = () => {
     const csv = [
       ['Title', 'Project', 'Assignee', 'Status', 'Priority', 'Due Date'],
-      ...tasks.map((t: any) => [t.title, t.project?.name, t.assignee?.firstName, t.status, t.priority, t.dueDate])
+      ...tasks.map((t: any) => [`"${t.title}"`, `"${t.project?.name}"`, `"${t.assignee?.firstName}"`, `"${t.status}"`, `"${t.priority}"`, `"${t.dueDate}"`])
     ].map(e => e.join(",")).join("\n");
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
@@ -130,8 +130,8 @@ export function TasksPage() {
   const saveMutation = useMutation({
     mutationFn: () => editingId ? api.patch(`/tasks/${editingId}`, form) : api.post('/tasks', form),
     onSuccess: () => { 
+      setEditOpen(false);
       qc.invalidateQueries({ queryKey: ['tasks'] }); 
-      setEditOpen(false); 
       toast.success(isRtl ? 'تم حفظ التغييرات' : 'Operational Update Success'); 
     },
     onError: (err: any) => {
@@ -159,11 +159,11 @@ export function TasksPage() {
         description={t.tasksSub}
         action={
           <div className="flex gap-3">
-            <button onClick={exportTasks} className="btn-ghost h-12 gap-2 text-[10px] uppercase tracking-widest">
+            <button onClick={exportTasks} className="clean-btn-secondary h-12 gap-2 text-[10px] uppercase tracking-widest">
               <Download size={16} /> {isRtl ? 'تصدير' : 'Export'}
             </button>
             {isAdminOrManager && (
-              <button onClick={() => { setEditingId(null); setForm({ title: '', description: '', priority: 'MEDIUM', projectId: '', assigneeId: '', dueDate: '', status: 'TODO' }); setEditOpen(true); }} className="btn-primary h-12 gap-2 text-[10px] uppercase tracking-widest shadow-brand/20">
+              <button onClick={() => { setEditingId(null); setForm({ title: '', description: '', priority: 'MEDIUM', projectId: '', assigneeId: '', dueDate: '', status: 'TODO' }); setEditOpen(true); }} className="clean-btn-primary h-12 gap-2 text-[10px] uppercase tracking-widest shadow-brand/20">
                 <Plus size={16} /> {t.newTask}
               </button>
             )}
@@ -276,8 +276,12 @@ export function TasksPage() {
             <Select label={t.status} icon={CheckCircle2} value={form.status} options={['TODO', 'IN_PROGRESS', 'IN_REVIEW', 'DONE'].map(s => ({ value: s, label: s }))} onChange={(e: any) => setForm(f => ({ ...f, status: e.target.value }))} />
 
             <div className="flex justify-end gap-4 pt-12 border-t border-[var(--border)]">
-              <button className="btn-ghost px-10" onClick={() => setEditOpen(false)}>{t.cancel}</button>
-              <button className="btn-primary px-10" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>{t.save}</button>
+              <button className="clean-btn-secondary px-10" onClick={() => setEditOpen(false)}>{t.cancel}</button>
+              <button className="clean-btn-primary px-10" onClick={() => {
+                if (confirm(isRtl ? 'هل أنت متأكد من حفظ البيانات؟' : 'Are you sure you want to save?')) {
+                  saveMutation.mutate()
+                }
+              }} disabled={saveMutation.isPending}>{t.save}</button>
             </div>
           </div>
 

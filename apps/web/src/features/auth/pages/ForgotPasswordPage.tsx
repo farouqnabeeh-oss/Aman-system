@@ -37,12 +37,12 @@ export function ForgotPasswordPage() {
               </div>
               <p className="text-text-primary font-medium">Check your email</p>
               <p className="text-sm text-text-muted">If that email exists, a reset link has been sent.</p>
-              <Link to="/login" className="btn-primary inline-flex">Back to Login</Link>
+              <Link to="/login" className="clean-btn-primary inline-flex">Back to Login</Link>
             </div>
           ) : (
             <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
               <Input label="Email address" type="email" placeholder="name@company.com" {...register('email', { required: true })} />
-              <button type="submit" disabled={mutation.isPending} className="btn-primary w-full">
+              <button type="submit" disabled={mutation.isPending} className="clean-btn-primary w-full h-12">
                 {mutation.isPending ? <Spinner size="sm" /> : null} Send Reset Link
               </button>
             </form>

@@ -18,7 +18,7 @@ const TRANSLATIONS = {
     users: 'إدارة الكوادر البشرية',
     usersSub: 'التحكم في صلاحيات الفريق ومراقبة مستويات الأداء',
     addUser: 'إضافة عضو جديد',
-    search: 'البحث في قاعدة البيانات...',
+    search: 'البحث عن موظف',
     allRoles: 'كل الصلاحيات',
     allStatus: 'كل الحالات',
     totalTeam: 'إجمالي الفريق',
@@ -39,7 +39,7 @@ const TRANSLATIONS = {
     users: 'Human Capital',
     usersSub: 'Strategic oversight of team permissions and operational velocity',
     addUser: 'Deploy Member',
-    search: 'Search personnel database...',
+    search: 'Search team member...',
     allRoles: 'All Protocols',
     allStatus: 'All Statuses',
     totalTeam: 'Total Personnel',
@@ -78,12 +78,18 @@ export function UsersPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['users', page, search, roleFilter, statusFilter],
-    queryFn: () => api.get<any>('/users', { params: { page, limit: 12, search: search || undefined, role: roleFilter || undefined, status: statusFilter || undefined } }).then((r) => r.data.data),
+    queryFn: () => api.get<any>('/users', { params: { page, limit: 12, sortBy: 'createdAt', sortOrder: 'desc', search: search || undefined, role: roleFilter || undefined, status: statusFilter || undefined } }).then((r) => r.data.data),
   });
 
   const saveMutation = useMutation({
     mutationFn: (dto: typeof form) => editingId ? api.patch(`/users/${editingId}`, dto) : api.post('/users', dto),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['users'] }); setEditOpen(false); toast.success('Protocol Successful'); },
+    onSuccess: () => { 
+      setEditOpen(false); 
+      qc.invalidateQueries({ queryKey: ['users'] }); 
+      qc.invalidateQueries({ queryKey: ['users-list'] });
+      setPage(1); 
+      toast.success('Protocol Successful'); 
+    },
   });
 
   const deleteMutation = useMutation({
@@ -97,18 +103,24 @@ export function UsersPage() {
     setEditOpen(true);
   };
 
-  const exportUsers = () => {
-    const csv = [
-      ['Name', 'Email', 'Role', 'Department', 'Position'],
-      ...users.map((u: any) => [`${u.firstName} ${u.lastName}`, u.email, u.role, u.department, u.position])
-    ].map(e => e.join(",")).join("\n");
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `team_report_${new Date().toISOString().slice(0,10)}.csv`);
-    link.click();
-    toast.success(isRtl ? 'تم تصدير الفريق' : 'Team exported');
+  const exportUsers = async () => {
+    try {
+      const res = await api.get('/users', { params: { limit: 10000, page: 1, sortBy: 'createdAt', sortOrder: 'desc' } });
+      const allUsers = res.data.data.items || [];
+      const csv = [
+        ['Name', 'Email', 'Role', 'Department', 'Position'],
+        ...allUsers.map((u: any) => [`"${u.firstName} ${u.lastName}"`, `"${u.email}"`, `"${u.role}"`, `"${u.department || ''}"`, `"${u.position || ''}"`])
+      ].map(e => e.join(",")).join("\n");
+      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `team_report_${new Date().toISOString().slice(0,10)}.csv`);
+      link.click();
+      toast.success(isRtl ? 'تم تصدير الفريق' : 'Team exported');
+    } catch (error) {
+      toast.error('Export failed');
+    }
   };
 
   const users = data?.items || [];
@@ -216,7 +228,11 @@ export function UsersPage() {
 
           <div className="flex justify-end gap-4 mt-12 py-6 border-t border-white/5">
             <button className="clean-btn-secondary px-10" onClick={() => setEditOpen(false)}>{t.cancel}</button>
-            <button className="clean-btn-primary px-10" onClick={() => saveMutation.mutate(form)}>{t.save}</button>
+            <button className="clean-btn-primary px-10" onClick={() => {
+              if (confirm(isRtl ? 'هل أنت متأكد من حفظ البيانات؟' : 'Are you sure you want to save?')) {
+                saveMutation.mutate(form);
+              }
+            }}>{t.save}</button>
           </div>
         </div>
       </Modal>

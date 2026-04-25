@@ -82,7 +82,7 @@ export function PayrollPage() {
 
    const createMutation = useMutation({
       mutationFn: () => api.post('/payroll', { ...form, month: parseInt(form.month), year: parseInt(form.year), baseSalary: parseFloat(form.baseSalary), allowances: parseFloat(form.allowances || '0'), deductions: parseFloat(form.deductions || '0'), bonus: parseFloat(form.bonus || '0') }),
-      onSuccess: () => { qc.invalidateQueries({ queryKey: ['payroll'] }); setCreateOpen(false); toast.success('Created'); },
+      onSuccess: () => { setCreateOpen(false); qc.invalidateQueries({ queryKey: ['payroll'] }); toast.success('Created'); },
    });
 
    const markPaid = useMutation({
@@ -95,8 +95,8 @@ export function PayrollPage() {
    const cols = [
       { key: 'user', label: t.employee, render: (r: any) => <span className="text-sm font-bold text-white">{r.user?.firstName} {r.user?.lastName}</span> },
       { key: 'period', label: t.period, render: (r: any) => <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">{MONTHS[r.month - 1]} {r.year}</span> },
-      { key: 'base', label: t.base, render: (r: any) => <span className="text-sm font-bold text-slate-400">${r.baseSalary.toLocaleString()}</span> },
-      { key: 'net', label: t.net, render: (r: any) => <span className="text-base font-black text-white">${r.netSalary.toLocaleString()}</span> },
+      { key: 'base', label: t.base, render: (r: any) => <span className="text-sm font-bold text-slate-400">₪{r.baseSalary.toLocaleString()}</span> },
+      { key: 'net', label: t.net, render: (r: any) => <span className="text-base font-black text-white">₪{r.netSalary.toLocaleString()}</span> },
       {
          key: 'status', label: t.status, render: (r: any) => r.isPaid ?
             <span className="text-[10px] font-black text-white bg-white/5 border border-white/10 px-3 py-1.5 rounded-xl uppercase tracking-widest">{t.paid}</span> :
@@ -104,7 +104,7 @@ export function PayrollPage() {
       },
       {
          key: 'action', label: '', render: (r: any) => !r.isPaid && (
-            <button onClick={() => markPaid.mutate(r.id)} className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-all"><Check size={14} /></button>
+            <button onClick={() => { if (confirm(isRtl ? 'هل أنت متأكد من صرف الراتب؟' : 'Authorize payment?')) markPaid.mutate(r.id) }} className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-all"><Check size={14} /></button>
          )
       }
    ];
@@ -139,7 +139,7 @@ export function PayrollPage() {
             </div>
 
             <div className="space-y-6">
-               <StatCard label={t.ytd} value={`$${(totalYTD / 1000).toFixed(1)}K`} icon={<CreditCard size={24} />} />
+               <StatCard label={t.ytd} value={`₪${(totalYTD / 1000).toFixed(1)}K`} icon={<CreditCard size={24} />} />
                <div className="clean-card !p-8">
                   <h4 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-6">Payment Overview</h4>
                   <div className="space-y-4">
@@ -184,7 +184,7 @@ export function PayrollPage() {
 
                <div className="flex justify-end gap-4 mt-12 py-6 border-t border-white/5">
                   <button className="clean-btn-secondary px-10" onClick={() => setCreateOpen(false)}>{t.cancel}</button>
-                  <button className="clean-btn-primary px-10" onClick={() => createMutation.mutate()}>{t.save}</button>
+                  <button className="clean-btn-primary px-10" onClick={() => { if (confirm(isRtl ? 'هل أنت متأكد من حفظ السجل؟' : 'Confirm record creation?')) createMutation.mutate(); }} disabled={createMutation.isPending}> {t.save}</button>
                </div>
             </div>
          </Modal>
