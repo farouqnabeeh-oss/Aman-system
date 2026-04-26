@@ -13,10 +13,9 @@ import { Modal } from '@/components/ui/Modal';
 import { Input, Select } from '@/components/ui/Input';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
-import { getSMClients, updateSMDetails, rateEmployee, getPeerRatings, getDeptMembers } from '@/lib/actions/social-media';
+import { getSMClients, updateSMDetails, rateEmployee, getPeerRatings, getDeptMembers, getSMStats } from '@/lib/actions/social-media';
 import toast from 'react-hot-toast';
-
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 const T = {
     ar: {
@@ -81,6 +80,14 @@ export default function SocialMediaPage() {
         }
     });
 
+    const { data: stats } = useQuery({
+        queryKey: ['sm-stats'],
+        queryFn: async () => {
+            const res = await getSMStats();
+            return res.data || {};
+        }
+    });
+
     const tabs = [
         { key: 'clients' as const, label: t.clients, icon: LayoutDashboard },
         { key: 'writer' as const, label: t.writer, icon: PenTool },
@@ -89,8 +96,16 @@ export default function SocialMediaPage() {
     ];
 
     return (
-        <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-8">
+        <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-6">
             <PageHeader title={t.title} description={t.subtitle} />
+
+            {/* Stats Bar */}
+            <motion.div variants={fadeIn} className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatCard label={isRtl ? 'إجمالي العملاء' : 'Total Clients'} value={stats?.totalClients || 0} icon={<Users size={18} />} />
+                <StatCard label={isRtl ? 'محتوى معتمد' : 'Approved Content'} value={stats?.approvedContent || 0} icon={<CheckCircle size={18} />} trend="up" />
+                <StatCard label={isRtl ? 'تصاميم منجزة' : 'Designs Done'} value={stats?.doneDesigns || 0} icon={<ImageIcon size={18} />} delta={`/${stats?.totalDesigns || 0}`} />
+                <StatCard label={isRtl ? 'فيديوهات منجزة' : 'Videos Done'} value={stats?.doneVideos || 0} icon={<Video size={18} />} delta={`/${stats?.totalVideos || 0}`} />
+            </motion.div>
 
             {/* Role Indicator */}
             <div className="flex items-center gap-4 bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 shadow-sm">
@@ -395,12 +410,14 @@ function TeamTab({ t, isRtl }: any) {
     });
 
     const handleSubmit = async () => {
-        if (!rating.receiverId) return;
+        if (!rating.receiverId) { toast.error(isRtl ? 'يرجى اختيار زميل' : 'Please select a colleague'); return; }
         const res = await rateEmployee(rating.receiverId, rating.stars, rating.comment);
         if (res.success) {
-            toast.success('Rating Submitted');
+            toast.success(isRtl ? 'تم إرسال التقييم بنجاح! سيصل إشعار للزميل' : 'Rating submitted! Colleague notified.');
             setRating({ stars: 5, comment: '', receiverId: '' });
             refetchFeed();
+        } else {
+            toast.error(res.message || 'Failed to submit rating');
         }
     };
 

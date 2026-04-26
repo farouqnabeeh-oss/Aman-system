@@ -11,7 +11,7 @@ export async function getNotifications() {
     const notifications = await prisma.notification.findMany({
       where: { userId: session.userId },
       orderBy: { createdAt: 'desc' },
-      take: 50,
+      take: 100,
     });
     return { success: true, data: notifications };
   } catch (err) {
@@ -34,9 +34,40 @@ export async function markAsRead(id: string) {
   }
 }
 
+export async function markAllNotificationsRead() {
+  const session = await getSession();
+  if (!session) return { success: false, message: 'Unauthorized' };
+
+  try {
+    await prisma.notification.updateMany({
+      where: { userId: session.userId, isRead: false },
+      data: { isRead: true },
+    });
+    return { success: true };
+  } catch (err) {
+    return { success: false, message: 'Failed to mark all as read' };
+  }
+}
+
+export async function getUnreadCount() {
+  const session = await getSession();
+  if (!session) return { success: false, data: 0 };
+
+  try {
+    const count = await prisma.notification.count({
+      where: { userId: session.userId, isRead: false },
+    });
+    return { success: true, data: count };
+  } catch {
+    return { success: false, data: 0 };
+  }
+}
+
 export async function getAuditLogs() {
   const session = await getSession();
-  if (!session || (session.role !== 'SUPER_ADMIN' && session.role !== 'ADMIN')) return { success: false, message: 'Unauthorized' };
+  if (!session || !['SUPER_ADMIN', 'ADMIN', 'MANAGER'].includes(session.role)) {
+    return { success: false, message: 'Unauthorized' };
+  }
 
   try {
     const logs = await prisma.auditLog.findMany({
@@ -44,7 +75,7 @@ export async function getAuditLogs() {
       include: {
         user: { select: { firstName: true, lastName: true, email: true } },
       },
-      take: 100,
+      take: 200,
     });
 
     const mapped = logs.map(l => ({

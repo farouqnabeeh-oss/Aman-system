@@ -2,8 +2,14 @@
 
 import { prisma } from '@/lib/prisma';
 import { getSession } from './auth';
-import { revalidatePath } from 'next/cache';
 import { logAction } from '@/lib/audit';
+import { revalidatePath } from 'next/cache';
+
+async function createNotification(userId: string, type: string, title: string, message: string, actionUrl?: string) {
+  try {
+    await prisma.notification.create({ data: { userId, type, title, message, actionUrl } });
+  } catch (e) { console.error('Notification error:', e); }
+}
 
 export async function getSMClients() {
   const session = await getSession();
@@ -11,12 +17,10 @@ export async function getSMClients() {
 
   try {
     const clients = await prisma.client.findMany({
-      where: { status: 'AGREED' },
-      include: {
-        smDetails: true,
-      },
+      where: { status: 'AGREED', deletedAt: null } as any,
+      include: { smDetails: true },
+      orderBy: { createdAt: 'desc' },
     });
-
     return { success: true, data: clients };
   } catch (err) {
     return { success: false, message: 'Failed to fetch clients' };
@@ -58,6 +62,10 @@ export async function rateEmployee(receiverId: string, stars: number, comment?: 
   const session = await getSession();
   if (!session) return { success: false, message: 'Unauthorized' };
 
+  if (receiverId === session.userId) {
+    return { success: false, message: 'You cannot rate yourself' };
+  }
+
   try {
     const rating = await prisma.rating.create({
       data: {
@@ -67,6 +75,21 @@ export async function rateEmployee(receiverId: string, stars: number, comment?: 
         comment,
       },
     });
+
+    // Notify the rated employee
+    const giver = await prisma.user.findUnique({
+      where: { id: session.userId },
+      select: { firstName: true, lastName: true },
+    });
+
+    const starEmoji = '⭐'.repeat(Math.min(stars, 5));
+    await createNotification(
+      receiverId,
+      'INFO',
+      `${starEmoji} تقييم جديد`,
+      `${giver?.firstName} ${giver?.lastName} قيّمك بـ ${stars}/5 نجوم.${comment ? ` "${comment}"` : ''}`,
+      '/social-media'
+    );
 
     await logAction({
       userId: session.userId,
@@ -85,21 +108,45 @@ export async function rateEmployee(receiverId: string, stars: number, comment?: 
 export async function getPeerRatings(userId: string) {
   const session = await getSession();
   const targetId = userId === 'current' ? session?.userId : userId;
-  
+
   if (!targetId) return { success: false, message: 'Invalid User ID' };
 
   try {
     const ratings = await prisma.rating.findMany({
       where: { receiverId: targetId },
       include: {
-        giver: { select: { firstName: true, lastName: true } },
+        giver: { select: { firstName: true, lastName: true, position: true } },
       },
       orderBy: { createdAt: 'desc' },
+      take: 20,
     });
 
     return { success: true, data: ratings };
   } catch (err) {
     return { success: false, message: 'Failed to fetch ratings' };
+  }
+}
+
+export async function getMyRatings() {
+  const session = await getSession();
+  if (!session) return { success: false, message: 'Unauthorized' };
+
+  try {
+    const ratings = await prisma.rating.findMany({
+      where: { receiverId: session.userId },
+      include: {
+        giver: { select: { firstName: true, lastName: true, position: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const avg = ratings.length > 0 
+      ? ratings.reduce((acc, r) => acc + r.stars, 0) / ratings.length 
+      : 0;
+
+    return { success: true, data: { ratings, avgRating: avg, totalRatings: ratings.length } };
+  } catch (err) {
+    return { success: false, message: 'Failed to fetch my ratings' };
   }
 }
 
@@ -110,22 +157,54 @@ export async function getDeptMembers() {
   try {
     const user = await prisma.user.findUnique({
       where: { id: session.userId },
-      select: { department: true }
+      select: { department: true },
     });
 
-    if (!user?.department) return { success: true, data: [] };
-
+    // If no department or super admin - return all users except self
     const members = await prisma.user.findMany({
-      where: { 
-        department: user.department,
+      where: {
+        ...(user?.department ? { department: user.department } : {}),
         id: { not: session.userId },
-        deletedAt: null
+        deletedAt: null,
       },
-      select: { id: true, firstName: true, lastName: true, position: true }
+      select: { id: true, firstName: true, lastName: true, position: true, department: true },
+      orderBy: { firstName: 'asc' },
     });
 
     return { success: true, data: members };
   } catch (err) {
     return { success: false, message: 'Failed to fetch members' };
+  }
+}
+
+export async function getSMStats() {
+  const session = await getSession();
+  if (!session) return { success: false, message: 'Unauthorized' };
+
+  try {
+    const [totalClients, pendingContent, approvedContent] = await Promise.all([
+      prisma.sMClientDetails.count(),
+      prisma.sMClientDetails.count({ where: { contentStatus: 'PENDING' } }),
+      prisma.sMClientDetails.count({ where: { contentStatus: 'APPROVED' } }),
+    ]);
+
+    const designStats = await prisma.sMClientDetails.aggregate({
+      _sum: { targetDesigns: true, doneDesigns: true, targetVideos: true, doneVideos: true },
+    });
+
+    return {
+      success: true,
+      data: {
+        totalClients,
+        pendingContent,
+        approvedContent,
+        totalDesigns: designStats._sum.targetDesigns || 0,
+        doneDesigns: designStats._sum.doneDesigns || 0,
+        totalVideos: designStats._sum.targetVideos || 0,
+        doneVideos: designStats._sum.doneVideos || 0,
+      }
+    };
+  } catch (err) {
+    return { success: false, message: 'Failed to fetch stats' };
   }
 }

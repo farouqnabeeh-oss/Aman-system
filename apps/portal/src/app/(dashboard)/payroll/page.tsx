@@ -74,22 +74,31 @@ export default function PayrollPage() {
 
   const createMutation = useMutation({
     mutationFn: (data: any) => createPayrollRecord(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['payroll'] });
-      setIsModalOpen(false);
-      toast.success(isRtl ? 'تم إنشاء سجل الراتب' : 'Payroll record created');
-    }
+    onSuccess: (res) => {
+      if (res.success) {
+        queryClient.invalidateQueries({ queryKey: ['payroll'] });
+        setIsModalOpen(false);
+        setForm({ userId: '', month: new Date().getMonth() + 1, year: new Date().getFullYear(), baseSalary: 0, allowances: 0, deductions: 0 });
+        toast.success(isRtl ? 'تم إنشاء سجل الراتب بنجاح' : 'Payroll record created successfully');
+      } else {
+        toast.error(res.message || 'Failed to create record');
+      }
+    },
+    onError: () => toast.error('An error occurred'),
   });
 
   const handleCreate = () => {
+    if (!form.userId) { toast.error(isRtl ? 'يرجى اختيار موظف' : 'Please select an employee'); return; }
+    if (!form.baseSalary || Number(form.baseSalary) <= 0) { toast.error(isRtl ? 'الراتب الأساسي يجب أن يكون أكبر من صفر' : 'Base salary must be greater than 0'); return; }
     const net = Number(form.baseSalary) + Number(form.allowances) - Number(form.deductions);
     createMutation.mutate({
-        ...form,
+        userId: form.userId,
+        month: Number(form.month),
+        year: Number(form.year),
         baseSalary: Number(form.baseSalary),
         allowances: Number(form.allowances),
         deductions: Number(form.deductions),
         netSalary: net,
-        isPaid: false
     });
   };
 
@@ -131,7 +140,7 @@ export default function PayrollPage() {
           <div>
             <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{isRtl ? 'إجمالي الرواتب' : 'Total Payroll'}</p>
             <p className="text-xl font-black text-slate-900 mt-1">
-              {records?.reduce((acc: number, curr: any) => acc + Number(curr.netSalary), 0).toLocaleString()}
+              ₪{records?.reduce((acc: number, curr: any) => acc + Number(curr.netSalary), 0).toLocaleString()}
             </p>
           </div>
         </div>
@@ -170,9 +179,9 @@ export default function PayrollPage() {
                       <span className="text-[10px] font-black uppercase">{r.month}/{r.year}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-tight">${Number(r.baseSalary).toLocaleString()}</td>
+                  <td className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-tight">₪{Number(r.baseSalary).toLocaleString()}</td>
                   <td className="px-6 py-4">
-                    <span className="text-sm font-black text-slate-900 tracking-tighter">${Number(r.netSalary).toLocaleString()}</span>
+                    <span className="text-sm font-black text-slate-900 tracking-tighter">₪{Number(r.netSalary).toLocaleString()}</span>
                   </td>
                   <td className="px-6 py-4 text-center">
                     <div className="flex justify-center">
@@ -249,7 +258,7 @@ export default function PayrollPage() {
               </div>
               <div className="p-4 rounded-2xl bg-brand/5 border border-brand/10 flex justify-between items-center">
                   <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t.net}</p>
-                  <p className="text-xl font-black text-brand">${(Number(form.baseSalary) + Number(form.allowances) - Number(form.deductions)).toLocaleString()}</p>
+                  <p className="text-xl font-black text-brand">₪{(Number(form.baseSalary) + Number(form.allowances) - Number(form.deductions)).toLocaleString()}</p>
               </div>
               <div className="flex justify-end gap-3 pt-4">
                   <button onClick={() => setIsModalOpen(false)} className="px-6 py-2.5 rounded-xl bg-slate-50 text-[10px] font-black text-slate-500 uppercase tracking-widest hover:bg-slate-100">

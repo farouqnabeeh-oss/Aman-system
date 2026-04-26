@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import { clsx } from 'clsx';
 
 import { getAttendanceToday, getLeaveRequests, selfAttendance, requestLeave, updateLeaveStatus } from '@/lib/actions/hr';
+import { getPayrollRecords } from '@/lib/actions/payroll';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Modal } from '@/components/ui/Modal';
 import { Input, Select } from '@/components/ui/Input';
@@ -71,6 +72,14 @@ export default function HrPage() {
       return res.data || [];
     },
     enabled: tab === 'leaves',
+  });
+
+  const { data: payrollData } = useQuery({
+    queryKey: ['payroll'],
+    queryFn: async () => {
+      const res = await getPayrollRecords();
+      return res.data || [];
+    },
   });
 
   const attendanceMutation = useMutation({
@@ -157,9 +166,9 @@ export default function HrPage() {
                 </button>
             </div>
         </div>
-        <StatCard label={t.onLeave} value={SAMPLE_LEAVES.filter(l => l.status === 'APPROVED').length} icon={<Calendar size={18} />} />
+        <StatCard label={t.onLeave} value={SAMPLE_LEAVES.filter((l: any) => l.status === 'APPROVED').length} icon={<Calendar size={18} />} />
         <StatCard label={t.late} value={lateCount} icon={<Clock size={18} />} trend="down" delta={String(lateCount)} />
-        <StatCard label={t.totalPayroll} value="$42.5k" icon={<Briefcase size={18} />} />
+        <StatCard label={t.totalPayroll} value={`₪${payrollData?.reduce((a: number, r: any) => a + Number(r.netSalary), 0).toLocaleString() || '0'}`} icon={<Briefcase size={18} />} />
       </motion.div>
 
       {/* Tabs */}

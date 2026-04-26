@@ -2,7 +2,14 @@
 
 import { prisma } from '@/lib/prisma';
 import { getSession } from './auth';
+import { logAction } from '@/lib/audit';
 import { revalidatePath } from 'next/cache';
+
+async function createNotification(userId: string, type: string, title: string, message: string, actionUrl?: string) {
+  try {
+    await prisma.notification.create({ data: { userId, type, title, message, actionUrl } });
+  } catch (e) { console.error('Notification error:', e); }
+}
 
 export async function getAcquisitionStats() {
   try {
@@ -82,6 +89,23 @@ export async function createClientLead(data: any) {
         } : {})
       },
     });
+
+    await logAction({
+      userId: session.userId,
+      action: 'CREATE',
+      entity: 'Client',
+      entityId: client.id,
+      newValues: { name: clientData.name, status: clientData.status },
+    });
+
+    // Notify managers about new lead
+    const managers = await prisma.user.findMany({
+      where: { role: { in: ['ADMIN', 'SUPER_ADMIN', 'MANAGER'] }, deletedAt: null },
+      select: { id: true },
+    });
+    await Promise.all(managers.map(m =>
+      createNotification(m.id, 'INFO', '🎯 عميل محتمل جديد', `تمت إضافة عميل جديد: ${clientData.name} - الحالة: ${clientData.status}`, '/acquisition')
+    ));
 
     revalidatePath('/acquisition');
     return { success: true, data: client };
