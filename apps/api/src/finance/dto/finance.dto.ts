@@ -20,7 +20,7 @@ export class CreateTransactionDto {
 export class TransactionFiltersDto {
   @IsEnum(TransactionType) @IsOptional() type?: TransactionType;
   @IsEnum(TransactionStatus) @IsOptional() status?: TransactionStatus;
-  @IsEnum(Department) @IsOptional() department?: Department;
+  @IsString() @IsOptional() department?: string;
   @IsString() @IsOptional() category?: string;
   @IsString() @IsOptional() search?: string;
   @IsString() @IsOptional() dateFrom?: string;

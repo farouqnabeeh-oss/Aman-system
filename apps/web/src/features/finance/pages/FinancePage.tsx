@@ -266,7 +266,7 @@ function Transactions() {
           </div>
           <Textarea label={t.description} icon={Layers} value={form.description} onChange={(e: any) => setForm(f => ({ ...f, description: e.target.value }))} />
           <div className="grid grid-cols-2 gap-6">
-            <Select label={t.department} icon={Users} value={form.department} options={['ENGINEERING', 'FINANCE', 'HR', 'MARKETING', 'OPERATIONS'].map(d => ({ value: d, label: d }))} onChange={(e: any) => setForm(f => ({ ...f, department: e.target.value }))} />
+            <Input label={t.department} icon={Users} value={form.department} onChange={(e: any) => setForm(f => ({ ...f, department: e.target.value }))} />
             <Input label={t.category} icon={Zap} value={form.category} onChange={(e: any) => setForm(f => ({ ...f, category: e.target.value }))} />
           </div>
           <div className="flex justify-end gap-4 mt-12 py-6 border-t border-white/5">

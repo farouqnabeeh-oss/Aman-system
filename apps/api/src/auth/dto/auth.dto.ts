@@ -41,7 +41,7 @@ export class RegisterDto {
   role?: UserRole;
 
   
-  @IsEnum(Department)
+  @IsString()
   @IsOptional()
   department?: Department;
 }

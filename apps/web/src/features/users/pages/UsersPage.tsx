@@ -250,7 +250,7 @@ export function UsersPage() {
 
           <div className="grid grid-cols-2 gap-6">
             <Select label={t.role} icon={ShieldCheck} value={form.role} options={['MANAGER', 'EMPLOYEE'].map(r => ({ value: r, label: r }))} onChange={(e: any) => setForm(f => ({ ...f, role: e.target.value }))} />
-            <Select label={t.dept} icon={Zap} value={form.department} options={['ENGINEERING', 'FINANCE', 'HR', 'MARKETING', 'OPERATIONS'].map(d => ({ value: d, label: d }))} onChange={(e: any) => setForm(f => ({ ...f, department: e.target.value }))} />
+            <Input label={t.dept} icon={Zap} value={form.department} onChange={(e: any) => setForm(f => ({ ...f, department: e.target.value }))} />
           </div>
 
           <div className="flex justify-end gap-4 mt-12 py-6 border-t border-white/5">

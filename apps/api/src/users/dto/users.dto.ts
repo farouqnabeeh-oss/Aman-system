@@ -33,7 +33,7 @@ export class UserFiltersDto {
   @IsString() @IsOptional() search?: string;
   @IsEnum(UserRole) @IsOptional() role?: UserRole;
   @IsEnum(UserStatus) @IsOptional() status?: UserStatus;
-  @IsEnum(Department) @IsOptional() department?: Department;
+  @IsString() @IsOptional() department?: string;
   @Type(() => Number) page: number = 1;
   @Type(() => Number) limit: number = 20;
   @IsIn(['firstName', 'lastName', 'email', 'createdAt', 'role']) @IsOptional() sortBy: string = 'createdAt';

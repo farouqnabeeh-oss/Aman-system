@@ -14,7 +14,7 @@ class CreateProjectDto {
   @IsString() @IsOptional() description?: string;
   @IsString() managerId!: string;
   @IsString() @IsOptional() clientId?: string;
-  @IsEnum(Department) @IsOptional() department?: Department;
+  @IsString() @IsOptional() department?: string;
   @IsString() startDate!: string;
   @IsString() @IsOptional() endDate?: string;
   @IsNumber() @IsPositive() @IsOptional() budget?: number;

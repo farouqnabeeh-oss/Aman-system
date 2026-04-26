@@ -259,7 +259,7 @@ export function ProjectsPage() {
 
           <div className="grid grid-cols-2 gap-6">
             <Select label={t.manager} icon={Users} value={form.managerId} onChange={(e: any) => setForm(f => ({ ...f, managerId: e.target.value }))} options={(userData ?? []).map((u: any) => ({ value: u.id, label: `${u.firstName} ${u.lastName}` }))} />
-            <Select label={t.dept} icon={Zap} value={form.department} onChange={(e: any) => setForm(f => ({ ...f, department: e.target.value }))} options={['ENGINEERING', 'FINANCE', 'HR', 'MARKETING', 'OPERATIONS'].map(d => ({ value: d, label: d }))} />
+            <Input label={t.dept} icon={Zap} value={form.department} onChange={(e: any) => setForm(f => ({ ...f, department: e.target.value }))} />
           </div>
 
           <div className="grid grid-cols-2 gap-6">

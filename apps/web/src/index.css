@@ -8,9 +8,9 @@
 @layer base {
   :root {
     /* Sky Blue Theme - Dark Mode (Base) */
-    --brand: 14 165 233;
-    --brand-light: 56 189 248;
-    --brand-glow: rgba(14, 165, 233, 0.4);
+    --brand: 28 147 178;
+    --brand-light: 86 189 218;
+    --brand-glow: rgba(28, 147, 178, 0.4);
 
     --bg-base: #020617;
     /* Deep Navy */
@@ -33,28 +33,7 @@
     --gradient-2: radial-gradient(ellipse 60% 40% at 80% 110%, rgba(56, 189, 248, 0.1) 0%, transparent 60%);
   }
 
-  :root.light {
-    /* Sky Blue Theme - Light Mode */
-    --bg-base: #f8fafc;
-    /* Lighter background */
-    --bg-surface: #ffffff;
-    --bg-card: rgba(255, 255, 255, 0.8);
-    --bg-glass: rgba(14, 165, 233, 0.04);
 
-    --border: rgba(14, 165, 233, 0.15);
-    --border-hover: rgba(14, 165, 233, 0.3);
-
-    --text-1: #0f172a;
-    --text-2: #334155;
-    --text-3: #64748b;
-    --text-4: #94a3b8;
-
-    --bg-sidebar: #ffffff;
-    --bg-topbar: rgba(255, 255, 255, 0.8);
-
-    --gradient-1: radial-gradient(ellipse 80% 50% at 20% -10%, rgba(14, 165, 233, 0.15) 0%, transparent 60%);
-    --gradient-2: radial-gradient(ellipse 60% 40% at 80% 110%, rgba(14, 165, 233, 0.1) 0%, transparent 60%);
-  }
 
   * {
     box-sizing: border-box;
