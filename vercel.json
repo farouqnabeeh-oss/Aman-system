@@ -1,5 +1,5 @@
 {
   "name": "aman-portal-final",
-  "buildCommand": "pnpm install && turbo run build --filter=portal",
+  "buildCommand": "pnpm exec prisma generate --schema=apps/portal/prisma/schema.prisma && turbo run build --filter=portal",
   "outputDirectory": "apps/portal/.next"
 }
