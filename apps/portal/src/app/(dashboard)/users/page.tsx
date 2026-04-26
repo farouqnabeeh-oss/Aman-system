@@ -119,10 +119,10 @@ export default function UsersPage() {
     setSaving(true);
     try {
       if (editingId) {
-        const { password, email, ...updateData } = form;
+        const { password, email, customDept, ...updateData } = form;
         const res = await updateUser(editingId, {
           ...updateData,
-          department: updateData.department === 'OTHER' ? updateData.customDept : (updateData.department || null),
+          department: updateData.department === 'OTHER' ? customDept : (updateData.department || null),
           ...(password ? { password } : {}),
         } as any);
         if (res.success) {
@@ -133,9 +133,10 @@ export default function UsersPage() {
           toast.error(res.error || 'Update failed');
         }
       } else {
-        const finalDept = form.department === 'OTHER' ? form.customDept : form.department;
+        const { customDept, ...formData } = form;
+        const finalDept = formData.department === 'OTHER' ? customDept : formData.department;
         const res = await createUser({
-          ...form,
+          ...formData,
           department: finalDept || null,
         } as any);
         if (res.success) {
@@ -151,6 +152,7 @@ export default function UsersPage() {
     }
     setSaving(false);
   };
+
 
   const handleDelete = async (id: string) => {
     if (!confirm(t.deleteConfirm)) return;

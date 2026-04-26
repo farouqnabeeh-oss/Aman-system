@@ -91,10 +91,10 @@ export default function FinancePage() {
             </div>
             
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              <div className="lg:col-span-8 glass-card !p-10 border-white/5 bg-white/[0.02]">
+              <div className="lg:col-span-8 glass-card !p-10 border-slate-100 bg-white shadow-sm">
                 <div className="flex items-center justify-between mb-10">
                     <div>
-                        <h3 className="text-sm font-black text-white uppercase tracking-tight mb-1">Financial Velocity</h3>
+                        <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight mb-1">Financial Velocity</h3>
                         <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Invoicing metrics and payment flow</p>
                     </div>
                     <div className="w-12 h-12 rounded-2xl bg-brand/10 border border-brand/20 flex items-center justify-center text-brand">
@@ -107,12 +107,12 @@ export default function FinancePage() {
                       <XAxis dataKey="status" axisLine={false} tickLine={false} tick={{ fill: '#475569', fontSize: 10, fontWeight: 900 }} dy={10} />
                       <YAxis axisLine={false} tickLine={false} tick={{ fill: '#475569', fontSize: 10 }} />
                       <Tooltip 
-                        contentStyle={{ backgroundColor: '#0B0F1A', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '16px' }}
-                        cursor={{ fill: 'rgba(255,255,255,0.02)' }}
+                        contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #f1f5f9', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                        cursor={{ fill: 'rgba(0,0,0,0.02)' }}
                       />
                       <Bar dataKey="_count" radius={[10, 10, 0, 0]} barSize={50}>
                         {(summaryData?.invoicesByStatus || []).map((entry: any, index: number) => (
-                           <Cell key={`cell-${index}`} fill={index % 2 === 0 ? '#1C93B2' : 'rgba(255,255,255,0.05)'} />
+                           <Cell key={`cell-${index}`} fill={index % 2 === 0 ? '#1C93B2' : '#e2e8f0'} />
                         ))}
                       </Bar>
                     </BarChart>
@@ -120,13 +120,13 @@ export default function FinancePage() {
                 </div>
               </div>
 
-              <div className="lg:col-span-4 glass-card !p-10 border-white/5 bg-white/[0.02] flex flex-col">
+              <div className="lg:col-span-4 glass-card !p-10 border-slate-100 bg-white shadow-sm flex flex-col">
                 <div className="flex items-center justify-between mb-10">
                     <div>
-                        <h3 className="text-sm font-black text-white uppercase tracking-tight mb-1">Liquidity Share</h3>
+                        <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight mb-1">Liquidity Share</h3>
                         <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Income vs Expense ratio</p>
                     </div>
-                    <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-500">
+                    <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500">
                         <PieChartIcon size={20} />
                     </div>
                 </div>
@@ -142,20 +142,20 @@ export default function FinancePage() {
                         stroke="none"
                       >
                         <Cell fill="#1C93B2" fillOpacity={0.8} />
-                        <Cell fill="rgba(255,255,255,0.05)" />
+                        <Cell fill="#f8fafc" />
                       </Pie>
-                      <Tooltip contentStyle={{ backgroundColor: '#0B0F1A', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '16px' }} />
+                      <Tooltip contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #f1f5f9', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
                 <div className="space-y-4 mt-8">
                     <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
                         <span className="flex items-center gap-3 text-slate-500"><div className="w-2.5 h-2.5 rounded-full bg-brand" /> Income</span>
-                        <span className="text-white">{Math.round(((summaryData?.totalIncome || 0) / ((summaryData?.totalIncome || 0) + (summaryData?.totalExpense || 0) || 1)) * 100)}%</span>
+                        <span className="text-slate-900">{Math.round(((summaryData?.totalIncome || 0) / ((summaryData?.totalIncome || 0) + (summaryData?.totalExpense || 0) || 1)) * 100)}%</span>
                     </div>
                     <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
-                        <span className="flex items-center gap-3 text-slate-500"><div className="w-2.5 h-2.5 rounded-full bg-white/10" /> Expense</span>
-                        <span className="text-white">{Math.round(((summaryData?.totalExpense || 0) / ((summaryData?.totalIncome || 0) + (summaryData?.totalExpense || 0) || 1)) * 100)}%</span>
+                        <span className="flex items-center gap-3 text-slate-500"><div className="w-2.5 h-2.5 rounded-full bg-slate-200" /> Expense</span>
+                        <span className="text-slate-900">{Math.round(((summaryData?.totalExpense || 0) / ((summaryData?.totalIncome || 0) + (summaryData?.totalExpense || 0) || 1)) * 100)}%</span>
                     </div>
                 </div>
               </div>
@@ -193,6 +193,9 @@ function TransactionsTab({ t, isRtl }: any) {
             setForm({ description: '', amount: '', type: 'EXPENSE', category: 'OPERATIONS', department: 'ENGINEERING', transactionDate: new Date().toISOString().split('T')[0] });
             queryClient.invalidateQueries({ queryKey: ['transactions'] });
             queryClient.invalidateQueries({ queryKey: ['financeSummary'] });
+        } else {
+            console.error('Transaction creation error:', res.error || res.message);
+            toast.error(res.message || 'Failed to create transaction. Check all fields.');
         }
     };
 
@@ -212,17 +215,17 @@ function TransactionsTab({ t, isRtl }: any) {
                 <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">{t.transactions}</h3>
                 <button 
                     onClick={() => setIsModalOpen(true)}
-                    className="flex items-center gap-2 px-6 py-3 rounded-xl bg-white text-black text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all shadow-lg shadow-white/5"
+                    className="flex items-center gap-2 px-6 py-3 rounded-xl bg-brand text-white text-[10px] font-black uppercase tracking-widest hover:bg-brand/90 transition-all shadow-lg shadow-brand/20"
                 >
                     <Plus size={14} /> {t.newTransaction}
                 </button>
             </div>
 
-            <div className="glass-card !p-0 overflow-hidden border-white/5 bg-white/[0.01]">
+            <div className="glass-card !p-0 overflow-hidden border-slate-100 bg-white shadow-sm">
                 <div className="overflow-x-auto no-scrollbar">
                     <table className="w-full text-left">
                         <thead>
-                            <tr className="border-b border-white/5 bg-white/[0.02]">
+                            <tr className="border-b border-slate-100 bg-slate-50/70">
                                 <th className="px-8 py-5 text-[9px] font-black text-slate-500 uppercase tracking-widest">{t.description}</th>
                                 <th className="px-8 py-5 text-[9px] font-black text-slate-500 uppercase tracking-widest">{t.type}</th>
                                 <th className="px-8 py-5 text-[9px] font-black text-slate-500 uppercase tracking-widest">{t.amount}</th>
@@ -230,16 +233,16 @@ function TransactionsTab({ t, isRtl }: any) {
                                 <th className="px-8 py-5"></th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-white/[0.03]">
+                        <tbody className="divide-y divide-slate-50">
                             {isLoading ? (
-                                Array(5).fill(0).map((_, i) => <tr key={i}><td colSpan={5} className="px-8 py-6"><div className="h-4 bg-white/5 rounded-lg animate-pulse" /></td></tr>)
+                                Array(5).fill(0).map((_, i) => <tr key={i}><td colSpan={5} className="px-8 py-6"><div className="h-4 bg-slate-100 rounded-lg animate-pulse" /></td></tr>)
                             ) : transactions.length === 0 ? (
-                                <tr><td colSpan={5} className="p-32 text-center text-slate-700 uppercase tracking-[0.3em] text-[10px] font-black">No Records Logged</td></tr>
+                                <tr><td colSpan={5} className="p-32 text-center text-slate-400 uppercase tracking-[0.3em] text-[10px] font-black">No Records Logged</td></tr>
                             ) : transactions.map((tx: any) => (
-                                <tr key={tx.id} className="hover:bg-white/[0.02] transition-all group">
+                                <tr key={tx.id} className="hover:bg-slate-50 transition-all group">
                                     <td className="px-8 py-5">
-                                        <p className="text-xs font-black text-white uppercase tracking-tight">{tx.description}</p>
-                                        <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mt-1">{tx.category} · {tx.department}</p>
+                                        <p className="text-xs font-black text-slate-900 uppercase tracking-tight">{tx.description}</p>
+                                        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mt-1">{tx.category} · {tx.department}</p>
                                     </td>
                                     <td className="px-8 py-5">
                                         <span className={clsx(
@@ -249,7 +252,7 @@ function TransactionsTab({ t, isRtl }: any) {
                                             {tx.type}
                                         </span>
                                     </td>
-                                    <td className="px-8 py-5 text-xs font-black text-white">
+                                    <td className="px-8 py-5 text-xs font-black text-slate-900">
                                         {fmt(Number(tx.amount), isRtl)}
                                     </td>
                                     <td className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest">
@@ -257,8 +260,8 @@ function TransactionsTab({ t, isRtl }: any) {
                                     </td>
                                     <td className="px-8 py-5 text-right">
                                         <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                                            <button className="p-2 rounded-lg bg-white/5 text-slate-600 hover:text-brand transition-all"><Edit2 size={14} /></button>
-                                            <button onClick={() => handleDelete(tx.id)} className="p-2 rounded-lg bg-white/5 text-slate-600 hover:text-rose-500 transition-all"><Trash2 size={14} /></button>
+                                            <button className="p-2 rounded-lg bg-slate-100 text-slate-500 hover:text-brand transition-all"><Edit2 size={14} /></button>
+                                            <button onClick={() => handleDelete(tx.id)} className="p-2 rounded-lg bg-slate-100 text-slate-500 hover:text-rose-500 transition-all"><Trash2 size={14} /></button>
                                         </div>
                                     </td>
                                 </tr>
@@ -281,6 +284,7 @@ function TransactionsTab({ t, isRtl }: any) {
                         />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
+                        <Input label={t.category} value={form.category} onChange={(e: any) => setForm({...form, category: e.target.value})} placeholder="Category Name" />
                          <Select 
                             label={t.department} 
                             value={form.department} 
@@ -289,9 +293,9 @@ function TransactionsTab({ t, isRtl }: any) {
                         />
                         <Input label={isRtl ? 'تاريخ العملية' : 'Transaction Date'} type="date" value={form.transactionDate} onChange={(e: any) => setForm({...form, transactionDate: e.target.value})} />
                     </div>
-                    <div className="flex justify-end gap-3 pt-8 border-t border-white/5">
-                        <button className="px-8 py-3 rounded-xl bg-white/5 text-[10px] font-black text-slate-500 uppercase tracking-widest" onClick={() => setIsModalOpen(false)}>{t.cancel}</button>
-                        <button className="px-10 py-3 rounded-xl bg-brand text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-brand/20" onClick={handleCreate}>{t.save}</button>
+                    <div className="flex justify-end gap-3 pt-8 border-t border-slate-100">
+                        <button className="px-8 py-3 rounded-xl bg-slate-50 text-[10px] font-black text-slate-500 uppercase tracking-widest hover:bg-slate-100" onClick={() => setIsModalOpen(false)}>{t.cancel}</button>
+                        <button className="px-10 py-3 rounded-xl bg-brand text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-brand/20 hover:bg-brand/90" onClick={handleCreate}>{t.save}</button>
                     </div>
                 </div>
             </Modal>
@@ -308,10 +312,10 @@ function BudgetsTab({ t, isRtl }: any) {
     return (
         <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {isLoading ? (
-                Array(3).fill(0).map((_, i) => <div key={i} className="glass-card h-64 animate-pulse bg-white/[0.02] border-white/5" />)
+                Array(3).fill(0).map((_, i) => <div key={i} className="glass-card h-64 animate-pulse bg-slate-50 border-slate-100" />)
             ) : budgets.length === 0 ? (
-                <div className="col-span-full py-32 text-center glass-card border-dashed border-white/5 bg-white/[0.01]">
-                    <Target size={48} className="mx-auto text-slate-800 mb-4 opacity-20" />
+                <div className="col-span-full py-32 text-center glass-card border-dashed border-slate-200 bg-white shadow-sm">
+                    <Target size={48} className="mx-auto text-slate-300 mb-4 opacity-50" />
                     <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">No Budget Allocations Found</p>
                 </div>
             ) : budgets.map((b: any) => {
@@ -319,10 +323,10 @@ function BudgetsTab({ t, isRtl }: any) {
                 const spent = Number(b.spent || 0);
                 const pct = Math.min(allocated > 0 ? (spent / allocated) * 100 : 0, 100);
                 return (
-                    <div key={b.department} className="glass-card !p-10 border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-all group relative overflow-hidden">
+                    <div key={b.department} className="glass-card !p-10 border-slate-100 bg-white shadow-sm hover:bg-slate-50 transition-all group relative overflow-hidden">
                         <div className="flex justify-between items-start mb-10">
                             <div>
-                                <h4 className="text-sm font-black text-white uppercase tracking-tight mb-1">{b.department}</h4>
+                                <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight mb-1">{b.department}</h4>
                                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Active Pool Cycle</p>
                             </div>
                             <div className={clsx(
@@ -332,17 +336,17 @@ function BudgetsTab({ t, isRtl }: any) {
                                 {pct.toFixed(0)}%
                             </div>
                         </div>
-                        <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden mb-10">
+                        <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden mb-10">
                             <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }} className={clsx('h-full rounded-full', pct > 90 ? 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.3)]' : 'bg-brand shadow-[0_0_10px_rgba(28,147,178,0.3)]')} />
                         </div>
-                        <div className="grid grid-cols-2 gap-4 pt-8 border-t border-white/5">
+                        <div className="grid grid-cols-2 gap-4 pt-8 border-t border-slate-100">
                             <div>
-                                <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-1">{t.spent}</p>
-                                <p className="text-lg font-black text-white">{fmt(spent, isRtl)}</p>
+                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">{t.spent}</p>
+                                <p className="text-lg font-black text-slate-900">{fmt(spent, isRtl)}</p>
                             </div>
                             <div className="text-right">
-                                <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-1">{t.budget}</p>
-                                <p className="text-lg font-black text-slate-400">{fmt(allocated, isRtl)}</p>
+                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">{t.budget}</p>
+                                <p className="text-lg font-black text-slate-500">{fmt(allocated, isRtl)}</p>
                             </div>
                         </div>
                     </div>

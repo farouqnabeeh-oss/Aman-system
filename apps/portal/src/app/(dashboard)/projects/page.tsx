@@ -61,6 +61,8 @@ export default function ProjectsPage() {
 
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<any>(null);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ 
     name: '', 
@@ -205,7 +207,7 @@ export default function ProjectsPage() {
                     </div>
                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Active Tasks</span>
                 </div>
-                <button className="text-[9px] font-black text-slate-900 uppercase tracking-widest hover:text-brand transition-all flex items-center gap-1">
+                <button onClick={() => { setSelectedProject(p); setDetailModalOpen(true); }} className="text-[9px] font-black text-slate-900 uppercase tracking-widest hover:text-brand transition-all flex items-center gap-1">
                     {isRtl ? 'التفاصيل' : 'Details'} <ExternalLink size={10} />
                 </button>
               </div>
@@ -264,6 +266,51 @@ export default function ProjectsPage() {
             </button>
           </div>
         </div>
+      </Modal>
+      <Modal open={detailModalOpen} onClose={() => setDetailModalOpen(false)} title={isRtl ? 'تفاصيل المشروع' : 'Project Details'}>
+        {selectedProject && (
+          <div className="space-y-6 pt-4">
+            <div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t.name}</p>
+              <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">{selectedProject.name}</h3>
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t.desc}</p>
+              <p className="text-sm font-medium text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-100">{selectedProject.description || (isRtl ? 'لا يوجد وصف' : 'No description provided')}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t.manager}</p>
+                <p className="text-sm font-black text-slate-900 uppercase tracking-tight">{selectedProject.manager?.firstName} {selectedProject.manager?.lastName}</p>
+              </div>
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t.department}</p>
+                <p className="text-sm font-black text-slate-900 uppercase tracking-tight">{selectedProject.department}</p>
+              </div>
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t.budget}</p>
+                <p className="text-sm font-black text-slate-900 uppercase tracking-tight">${Number(selectedProject.budget || 0).toLocaleString()}</p>
+              </div>
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t.status}</p>
+                <p className="text-sm font-black text-slate-900 uppercase tracking-tight">{selectedProject.status}</p>
+              </div>
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t.startDate}</p>
+                <p className="text-sm font-black text-slate-900 uppercase tracking-tight">{new Date(selectedProject.startDate).toLocaleDateString()}</p>
+              </div>
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t.endDate}</p>
+                <p className="text-sm font-black text-slate-900 uppercase tracking-tight">{selectedProject.endDate ? new Date(selectedProject.endDate).toLocaleDateString() : '-'}</p>
+              </div>
+            </div>
+            <div className="flex justify-end pt-4">
+              <button className="px-8 py-3 rounded-xl bg-slate-100 text-[10px] font-black text-slate-500 uppercase tracking-widest hover:bg-slate-200 transition-all" onClick={() => setDetailModalOpen(false)}>
+                {isRtl ? 'إغلاق' : 'Close'}
+              </button>
+            </div>
+          </div>
+        )}
       </Modal>
     </motion.div>
   );
