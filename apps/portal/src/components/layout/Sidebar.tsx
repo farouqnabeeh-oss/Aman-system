@@ -18,7 +18,7 @@ const TRANSLATIONS = {
     dashboard: 'لوحة التحكم', users: 'الفريق', finance: 'المالية',
     projects: 'المشاريع', tasks: 'المهام', files: 'الملفات',
     hr: 'الموارد البشرية', payroll: 'الرواتب',
-    notifications: 'التنبيهات', auditLogs: 'السجلات', brand: 'نظام أمان',
+    notifications: 'التنبيهات', auditLogs: 'السجلات', brand: 'سحاب ديجيتال',
     secretary: 'المتابعة', socialMedia: 'السوشيال ميديا', acquisition: 'الاستقطاب',
     reports: 'التقارير',
   },
@@ -26,7 +26,7 @@ const TRANSLATIONS = {
     dashboard: 'Dashboard', users: 'Team', finance: 'Finance',
     projects: 'Projects', tasks: 'Tasks', files: 'Files',
     hr: 'Human Resources', payroll: 'Payroll',
-    notifications: 'Notifications', auditLogs: 'Audit Logs', brand: 'AMAN System',
+    notifications: 'Notifications', auditLogs: 'Audit Logs', brand: 'Sahab Digital',
     secretary: 'Tracking', socialMedia: 'Social Media', acquisition: 'Acquisition',
     reports: 'Reports',
   }
@@ -86,8 +86,8 @@ export function Sidebar() {
         sidebarCollapsed ? 'justify-center' : 'gap-3'
       )}>
         <div className="relative flex-shrink-0">
-          <div className="w-9 h-9 rounded-xl overflow-hidden ring-1 ring-slate-200">
-            <img src="/logo.png" alt="Logo" className="w-full h-full object-cover" />
+          <div className="w-10 h-10 flex items-center justify-center p-1">
+            <img src="/logo.png" alt="Logo" className="max-w-full max-h-full object-contain" />
           </div>
         </div>
         <AnimatePresence>

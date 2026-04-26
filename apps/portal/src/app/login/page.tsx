@@ -11,7 +11,7 @@ import toast from 'react-hot-toast';
 
 const translations = {
   ar: {
-    title: 'نظام أمان الموحد',
+    title: 'سحاب ديجيتال',
     subtitle: 'بوابة الإدارة الرقمية المتكاملة 2026',
     welcome: 'مركز المصادقة المركزية',
     login: 'أدخل بيانات الاعتماد الوظيفية للوصول إلى المنصة الآمنة',
@@ -23,7 +23,7 @@ const translations = {
     identity: 'التحقق من الهوية',
   },
   en: {
-    title: 'Aman Unified Core',
+    title: 'Sahab Digital',
     subtitle: 'Integrated Digital Management Hub 2026',
     welcome: 'Central Auth Center',
     login: 'Enter your operational credentials to access the secure node',
@@ -111,8 +111,8 @@ export default function LoginPage() {
             className="relative inline-block mb-8"
           >
             <div className="absolute inset-0 bg-brand/10 blur-[60px] rounded-full" />
-            <div className="relative p-1 rounded-[2.5rem] bg-white border border-slate-100 shadow-2xl overflow-hidden group">
-               <img src="/logo.png" alt="Aman" className="relative w-32 h-32 object-contain rounded-[2.2rem] transition-transform duration-500 group-hover:scale-105" />
+            <div className="relative p-2 flex items-center justify-center group">
+               <img src="/logo.png" alt="Sahab Digital" className="relative max-w-[12rem] max-h-[12rem] object-contain transition-transform duration-500 group-hover:scale-105" />
                <div className="absolute top-0 left-0 w-full h-[2px] bg-brand/50 shadow-[0_0_15px_rgba(28,147,178,0.5)] animate-scan" />
             </div>
           </motion.div>

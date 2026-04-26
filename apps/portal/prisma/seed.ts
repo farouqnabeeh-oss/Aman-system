@@ -28,14 +28,15 @@ async function main() {
   // 1. Manager
   const manager = await prisma.user.create({
     data: {
-      email: 'aman10@gmail.com',
+      email: 'manager@sahab.digital',
       passwordHash: managerPass,
       role: 'MANAGER',
       status: 'ACTIVE',
-      firstName: 'Aman',
-      lastName: 'Manager',
-      department: 'OPERATIONS',
+      firstName: 'المدير',
+      lastName: 'العام',
+      department: 'MANAGEMENT',
       position: 'General Manager',
+      employeeNumber: 'EMP-001',
       emailVerified: true,
       phone: '+966-500-000-000'
     },
@@ -44,8 +45,8 @@ async function main() {
   // 2. Client
   const client = await prisma.client.create({
     data: {
-      name: 'Global Tech Solutions',
-      email: 'contact@globaltech.com',
+      name: 'Sahab Digital Tech',
+      email: 'contact@sahab.digital',
       createdById: manager.id
     }
   });
@@ -53,14 +54,14 @@ async function main() {
   // 3. Project
   const project = await prisma.project.create({
     data: {
-      name: 'Vision 2026 Dashboard',
-      description: 'Strategic dashboard for corporate oversight and KPI tracking.',
+      name: 'نظام الإدارة الرقمية',
+      description: 'نظام إدارة المشاريع والأقسام الخاص بـ سحاب ديجيتال',
       status: 'ACTIVE',
       budget: 250000,
       progress: 35,
       startDate: subDays(new Date(), 30),
       endDate: addDays(new Date(), 90),
-      department: 'OPERATIONS',
+      department: 'MANAGEMENT',
       managerId: manager.id,
       createdById: manager.id,
     }
@@ -74,7 +75,7 @@ async function main() {
       type: 'INCOME',
       category: 'SERVICES',
       status: 'COMPLETED',
-      description: 'Annual Contract',
+      description: 'ميزانية النظام التشغيلية',
       transactionDate: subDays(now, 5),
       createdById: manager.id
     }
@@ -83,7 +84,7 @@ async function main() {
   // 5. Budget Allocations
   await prisma.budgetAllocation.create({
     data: {
-      department: 'OPERATIONS',
+      department: 'MANAGEMENT',
       period: 'MONTHLY',
       year: now.getFullYear(),
       month: now.getMonth() + 1,
@@ -93,8 +94,9 @@ async function main() {
     }
   });
 
-  console.log('✅ AMAN System: Cloud Deployment & Seeding Complete.');
-  console.log('📋 Login: aman10@gmail.com / aman@2026');
+  console.log('✅ Sahab Digital: Cloud Deployment & Seeding Complete.');
+  console.log('📋 Login ID (المعرف الوظيفي): EMP-001');
+  console.log('📋 Password (كلمة المرور): aman@2026');
 }
 
 main()
