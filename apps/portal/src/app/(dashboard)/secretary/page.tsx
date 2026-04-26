@@ -45,10 +45,10 @@ const T = {
 };
 
 const statusOptions = [
-  { value: 'PRESENT', label_ar: 'حاضر', label_en: 'Present', color: 'text-emerald-400 bg-emerald-500/10' },
-  { value: 'LATE', label_ar: 'متأخر', label_en: 'Late', color: 'text-amber-400 bg-amber-500/10' },
-  { value: 'ABSENT', label_ar: 'غائب', label_en: 'Absent', color: 'text-rose-400 bg-rose-500/10' },
-  { value: 'REMOTE', label_ar: 'عمل عن بعد', label_en: 'Remote', color: 'text-blue-400 bg-blue-500/10' },
+  { value: 'PRESENT', label_ar: 'حاضر', label_en: 'Present', color: 'text-emerald-600 bg-emerald-50 border border-emerald-100' },
+  { value: 'LATE', label_ar: 'متأخر', label_en: 'Late', color: 'text-amber-600 bg-amber-50 border border-amber-100' },
+  { value: 'ABSENT', label_ar: 'غائب', label_en: 'Absent', color: 'text-rose-600 bg-rose-50 border border-rose-100' },
+  { value: 'REMOTE', label_ar: 'عمل عن بعد', label_en: 'Remote', color: 'text-brand bg-brand/5 border border-brand/10' },
 ];
 
 const fadeIn = { hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } };
@@ -115,36 +115,36 @@ export default function SecretaryPage() {
 
       {/* Toolbar */}
       <motion.div variants={fadeIn} className="flex flex-wrap items-center gap-4">
-        <div className="flex-1 min-w-[300px] flex items-center gap-3 bg-white/[0.03] border border-white/[0.06] rounded-2xl px-5 py-3.5 focus-within:border-white/20 transition-all">
-          <Search size={18} className="text-slate-600 flex-shrink-0" />
+        <div className="flex-1 min-w-[300px] flex items-center gap-4 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus-within:border-brand/30 transition-all">
+          <Search size={18} className="text-slate-400 flex-shrink-0" />
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder={t.search}
-            className="bg-transparent text-sm text-white outline-none w-full font-medium placeholder:text-slate-600"
+            className="bg-transparent text-sm text-slate-900 outline-none w-full font-black uppercase tracking-tight placeholder:text-slate-300"
           />
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-2xl border border-white/5">
-            <Calendar size={14} className="text-slate-500" />
-            <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">{new Date().toLocaleDateString(isRtl ? 'ar-EG' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+        <div className="flex items-center gap-3 px-5 py-3.5 bg-slate-50 rounded-2xl border border-slate-100">
+            <Calendar size={16} className="text-brand" />
+            <span className="text-[11px] font-black text-slate-900 uppercase tracking-widest">{new Date().toLocaleDateString(isRtl ? 'ar-EG' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
         </div>
       </motion.div>
 
       {/* Table */}
-      <motion.div variants={fadeIn} className="glass-card !p-0 overflow-hidden">
+      <motion.div variants={fadeIn} className="glass-card !p-0 overflow-hidden border-slate-100">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-white/[0.08] bg-white/[0.02]">
-                <th className="px-6 py-5 text-start text-[9px] font-black text-slate-500 uppercase tracking-widest">{t.employee}</th>
-                <th className="px-6 py-5 text-start text-[9px] font-black text-slate-500 uppercase tracking-widest">{t.status}</th>
-                <th className="px-6 py-5 text-start text-[9px] font-black text-slate-500 uppercase tracking-widest">{t.checkIn}</th>
-                <th className="px-6 py-5 text-start text-[9px] font-black text-slate-500 uppercase tracking-widest">{t.checkOut}</th>
-                <th className="px-6 py-5 text-start text-[9px] font-black text-slate-500 uppercase tracking-widest">{t.notes}</th>
-                <th className="px-6 py-5 text-center text-[9px] font-black text-slate-500 uppercase tracking-widest">{t.actions}</th>
+              <tr className="border-b border-slate-100 bg-slate-50/50">
+                <th className="px-6 py-5 text-start text-[9px] font-black text-slate-400 uppercase tracking-widest">{t.employee}</th>
+                <th className="px-6 py-5 text-start text-[9px] font-black text-slate-400 uppercase tracking-widest">{t.status}</th>
+                <th className="px-6 py-5 text-start text-[9px] font-black text-slate-400 uppercase tracking-widest">{t.checkIn}</th>
+                <th className="px-6 py-5 text-start text-[9px] font-black text-slate-400 uppercase tracking-widest">{t.checkOut}</th>
+                <th className="px-6 py-5 text-start text-[9px] font-black text-slate-400 uppercase tracking-widest">{t.notes}</th>
+                <th className="px-6 py-5 text-center text-[9px] font-black text-slate-400 uppercase tracking-widest">{t.actions}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/[0.03]">
+            <tbody className="divide-y divide-slate-50">
               {filtered.map((e) => (
                 <EmployeeRow 
                     key={e.id} 
@@ -189,15 +189,15 @@ function EmployeeRow({ employee, t, isRtl, onUpdate, isSaving }: any) {
     };
 
     return (
-        <tr className="hover:bg-white/[0.02] transition-colors">
+        <tr className="hover:bg-slate-50/50 transition-colors">
             <td className="px-6 py-5">
-                <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center font-bold text-xs text-white border border-white/5">
+                <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-brand/5 border border-brand/10 flex items-center justify-center font-black text-xs text-brand transition-all">
                         {employee.name?.[0]}
                     </div>
                     <div>
-                        <p className="text-sm font-bold text-white">{employee.name}</p>
-                        <p className="text-[10px] text-slate-500 font-medium">ID: {employee.employeeNumber} · {employee.department}</p>
+                        <p className="text-sm font-black text-slate-900 uppercase tracking-tight">{employee.name}</p>
+                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">ID: {employee.employeeNumber} · {employee.department}</p>
                     </div>
                 </div>
             </td>
@@ -206,12 +206,12 @@ function EmployeeRow({ employee, t, isRtl, onUpdate, isSaving }: any) {
                     value={status}
                     onChange={(e) => setStatus(e.target.value)}
                     className={clsx(
-                        'text-[10px] font-black px-3 py-1.5 rounded-lg outline-none cursor-pointer transition-all uppercase tracking-widest',
-                        statusOptions.find(o => o.value === status)?.color || 'text-slate-400 bg-white/5'
+                        'text-[10px] font-black px-3 py-1.5 rounded-lg outline-none cursor-pointer transition-all uppercase tracking-widest border',
+                        statusOptions.find(o => o.value === status)?.color || 'text-slate-400 bg-slate-50 border-slate-100'
                     )}
                 >
                     {statusOptions.map(o => (
-                        <option key={o.value} value={o.value} className="bg-[#0B0F1A] text-white">
+                        <option key={o.value} value={o.value} className="bg-white text-slate-900">
                             {isRtl ? o.label_ar : o.label_en}
                         </option>
                     ))}
@@ -222,7 +222,7 @@ function EmployeeRow({ employee, t, isRtl, onUpdate, isSaving }: any) {
                     type="time" 
                     value={checkIn}
                     onChange={(e) => setCheckIn(e.target.value)}
-                    className="bg-white/5 border border-white/5 rounded-lg px-2 py-1.5 text-xs text-white outline-none focus:border-white/20"
+                    className="bg-slate-50 border border-slate-100 rounded-lg px-2 py-1.5 text-xs text-slate-900 outline-none focus:border-brand/30 focus:bg-white font-bold transition-all"
                 />
             </td>
             <td className="px-6 py-5">
@@ -230,7 +230,7 @@ function EmployeeRow({ employee, t, isRtl, onUpdate, isSaving }: any) {
                     type="time" 
                     value={checkOut}
                     onChange={(e) => setCheckOut(e.target.value)}
-                    className="bg-white/5 border border-white/5 rounded-lg px-2 py-1.5 text-xs text-white outline-none focus:border-white/20"
+                    className="bg-slate-50 border border-slate-100 rounded-lg px-2 py-1.5 text-xs text-slate-900 outline-none focus:border-brand/30 focus:bg-white font-bold transition-all"
                 />
             </td>
             <td className="px-6 py-5">
@@ -239,7 +239,7 @@ function EmployeeRow({ employee, t, isRtl, onUpdate, isSaving }: any) {
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="..."
-                    className="bg-transparent border-b border-white/10 text-xs text-white outline-none focus:border-white/30 w-full"
+                    className="bg-transparent border-b border-slate-100 text-xs text-slate-900 font-bold outline-none focus:border-brand/30 w-full"
                 />
             </td>
             <td className="px-6 py-5 text-center">
@@ -247,11 +247,11 @@ function EmployeeRow({ employee, t, isRtl, onUpdate, isSaving }: any) {
                     onClick={handleSave}
                     disabled={!hasChanges || isSaving}
                     className={clsx(
-                        'p-2.5 rounded-xl transition-all',
-                        hasChanges ? 'bg-white text-black hover:bg-slate-200' : 'text-slate-700 pointer-events-none'
+                        'p-2.5 rounded-xl transition-all shadow-sm',
+                        hasChanges ? 'bg-brand text-white hover:bg-brand/90 shadow-brand/10' : 'bg-slate-50 text-slate-300 pointer-events-none'
                     )}
                 >
-                    {isSaving ? <div className="w-4 h-4 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" /> : <Save size={16} />}
+                    {isSaving ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Save size={16} />}
                 </button>
             </td>
         </tr>
