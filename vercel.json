@@ -1,5 +1,9 @@
 {
-  "name": "aman-portal-final",
-  "buildCommand": "pnpm exec prisma generate --schema=apps/portal/prisma/schema.prisma && turbo run build --filter=portal",
-  "outputDirectory": "apps/portal/.next"
+  "version": 2,
+  "builds": [
+    {
+      "src": "apps/portal/package.json",
+      "use": "@vercel/next"
+    }
+  ]
 }
