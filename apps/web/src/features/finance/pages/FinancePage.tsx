@@ -204,17 +204,7 @@ function Transactions() {
     },
   });
 
-   const createTransMutation = useMutation({
-      mutationFn: () => api.post('/finance/transactions', form),
-      onSuccess: () => { 
-        qc.invalidateQueries({ queryKey: ['transactions'] }); 
-        qc.invalidateQueries({ queryKey: ['finance-summary'] });
-        qc.invalidateQueries({ queryKey: ['dashboard'] });
-        qc.invalidateQueries({ queryKey: ['audit-logs'] });
-        setEditOpen(false); 
-        toast.success(isRtl ? 'تم إضافة المعاملة' : 'Transaction Added'); 
-      },
-   });
+
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/finance/transactions/${id}`),
