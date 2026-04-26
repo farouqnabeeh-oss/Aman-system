@@ -1,0 +1,14 @@
+{
+  "buildCommand": "pnpm exec prisma generate --schema=apps/api/prisma/schema.prisma && turbo run build --filter=@ems/api --filter=@ems/web",
+  "outputDirectory": "apps/web/dist",
+  "rewrites": [
+    {
+      "source": "/api/v1/:path*",
+      "destination": "/api/index.ts"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
