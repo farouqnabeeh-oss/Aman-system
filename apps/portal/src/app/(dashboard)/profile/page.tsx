@@ -11,7 +11,7 @@ import { updateUser } from '@/lib/actions/users';
 import toast from 'react-hot-toast';
 
 export default function ProfilePage() {
-  const { user, setUser } = useAuthStore();
+  const { user, updateUser } = useAuthStore();
   const { language } = useUIStore();
   const isRtl = language === 'ar';
   
@@ -39,7 +39,7 @@ export default function ProfilePage() {
     
     if (res.success) {
         toast.success(isRtl ? 'تم تحديث الملف الشخصي' : 'Profile updated successfully');
-        setUser({ ...user, firstName: form.firstName, lastName: form.lastName });
+        updateUser({ firstName: form.firstName, lastName: form.lastName });
         setForm({ ...form, password: '', confirmPassword: '' });
     } else {
         toast.error(res.error || 'Update failed');
