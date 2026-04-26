@@ -1,16 +1,26 @@
 'use client';
 
-import { useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 import { useUIStore } from '@/store/ui.store';
+import { useAuthStore } from '@/store/auth.store';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const { sidebarOpen, setSidebarOpen, sidebarCollapsed, language } = useUIStore();
+  const { user, logout } = useAuthStore();
   const pathname = usePathname();
+  const router = useRouter();
   const isRtl = language === 'ar';
+
+  useEffect(() => {
+    if (!user) {
+      logout();
+      router.push('/login');
+    }
+  }, [user, logout, router]);
 
   // Placeholder for command palette state
   const [cmdOpen, setCmdOpen] = useState(false);
