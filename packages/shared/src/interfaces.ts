@@ -35,6 +35,7 @@ export interface IUser {
   phone: string | null;
   department: Department | null;
   position: string | null;
+  employeeNumber: string | null;
   emailVerified: boolean;
   lastLoginAt: string | null;
   createdById: string | null;
