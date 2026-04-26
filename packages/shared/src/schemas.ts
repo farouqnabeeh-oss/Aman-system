@@ -74,7 +74,7 @@ export const RegisterSchema = z
   });
 
 export const LoginSchema = z.object({
-  email,
+  employeeNumber: z.string().min(1, 'Employee number is required'),
   password: z.string().min(1, 'Password is required'),
 });
 

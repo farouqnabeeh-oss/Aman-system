@@ -69,15 +69,24 @@ export async function login(formData: any) {
     return { success: false, error: validated.error.flatten().fieldErrors };
   }
 
-  const { email, password } = validated.data;
+  const { employeeNumber, password } = validated.data;
+  const isRtl = true; // Defaulting for message purposes or fetch from context if possible
 
   try {
     const user = await prisma.user.findUnique({
-      where: { email: email.toLowerCase(), deletedAt: null },
+      where: { employeeNumber, deletedAt: null },
     });
 
-    if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
-      return { success: false, message: 'Invalid email or password' };
+    if (!user) {
+      return { success: false, message: 'Invalid employee number or password' };
+    }
+
+    // Check if password matches passwordHash OR matches nationalId (default password)
+    const isPasswordCorrect = await bcrypt.compare(password, user.passwordHash);
+    const isDefaultPassword = user.nationalId === password;
+
+    if (!isPasswordCorrect && !isDefaultPassword) {
+      return { success: false, message: 'Invalid employee number or password' };
     }
 
     if (user.status === 'SUSPENDED') {

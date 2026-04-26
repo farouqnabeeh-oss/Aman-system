@@ -6,6 +6,7 @@ export const UserRole = {
   SUPER_ADMIN: 'SUPER_ADMIN',
   ADMIN: 'ADMIN',
   MANAGER: 'MANAGER',
+  SECRETARY: 'SECRETARY',
   EMPLOYEE: 'EMPLOYEE',
 } as const;
 export type UserRole = (typeof UserRole)[keyof typeof UserRole];
@@ -19,14 +20,13 @@ export const UserStatus = {
 export type UserStatus = (typeof UserStatus)[keyof typeof UserStatus];
 
 export const Department = {
-  ENGINEERING: 'ENGINEERING',
-  FINANCE: 'FINANCE',
+  SOCIAL_MEDIA: 'SOCIAL_MEDIA',
+  PROGRAMMING: 'PROGRAMMING',
+  PROJECTS: 'PROJECTS',
   HR: 'HR',
-  MARKETING: 'MARKETING',
+  FINANCE: 'FINANCE',
   OPERATIONS: 'OPERATIONS',
-  SALES: 'SALES',
-  LEGAL: 'LEGAL',
-  PRODUCT: 'PRODUCT',
+  OTHER: 'OTHER',
 } as const;
 export type Department = (typeof Department)[keyof typeof Department];
 
@@ -155,8 +155,9 @@ export type AuditAction = (typeof AuditAction)[keyof typeof AuditAction];
 
 // Role hierarchy for comparison
 export const ROLE_HIERARCHY: Record<UserRole, number> = {
-  SUPER_ADMIN: 4,
-  ADMIN: 3,
-  MANAGER: 2,
+  SUPER_ADMIN: 5,
+  ADMIN: 4,
+  MANAGER: 3,
+  SECRETARY: 2,
   EMPLOYEE: 1,
 };

@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Users, DollarSign, FolderKanban,
   CheckSquare, FileText, Bell, HeartPulse, CreditCard,
-  ScrollText, ChevronLeft, ChevronRight
+  ScrollText, ChevronLeft, ChevronRight, BarChart2
 } from 'lucide-react';
 import { useUIStore } from '@/store/ui.store';
 import { useAuthStore } from '@/store/auth.store';
@@ -19,12 +19,16 @@ const TRANSLATIONS = {
     projects: 'المشاريع', tasks: 'المهام', files: 'الملفات',
     hr: 'الموارد البشرية', payroll: 'الرواتب',
     notifications: 'التنبيهات', auditLogs: 'السجلات', brand: 'نظام أمان',
+    secretary: 'المتابعة', socialMedia: 'السوشيال ميديا', acquisition: 'الاستقطاب',
+    reports: 'التقارير',
   },
   en: {
     dashboard: 'Dashboard', users: 'Team', finance: 'Finance',
     projects: 'Projects', tasks: 'Tasks', files: 'Files',
     hr: 'Human Resources', payroll: 'Payroll',
     notifications: 'Notifications', auditLogs: 'Audit Logs', brand: 'AMAN System',
+    secretary: 'Tracking', socialMedia: 'Social Media', acquisition: 'Acquisition',
+    reports: 'Reports',
   }
 };
 
@@ -36,9 +40,13 @@ const NAV_ITEMS = (t: any) => [
   { path: '/tasks', label: t.tasks, icon: CheckSquare, color: 'text-sky-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'] },
   { path: '/files', label: t.files, icon: FileText, color: 'text-teal-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'] },
   { path: '/hr', label: t.hr, icon: HeartPulse, color: 'text-rose-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'] },
+  { path: '/secretary', label: t.secretary, icon: CheckSquare, color: 'text-violet-500', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'SECRETARY'] },
+  { path: '/social-media', label: t.socialMedia, icon: LayoutDashboard, color: 'text-pink-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'] },
+  { path: '/acquisition', label: t.acquisition, icon: FolderKanban, color: 'text-emerald-500', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
+  { path: '/reports', label: t.reports, icon: BarChart2, color: 'text-indigo-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
   { path: '/payroll', label: t.payroll, icon: CreditCard, color: 'text-indigo-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
   { path: '/notifications', label: t.notifications, icon: Bell, color: 'text-orange-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'] },
-  { path: '/audit-logs', label: t.auditLogs, icon: ScrollText, color: 'text-slate-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
+  { path: '/audit', label: t.auditLogs, icon: ScrollText, color: 'text-slate-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
 ];
 
 export function Sidebar() {
@@ -63,32 +71,24 @@ export function Sidebar() {
       animate={{ width: sidebarCollapsed ? 72 : 256 }}
       transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
       className={clsx(
-        'fixed top-0 bottom-0 z-50 flex flex-col',
-        'border-white/[0.06]',
+        'fixed top-0 bottom-0 z-50 flex flex-col sidebar-bg',
+        'border-slate-100',
         isRtl ? 'right-0 border-l' : 'left-0 border-r',
         'transition-transform duration-300 lg:translate-x-0',
         isRtl
           ? (sidebarOpen ? 'translate-x-0' : 'translate-x-full')
           : (sidebarOpen ? 'translate-x-0' : '-translate-x-full'),
       )}
-      style={{ background: 'linear-gradient(180deg, #0a0e1a 0%, #060810 100%)' }}
     >
-      {/* Grid overlay */}
-      <div className="absolute inset-0 bg-grid opacity-30 pointer-events-none" />
-
-      {/* Top ambient */}
-      <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-blue-900/20 to-transparent pointer-events-none" />
-
       {/* Brand */}
       <div className={clsx(
-        'relative flex items-center h-16 px-4 border-b border-white/[0.05] flex-shrink-0',
+        'relative flex items-center h-16 px-4 border-b border-slate-100 flex-shrink-0',
         sidebarCollapsed ? 'justify-center' : 'gap-3'
       )}>
         <div className="relative flex-shrink-0">
-          <div className="w-9 h-9 rounded-xl overflow-hidden ring-1 ring-white/10">
+          <div className="w-9 h-9 rounded-xl overflow-hidden ring-1 ring-slate-200">
             <img src="/logo.png" alt="Logo" className="w-full h-full object-cover" />
           </div>
-          <div className="absolute -inset-1 bg-blue-500/20 blur-md rounded-xl -z-10" />
         </div>
         <AnimatePresence>
           {!sidebarCollapsed && (
@@ -98,15 +98,15 @@ export function Sidebar() {
               exit={{ opacity: 0, x: -10 }}
               transition={{ duration: 0.2 }}
             >
-              <p className="text-sm font-bold text-white tracking-tight leading-none">{t.brand}</p>
-              <p className="text-[10px] text-slate-500 mt-0.5 uppercase tracking-widest">Unified Node v1.0</p>
+              <p className="text-sm font-black text-slate-900 tracking-tight leading-none">{t.brand}</p>
+              <p className="text-[10px] text-slate-400 mt-0.5 uppercase tracking-widest font-black">Unified Node v1.0</p>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
       {/* Navigation */}
-      <nav className="relative flex-1 px-3 py-4 space-y-0.5 overflow-y-auto no-scrollbar">
+      <nav className="relative flex-1 px-3 py-4 space-y-1 overflow-y-auto no-scrollbar">
         {items.map((item, idx) => {
           const active = pathname.startsWith(item.path);
           const Icon = item.icon;
@@ -124,12 +124,12 @@ export function Sidebar() {
                 onClick={() => setSidebarOpen(false)}
                 title={sidebarCollapsed ? item.label : undefined}
                 className={clsx(
-                  'nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 text-slate-500 hover:text-slate-200 cursor-pointer',
-                  active && 'bg-white/5 border border-white/5 text-white',
+                  'flex items-center gap-3 px-3 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all duration-200',
+                  active ? 'bg-brand text-white shadow-lg shadow-brand/20' : 'text-slate-500 hover:bg-brand/5 hover:text-brand',
                   sidebarCollapsed && 'justify-center px-0'
                 )}
               >
-                <span className={clsx('nav-icon flex-shrink-0 transition-colors', active ? item.color : 'text-slate-600 group-hover:text-slate-400')}>
+                <span className={clsx('flex-shrink-0 transition-colors', active ? 'text-white' : 'text-slate-400')}>
                   <Icon size={18} />
                 </span>
                 <AnimatePresence>
@@ -138,7 +138,7 @@ export function Sidebar() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="flex-1 text-sm truncate"
+                      className="flex-1 truncate"
                     >
                       {item.label}
                     </motion.span>
@@ -146,26 +146,9 @@ export function Sidebar() {
                 </AnimatePresence>
                 {/* Notification badge */}
                 {isNotif && unread > 0 && (
-                  <AnimatePresence>
-                    <motion.span
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className={clsx(
-                        'flex-shrink-0 h-5 min-w-5 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center px-1',
-                        sidebarCollapsed && 'absolute top-1 right-1 h-4 min-w-4 text-[8px]'
-                      )}
-                    >
-                      {unread > 9 ? '9+' : unread}
-                    </motion.span>
-                  </AnimatePresence>
-                )}
-                {/* Active indicator */}
-                {active && !sidebarCollapsed && (
-                  <div className={clsx(
-                    'absolute flex-shrink-0 w-1 h-6 rounded-full',
-                    isRtl ? 'left-0' : 'right-0',
-                    'bg-gradient-to-b from-sky-400 to-blue-600'
-                  )} />
+                  <span className="flex-shrink-0 h-5 min-w-5 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center px-1">
+                    {unread > 9 ? '9+' : unread}
+                  </span>
                 )}
               </Link>
             </motion.div>

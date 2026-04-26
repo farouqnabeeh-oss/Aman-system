@@ -14,20 +14,22 @@ const UserFiltersSchema = z.object({
   search: z.string().optional(),
   role: z.nativeEnum(UserRole).optional(),
   status: z.nativeEnum(UserStatus).optional(),
-  department: z.nativeEnum(Department).optional(),
+  department: z.string().optional(),
   page: z.number().default(1),
   limit: z.number().default(20),
-  sortBy: z.enum(['firstName', 'lastName', 'email', 'createdAt', 'role']).default('createdAt'),
+  sortBy: z.enum(['firstName', 'lastName', 'email', 'employeeNumber', 'createdAt', 'role']).default('createdAt'),
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
 });
 
 const CreateUserSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(8),
+  employeeNumber: z.string().min(1),
+  nationalId: z.string().optional(),
+  password: z.string().min(6).optional(), // Can be empty if using default password
   firstName: z.string().min(1).max(50),
   lastName: z.string().min(1).max(50),
   role: z.nativeEnum(UserRole).default(UserRole.EMPLOYEE),
-  department: z.nativeEnum(Department).nullable().optional(),
+  department: z.string().nullable().optional(),
   position: z.string().max(100).nullable().optional(),
   phone: z.string().nullable().optional(),
 });
@@ -35,29 +37,33 @@ const CreateUserSchema = z.object({
 const UpdateUserSchema = z.object({
   firstName: z.string().min(1).max(50).optional(),
   lastName: z.string().min(1).max(50).optional(),
+  employeeNumber: z.string().optional(),
+  nationalId: z.string().optional(),
   role: z.nativeEnum(UserRole).optional(),
   status: z.nativeEnum(UserStatus).optional(),
-  department: z.nativeEnum(Department).nullable().optional(),
+  department: z.string().nullable().optional(),
   position: z.string().max(100).nullable().optional(),
   phone: z.string().nullable().optional(),
-  password: z.string().min(8).optional(),
+  password: z.string().min(6).optional(),
   avatarUrl: z.string().url().optional().nullable(),
 });
 
 // --- ACTIONS ---
 
-export async function getUsers(filters: z.infer<typeof UserFiltersSchema>) {
+export async function getUsers(filters: z.input<typeof UserFiltersSchema>) {
   try {
-    const { search, role, status, department, page, limit, sortBy, sortOrder } = filters;
+    const validated = UserFiltersSchema.parse(filters);
+    const { search, role, status, department, page, limit, sortBy, sortOrder } = validated;
     
     const where: any = {
       deletedAt: null,
       ...(search ? {
         OR: [
-          { firstName: { contains: search } },
-          { lastName: { contains: search } },
-          { email: { contains: search } },
-          { position: { contains: search } },
+          { firstName: { contains: search, mode: 'insensitive' } },
+          { lastName: { contains: search, mode: 'insensitive' } },
+          { email: { contains: search, mode: 'insensitive' } },
+          { employeeNumber: { contains: search, mode: 'insensitive' } },
+          { position: { contains: search, mode: 'insensitive' } },
         ],
       } : {}),
       ...(role ? { role } : {}),
@@ -70,7 +76,8 @@ export async function getUsers(filters: z.infer<typeof UserFiltersSchema>) {
       prisma.user.findMany({
         where,
         select: {
-          id: true, email: true, role: true, status: true,
+          id: true, email: true, employeeNumber: true, nationalId: true,
+          role: true, status: true,
           firstName: true, lastName: true, avatarUrl: true, phone: true,
           department: true, position: true, emailVerified: true,
           lastLoginAt: true, createdAt: true, updatedAt: true,
@@ -106,10 +113,18 @@ export async function createUser(data: z.infer<typeof CreateUserSchema>) {
 
     const val = CreateUserSchema.parse(data);
     
-    const existing = await prisma.user.findUnique({ where: { email: val.email.toLowerCase() } });
-    if (existing) throw new Error('Email already exists');
+    const existing = await prisma.user.findFirst({ 
+      where: { 
+        OR: [
+          { email: val.email.toLowerCase() },
+          { employeeNumber: val.employeeNumber }
+        ]
+      } 
+    });
+    if (existing) throw new Error('Email or Employee Number already exists');
 
-    const passwordHash = await bcrypt.hash(val.password, 12);
+    const passwordToHash = val.password || val.nationalId || 'Aman2026!';
+    const passwordHash = await bcrypt.hash(passwordToHash, 12);
     
     const user = await prisma.user.create({
       data: {

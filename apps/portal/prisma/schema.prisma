@@ -21,6 +21,8 @@ model User {
   phone               String?
   department          String?
   position            String?
+  employeeNumber      String             @unique @default(cuid()) // Default to cuid if not provided during migration
+  nationalId          String?            // Used for default password
   refreshToken        String?
   emailVerified       Boolean            @default(false)
   emailVerifyToken    String?
@@ -32,6 +34,8 @@ model User {
   createdAt           DateTime           @default(now())
   updatedAt           DateTime           @updatedAt
   deletedAt           DateTime?
+  receivedRatings     Rating[]           @relation("RatingReceiver")
+  givenRatings        Rating[]           @relation("RatingGiver")
   attendanceRecords   AttendanceRecord[]
   auditLogs           AuditLog[]
   createdBudgets      BudgetAllocation[]
@@ -47,6 +51,7 @@ model User {
   payrollRecords      PayrollRecord[]
   createdProjects     Project[]          @relation("ProjectCreator")
   managedProjects     Project[]          @relation("ProjectManager")
+  approvedExtensions  ExtensionRequest[] @relation("ExtensionApprover")
   taskComments        TaskComment[]
   reportedTasks       Task[]             @relation("TaskReporter")
   assignedTasks       Task[]             @relation("TaskAssignee")
@@ -55,11 +60,27 @@ model User {
   usersCreated        User[]             @relation("UserCreatedBy")
 
   @@index([email])
+  @@index([employeeNumber])
   @@index([role])
   @@index([status])
   @@index([department])
   @@index([deletedAt])
   @@map("users")
+}
+
+model Rating {
+  id          String   @id @default(cuid())
+  giverId     String
+  receiverId  String
+  stars       Int      @default(5)
+  comment     String?
+  createdAt   DateTime @default(now())
+  giver       User     @relation("RatingGiver", fields: [giverId], references: [id])
+  receiver    User     @relation("RatingReceiver", fields: [receiverId], references: [id])
+
+  @@index([receiverId])
+  @@index([giverId])
+  @@map("ratings")
 }
 
 model Department {
@@ -100,15 +121,38 @@ model Client {
   company     String?
   address     String?
   taxId       String?
+  status      String    @default("POTENTIAL") // POTENTIAL, NEGOTIATING, AGREED
   createdById String
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   createdBy   User      @relation(fields: [createdById], references: [id])
   invoices    Invoice[]
   projects    Project[]
+  smDetails   SMClientDetails?
 
   @@index([email])
+  @@index([status])
   @@map("clients")
+}
+
+model SMClientDetails {
+  id            String   @id @default(cuid())
+  clientId      String   @unique
+  client        Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  startDate     DateTime
+  endDate       DateTime
+  targetDesigns Int      @default(0)
+  targetVideos  Int      @default(0)
+  doneDesigns   Int      @default(0)
+  doneVideos    Int      @default(0)
+  content       String?
+  contentStatus String   @default("PENDING") // PENDING, APPROVED, REWRITE
+  packagePrice  Decimal? @db.Decimal(10, 2)
+  packageDesc   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("sm_client_details")
 }
 
 model Invoice {
@@ -227,6 +271,7 @@ model Task {
   updatedAt      DateTime      @updatedAt
   deletedAt      DateTime?
   comments       TaskComment[]
+  extensions     ExtensionRequest[]
   reporter       User          @relation("TaskReporter", fields: [reporterId], references: [id])
   assignee       User?         @relation("TaskAssignee", fields: [assigneeId], references: [id])
   project        Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -237,6 +282,22 @@ model Task {
   @@index([priority])
   @@index([dueDate])
   @@map("tasks")
+}
+
+model ExtensionRequest {
+  id              String   @id @default(cuid())
+  taskId          String
+  reason          String
+  requestedDate   DateTime
+  status          String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  approvedById    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  task            Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  approvedBy      User?    @relation("ExtensionApprover", fields: [approvedById], references: [id])
+
+  @@index([taskId])
+  @@map("extension_requests")
 }
 
 model TaskComment {

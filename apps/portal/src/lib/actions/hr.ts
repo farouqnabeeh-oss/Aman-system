@@ -53,3 +53,83 @@ export async function getLeaveRequests() {
     return { success: false, message: 'Failed to fetch leave requests' };
   }
 }
+
+export async function getEmployeesForSecretary() {
+  const session = await getSession();
+  if (!session || !['SECRETARY', 'ADMIN', 'SUPER_ADMIN'].includes(session.role)) {
+    return { success: false, message: 'Unauthorized' };
+  }
+
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const users = await prisma.user.findMany({
+      where: { deletedAt: null },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        employeeNumber: true,
+        department: true,
+        attendanceRecords: {
+          where: { date: { gte: today } },
+          take: 1,
+        },
+      },
+      orderBy: { firstName: 'asc' },
+    });
+
+    const mapped = users.map((u) => ({
+      id: u.id,
+      name: `${u.firstName} ${u.lastName}`,
+      employeeNumber: u.employeeNumber,
+      department: u.department,
+      attendance: u.attendanceRecords[0] || null,
+    }));
+
+    return { success: true, data: mapped };
+  } catch (err) {
+    return { success: false, message: 'Failed to fetch employees' };
+  }
+}
+
+export async function markAttendance(userId: string, data: { status: string; checkIn?: string; checkOut?: string; notes?: string }) {
+  const session = await getSession();
+  if (!session || !['SECRETARY', 'ADMIN', 'SUPER_ADMIN'].includes(session.role)) {
+    return { success: false, message: 'Unauthorized' };
+  }
+
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const record = await prisma.attendanceRecord.upsert({
+      where: {
+        userId_date: {
+          userId,
+          date: today,
+        },
+      },
+      update: {
+        status: data.status,
+        checkIn: data.checkIn ? new Date(data.checkIn) : undefined,
+        checkOut: data.checkOut ? new Date(data.checkOut) : undefined,
+        notes: data.notes,
+      },
+      create: {
+        userId,
+        date: today,
+        status: data.status,
+        checkIn: data.checkIn ? new Date(data.checkIn) : undefined,
+        checkOut: data.checkOut ? new Date(data.checkOut) : undefined,
+        notes: data.notes,
+      },
+    });
+
+    return { success: true, data: record };
+  } catch (err) {
+    console.error('Mark attendance error:', err);
+    return { success: false, message: 'Failed to mark attendance' };
+  }
+}

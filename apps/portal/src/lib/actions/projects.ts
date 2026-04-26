@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/prisma';
 import { getSession } from './auth';
 import { logAction } from '@/lib/audit';
+import { revalidatePath } from 'next/cache';
 import { CreateProjectSchema } from '@ems/shared';
 
 export async function getProjects() {
@@ -33,7 +34,7 @@ export async function getProjects() {
 
 export async function createProject(formData: any) {
   const session = await getSession();
-  if (!session || (session.role !== 'ROOT' && session.role !== 'ADMIN' && session.role !== 'MANAGER')) {
+  if (!session || (session.role !== 'SUPER_ADMIN' && session.role !== 'ADMIN' && session.role !== 'MANAGER')) {
     return { success: false, message: 'Unauthorized' };
   }
 
@@ -54,6 +55,7 @@ export async function createProject(formData: any) {
       entityId: project.id,
       newValues: project,
     });
+    revalidatePath('/projects');
     return { success: true, project };
   } catch (error) {
     return { success: false, message: 'Failed to create project' };

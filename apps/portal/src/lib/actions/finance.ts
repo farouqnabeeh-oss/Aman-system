@@ -66,7 +66,7 @@ export async function getTransactions() {
 
 export async function createTransaction(formData: any) {
   const session = await getSession();
-  if (!session || (session.role !== 'ROOT' && session.role !== 'ADMIN' && session.role !== 'MANAGER')) {
+  if (!session || (session.role !== 'SUPER_ADMIN' && session.role !== 'ADMIN' && session.role !== 'MANAGER')) {
     return { success: false, message: 'Unauthorized' };
   }
 

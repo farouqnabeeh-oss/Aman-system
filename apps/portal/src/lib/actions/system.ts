@@ -36,7 +36,7 @@ export async function markAsRead(id: string) {
 
 export async function getAuditLogs() {
   const session = await getSession();
-  if (!session || session.role !== 'ROOT') return { success: false, message: 'Unauthorized' };
+  if (!session || (session.role !== 'SUPER_ADMIN' && session.role !== 'ADMIN')) return { success: false, message: 'Unauthorized' };
 
   try {
     const logs = await prisma.auditLog.findMany({

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { UserPlus, Trash2, Search, Filter, Mail, LayoutGrid, List, ShieldCheck, Zap } from 'lucide-react';
+import { UserPlus, Trash2, Search, Filter, Mail, LayoutGrid, List, ShieldCheck, Zap, Lock } from 'lucide-react';
 import { useUIStore } from '@/store/ui.store';
 import { PageHeader, StatCard } from '@/components/ui/States';
 import { Modal } from '@/components/ui/Modal';
@@ -32,10 +32,14 @@ const T = {
     dept: 'القسم',
     status: 'الحالة التشغيلية',
     email: 'البريد الإلكتروني',
+    employeeNumber: 'الرقم الوظيفي',
+    nationalId: 'رقم الهوية',
     password: 'كلمة المرور',
     tasks: 'المهام',
     projects: 'المشاريع',
     noUsers: 'لا يوجد مستخدمون',
+    other: 'أخرى',
+    enterDept: 'أدخل اسم القسم',
   },
   en: {
     users: 'Human Capital',
@@ -57,15 +61,19 @@ const T = {
     dept: 'Department',
     status: 'Operational Status',
     email: 'Command Email',
+    employeeNumber: 'Employee ID',
+    nationalId: 'National ID',
     password: 'Access Cipher',
     tasks: 'Tasks',
     projects: 'Projects',
     noUsers: 'No operators found',
+    other: 'Other',
+    enterDept: 'Enter Dept Name',
   }
 };
 
 const ROLES = ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'];
-const DEPARTMENTS = ['ENGINEERING', 'FINANCE', 'HR', 'MARKETING', 'OPERATIONS', 'SALES', 'LEGAL', 'PRODUCT'];
+const DEPARTMENTS = ['SOCIAL_MEDIA', 'PROGRAMMING', 'PROJECTS', 'HR', 'FINANCE', 'OPERATIONS'];
 
 const fadeIn = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } };
 const stagger = { show: { transition: { staggerChildren: 0.05 } } };
@@ -86,8 +94,8 @@ export default function UsersPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
-    firstName: '', lastName: '', email: '', password: '',
-    role: 'EMPLOYEE' as string, department: '' as string, position: ''
+    firstName: '', lastName: '', email: '', employeeNumber: '', nationalId: '', password: '',
+    role: 'EMPLOYEE' as string, department: '' as string, position: '', customDept: ''
   });
 
   const loadUsers = useCallback(async () => {
@@ -126,9 +134,10 @@ export default function UsersPage() {
           toast.error(res.error || 'Update failed');
         }
       } else {
+        const finalDept = form.department === 'OTHER' ? form.customDept : form.department;
         const res = await createUser({
           ...form,
-          department: form.department || null,
+          department: finalDept || null,
         } as any);
         if (res.success) {
           toast.success('Member deployed');
@@ -158,15 +167,20 @@ export default function UsersPage() {
   const handleEdit = (u: any) => {
     setEditingId(u.id);
     setForm({
-      firstName: u.firstName, lastName: u.lastName, email: u.email, password: '',
-      role: u.role, department: u.department || '', position: u.position || ''
+      firstName: u.firstName, lastName: u.lastName, email: u.email, 
+      employeeNumber: u.employeeNumber, nationalId: u.nationalId || '', password: '',
+      role: u.role, department: DEPARTMENTS.includes(u.department) ? u.department : (u.department ? 'OTHER' : ''),
+      position: u.position || '', customDept: DEPARTMENTS.includes(u.department) ? '' : (u.department || '')
     });
     setEditOpen(true);
   };
 
   const openNew = () => {
     setEditingId(null);
-    setForm({ firstName: '', lastName: '', email: '', password: '', role: 'EMPLOYEE', department: '', position: '' });
+    setForm({ 
+      firstName: '', lastName: '', email: '', employeeNumber: '', nationalId: '', password: '', 
+      role: 'EMPLOYEE', department: '', position: '', customDept: '' 
+    });
     setEditOpen(true);
   };
 
@@ -264,8 +278,9 @@ export default function UsersPage() {
               <h4 className="text-sm font-bold text-white mb-1">{u.firstName} {u.lastName}</h4>
               <p className="text-[9px] font-black text-slate-600 uppercase tracking-[0.2em] mb-1">{u.role}</p>
               {u.department && (
-                <p className="text-[9px] font-bold text-blue-400/60 uppercase tracking-widest mb-4">{u.department}</p>
+                <p className="text-[9px] font-bold text-blue-400/60 uppercase tracking-widest mb-2">{u.department}</p>
               )}
+              <p className="text-[10px] font-black text-white/40 mb-4 tracking-wider">ID: {u.employeeNumber}</p>
 
               {/* Stats */}
               <div className="w-full grid grid-cols-2 gap-4 border-t border-white/5 pt-5 mb-5 text-[9px] font-black text-slate-500 uppercase tracking-widest">
@@ -348,11 +363,15 @@ export default function UsersPage() {
             <Input label={t.lastName} icon={UserPlus} value={form.lastName} onChange={(e: any) => setForm(f => ({...f, lastName: e.target.value}))} />
           </div>
 
-          <Input label={t.email} icon={Mail} type="email" value={form.email} onChange={(e: any) => setForm(f => ({...f, email: e.target.value}))} disabled={!!editingId} />
+          <div className="grid grid-cols-2 gap-4">
+            <Input label={t.email} icon={Mail} type="email" value={form.email} onChange={(e: any) => setForm(f => ({...f, email: e.target.value}))} disabled={!!editingId} />
+            <Input label={t.employeeNumber} icon={ShieldCheck} value={form.employeeNumber} onChange={(e: any) => setForm(f => ({...f, employeeNumber: e.target.value}))} />
+          </div>
 
-          {!editingId && (
-            <Input label={t.password} icon={ShieldCheck} type="password" placeholder="••••••••" value={form.password} onChange={(e: any) => setForm(f => ({...f, password: e.target.value}))} />
-          )}
+          <div className="grid grid-cols-2 gap-4">
+            <Input label={t.nationalId} icon={ShieldCheck} value={form.nationalId} onChange={(e: any) => setForm(f => ({...f, nationalId: e.target.value}))} />
+            <Input label={t.password} icon={Lock} type="password" placeholder={editingId ? '••••••••' : 'Default is National ID'} value={form.password} onChange={(e: any) => setForm(f => ({...f, password: e.target.value}))} />
+          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <Select
@@ -367,10 +386,14 @@ export default function UsersPage() {
               icon={Zap}
               value={form.department}
               placeholder="Select..."
-              options={DEPARTMENTS.map(d => ({ value: d, label: d }))}
+              options={[...DEPARTMENTS.map(d => ({ value: d, label: d })), { value: 'OTHER', label: t.other }]}
               onChange={(e: any) => setForm(f => ({...f, department: e.target.value}))}
             />
           </div>
+
+          {form.department === 'OTHER' && (
+            <Input label={t.enterDept} icon={Zap} value={form.customDept} onChange={(e: any) => setForm(f => ({...f, customDept: e.target.value}))} />
+          )}
 
           <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-white/5">
             <button className="px-8 py-3 rounded-xl bg-white/5 border border-white/5 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:bg-white/10 transition-all" onClick={() => setEditOpen(false)}>

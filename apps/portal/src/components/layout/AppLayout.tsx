@@ -16,17 +16,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const [cmdOpen, setCmdOpen] = useState(false);
 
   return (
-    <div className="flex h-[100dvh] overflow-hidden" dir={isRtl ? 'rtl' : 'ltr'}>
-      {/* Ambient background orbs */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="mesh-orb w-[600px] h-[600px] top-[-200px] left-[-100px] bg-blue-900/30" />
-        <div className="mesh-orb w-[400px] h-[400px] bottom-[-150px] right-[-80px] bg-indigo-900/20" />
-        <div className="mesh-orb w-[300px] h-[300px] top-1/2 left-1/3 bg-teal-900/10" />
-      </div>
-
-      {/* Grid overlay */}
-      <div className="fixed inset-0 bg-grid opacity-20 pointer-events-none z-0" />
-
+    <div className="flex h-[100dvh] overflow-hidden bg-white" dir={isRtl ? 'rtl' : 'ltr'}>
+      
       {/* Mobile sidebar overlay */}
       <AnimatePresence>
         {sidebarOpen && (
@@ -34,7 +25,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+            className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm lg:hidden"
             onClick={() => setSidebarOpen(false)}
           />
         )}
@@ -54,7 +45,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         <Topbar onOpenCommand={() => setCmdOpen(true)} />
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto bg-white">
           <AnimatePresence mode="wait">
             <motion.div
               key={pathname}
@@ -72,10 +63,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
       {/* Command Palette Placeholder */}
       {cmdOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setCmdOpen(false)}>
-          <div className="w-full max-w-lg bg-[#111827] border border-white/10 rounded-2xl p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
-            <p className="text-white font-bold">Command Palette (Node Integration Pending)</p>
-            <p className="text-slate-500 text-sm mt-2">Press ESC to close or click outside.</p>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm" onClick={() => setCmdOpen(false)}>
+          <div className="w-full max-w-lg bg-white border border-slate-100 rounded-3xl p-8 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <p className="text-slate-900 font-black uppercase tracking-tight">Command Palette</p>
+            <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-2">Node Integration Pending · Press ESC to close</p>
           </div>
         </div>
       )}
