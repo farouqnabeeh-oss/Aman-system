@@ -153,16 +153,16 @@ export default function ReportsPage() {
                         <Users size={18} className="text-brand" /> {isRtl ? 'توزيع عبء العمل' : 'Departmental Load'}
                     </h3>
                     <div className="space-y-6">
-                        {['Content', 'Design', 'Development', 'Sales'].map((dept, i) => (
-                            <div key={dept}>
+                        {data?.deptLoad?.map((d: any, i: number) => (
+                            <div key={d.department}>
                                 <div className="flex justify-between text-[10px] font-black uppercase tracking-widest mb-3">
-                                    <span className="text-slate-500">{dept}</span>
-                                    <span className="text-white">{(85 - i * 10)}%</span>
+                                    <span className="text-slate-500">{d.department}</span>
+                                    <span className="text-white">{d.count} {isRtl ? 'مهمة نشطة' : 'Active'}</span>
                                 </div>
                                 <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
                                     <motion.div
                                         initial={{ width: 0 }}
-                                        animate={{ width: `${85 - i * 10}%` }}
+                                        animate={{ width: `${Math.min((d.count / 20) * 100, 100)}%` }}
                                         className="h-full bg-brand"
                                     />
                                 </div>
@@ -179,14 +179,14 @@ export default function ReportsPage() {
                         <div className="w-40 h-40 relative">
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
-                                    <Pie data={[{ v: 82 }, { v: 18 }]} dataKey="v" innerRadius={50} outerRadius={65} paddingAngle={8} stroke="none">
+                                    <Pie data={[{ v: data?.fidelity || 0 }, { v: 100 - (data?.fidelity || 0) }]} dataKey="v" innerRadius={50} outerRadius={65} paddingAngle={8} stroke="none">
                                         <Cell fill="#1C93B2" fillOpacity={0.8} />
                                         <Cell fill="rgba(255,255,255,0.05)" />
                                     </Pie>
                                 </PieChart>
                             </ResponsiveContainer>
                             <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                <p className="text-xl font-black text-white">82%</p>
+                                <p className="text-xl font-black text-white">{Math.round(data?.fidelity || 0)}%</p>
                                 <p className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Target</p>
                             </div>
                         </div>
@@ -195,14 +195,14 @@ export default function ReportsPage() {
                                 <div className="w-2.5 h-2.5 rounded-full bg-brand" />
                                 <div>
                                     <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-0.5">{isRtl ? 'في الموعد' : 'On Schedule'}</p>
-                                    <p className="text-xs font-black text-white">82% Accurate</p>
+                                    <p className="text-xs font-black text-white">{Math.round(data?.fidelity || 0)}% Accurate</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3">
                                 <div className="w-2.5 h-2.5 rounded-full bg-white/10" />
                                 <div>
                                     <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-0.5">{isRtl ? 'متأخر' : 'Deviation'}</p>
-                                    <p className="text-xs font-black text-white">18% Lag</p>
+                                    <p className="text-xs font-black text-white">{100 - Math.round(data?.fidelity || 0)}% Lag</p>
                                 </div>
                             </div>
                         </div>

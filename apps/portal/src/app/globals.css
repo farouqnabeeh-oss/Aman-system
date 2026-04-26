@@ -4,11 +4,11 @@
 @theme {
   --color-brand: rgb(28, 147, 178);
   --color-brand-light: rgb(40, 160, 195);
-  --color-bg-base: #ffffff;
-  --color-bg-surface: #f8fafc;
+  --color-bg-base: #0B0F1A;
+  --color-bg-surface: #0E1321;
   --font-sans: 'Inter', 'Noto Sans Arabic', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  
+
   --radius-2xl: 1rem;
   --radius-3xl: 1.5rem;
 }
@@ -16,18 +16,18 @@
 :root {
   --brand: 28 147 178;
   --brand-rgb: 28, 147, 178;
-  --bg-base: #ffffff;
-  --bg-surface: #f8fafc;
-  --bg-card: #ffffff;
+  --bg-base: #0B0F1A;
+  --bg-surface: #0E1321;
+  --bg-card: rgba(255, 255, 255, 0.02);
   --bg-glass: rgba(28, 147, 178, 0.03);
 
-  --border: #e2e8f0;
-  --border-hover: #1C93B2;
+  --border: rgba(255, 255, 255, 0.05);
+  --border-hover: rgba(28, 147, 178, 0.3);
 
-  --text-1: #0f172a;
-  --text-2: #475569;
-  --text-3: #94a3b8;
-  --text-4: #cbd5e1;
+  --text-1: #ffffff;
+  --text-2: #94a3b8;
+  --text-3: #64748b;
+  --text-4: #475569;
 }
 
 * {
@@ -54,48 +54,54 @@ body {
   border-radius: var(--radius-2xl);
   border: 1px solid var(--border);
   background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.3);
 }
 
 .glass-card:hover {
-  border-color: #1C93B2;
-  box-shadow: 0 10px 15px -3px rgba(28, 147, 178, 0.1);
+  border-color: rgba(28, 147, 178, 0.3);
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5), 0 0 20px 0 rgba(28, 147, 178, 0.1);
   transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .text-gradient-brand {
   color: #1C93B2;
 }
 
-/* Custom Scrollbar for Light Mode */
+/* Custom Scrollbar for Dark Mode */
 ::-webkit-scrollbar {
   width: 6px;
 }
+
 ::-webkit-scrollbar-track {
-  background: #f8fafc;
+  background: #0B0F1A;
 }
+
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #1e293b;
   border-radius: 99px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: #1C93B2;
 }
 
-/* Layout overrides for light mode */
+/* Layout overrides for dark mode */
 .sidebar-bg {
-  background: #ffffff !important;
-  border-right: 1px solid #e2e8f0 !important;
+  background: #0B0F1A !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.05) !important;
 }
 
 .nav-link {
-  color: #475569 !important;
+  color: #94a3b8 !important;
 }
 
 .nav-link:hover {
-  background: rgba(28, 147, 178, 0.05) !important;
-  color: #1C93B2 !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+  color: #ffffff !important;
 }
 
 .nav-link.active {

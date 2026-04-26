@@ -56,7 +56,7 @@ export async function getLeaveRequests() {
 
 export async function getEmployeesForSecretary() {
   const session = await getSession();
-  if (!session || !['SECRETARY', 'ADMIN', 'SUPER_ADMIN'].includes(session.role)) {
+  if (!session || !['SECRETARY', 'ADMIN', 'SUPER_ADMIN', 'MANAGER'].includes(session.role)) {
     return { success: false, message: 'Unauthorized' };
   }
 
@@ -96,7 +96,7 @@ export async function getEmployeesForSecretary() {
 
 export async function markAttendance(userId: string, data: { status: string; checkIn?: string; checkOut?: string; notes?: string }) {
   const session = await getSession();
-  if (!session || !['SECRETARY', 'ADMIN', 'SUPER_ADMIN'].includes(session.role)) {
+  if (!session || !['SECRETARY', 'ADMIN', 'SUPER_ADMIN', 'MANAGER'].includes(session.role)) {
     return { success: false, message: 'Unauthorized' };
   }
 
@@ -132,4 +132,74 @@ export async function markAttendance(userId: string, data: { status: string; che
     console.error('Mark attendance error:', err);
     return { success: false, message: 'Failed to mark attendance' };
   }
+}
+
+export async function requestLeave(data: { type: string; startDate: string; endDate: string; reason?: string; daysCount: number }) {
+  const session = await getSession();
+  if (!session) return { success: false, message: 'Unauthorized' };
+
+  try {
+    const leave = await prisma.leaveRequest.create({
+      data: {
+        userId: session.userId,
+        type: data.type,
+        startDate: new Date(data.startDate),
+        endDate: new Date(data.endDate),
+        daysCount: data.daysCount,
+        reason: data.reason,
+        status: 'PENDING',
+      },
+    });
+    return { success: true, data: leave };
+  } catch (err) {
+    return { success: false, message: 'Failed to request leave' };
+  }
+}
+
+export async function updateLeaveStatus(id: string, status: string, reason?: string) {
+  const session = await getSession();
+  if (!session || !['ADMIN', 'SUPER_ADMIN', 'MANAGER'].includes(session.role)) {
+    return { success: false, message: 'Unauthorized' };
+  }
+
+  try {
+    const leave = await prisma.leaveRequest.update({
+      where: { id },
+      data: {
+        status,
+        rejectionReason: reason,
+        approvedById: session.userId,
+        approvedAt: new Date(),
+      },
+    });
+    return { success: true, data: leave };
+  } catch (err) {
+    return { success: false, message: 'Failed to update leave status' };
+  }
+}
+
+export async function selfAttendance(action: 'IN' | 'OUT') {
+    const session = await getSession();
+    if (!session) return { success: false, message: 'Unauthorized' };
+
+    try {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (action === 'IN') {
+            await prisma.attendanceRecord.upsert({
+                where: { userId_date: { userId: session.userId, date: today } },
+                update: { checkIn: new Date(), status: 'PRESENT' },
+                create: { userId: session.userId, date: today, checkIn: new Date(), status: 'PRESENT' }
+            });
+        } else {
+            await prisma.attendanceRecord.update({
+                where: { userId_date: { userId: session.userId, date: today } },
+                data: { checkOut: new Date() }
+            });
+        }
+        return { success: true };
+    } catch (err) {
+        return { success: false, message: 'Attendance operation failed' };
+    }
 }

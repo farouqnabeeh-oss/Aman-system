@@ -71,8 +71,8 @@ export function Sidebar() {
       animate={{ width: sidebarCollapsed ? 72 : 256 }}
       transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
       className={clsx(
-        'fixed top-0 bottom-0 z-50 flex flex-col sidebar-bg',
-        'border-slate-100',
+        'fixed top-0 bottom-0 z-50 flex flex-col bg-[#0B0F1A]/80 backdrop-blur-xl',
+        'border-white/5',
         isRtl ? 'right-0 border-l' : 'left-0 border-r',
         'transition-transform duration-300 lg:translate-x-0',
         isRtl
@@ -82,7 +82,7 @@ export function Sidebar() {
     >
       {/* Brand */}
       <div className={clsx(
-        'relative flex items-center h-16 px-4 border-b border-slate-100 flex-shrink-0',
+        'relative flex items-center h-16 px-4 border-b border-white/5 flex-shrink-0',
         sidebarCollapsed ? 'justify-center' : 'gap-3'
       )}>
         <div className="relative flex-shrink-0">
@@ -98,8 +98,8 @@ export function Sidebar() {
               exit={{ opacity: 0, x: -10 }}
               transition={{ duration: 0.2 }}
             >
-              <p className="text-sm font-black text-slate-900 tracking-tight leading-none">{t.brand}</p>
-              <p className="text-[10px] text-slate-400 mt-0.5 uppercase tracking-widest font-black">Unified Node v1.0</p>
+              <p className="text-sm font-black text-white tracking-tight leading-none">{t.brand}</p>
+              <p className="text-[10px] text-slate-500 mt-0.5 uppercase tracking-widest font-black">Unified Node v1.0</p>
             </motion.div>
           )}
         </AnimatePresence>
@@ -129,7 +129,7 @@ export function Sidebar() {
                   sidebarCollapsed && 'justify-center px-0'
                 )}
               >
-                <span className={clsx('flex-shrink-0 transition-colors', active ? 'text-white' : 'text-slate-400')}>
+                <span className={clsx('flex-shrink-0 transition-colors', active ? 'text-white' : 'text-slate-600')}>
                   <Icon size={18} />
                 </span>
                 <AnimatePresence>

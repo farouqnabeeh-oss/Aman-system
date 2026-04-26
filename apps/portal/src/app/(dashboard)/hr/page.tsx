@@ -7,8 +7,12 @@ import { PageHeader, StatCard } from '@/components/ui/States';
 import { motion } from 'framer-motion';
 import { clsx } from 'clsx';
 
-import { getAttendanceToday, getLeaveRequests } from '@/lib/actions/hr';
-import { useQuery } from '@tanstack/react-query';
+import { getAttendanceToday, getLeaveRequests, selfAttendance, requestLeave, updateLeaveStatus } from '@/lib/actions/hr';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Modal } from '@/components/ui/Modal';
+import { Input, Select } from '@/components/ui/Input';
+import toast from 'react-hot-toast';
+import { useAuthStore } from '@/store/auth.store';
 
 const T = {
   ar: {
@@ -41,8 +45,15 @@ const stagger = { show: { transition: { staggerChildren: 0.04 } } };
 
 export default function HrPage() {
   const { language } = useUIStore();
+  const isRtl = language === 'ar';
+  const { user } = useAuthStore();
   const t = T[language as keyof typeof T] || T.en;
   const [tab, setTab] = useState<'attendance' | 'leaves' | 'payroll'>('attendance');
+  const queryClient = useQueryClient();
+
+  const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
+  const [leaveForm, setLeaveForm] = useState({ type: 'ANNUAL', startDate: '', endDate: '', reason: '' });
+  const [saving, setSaving] = useState(false);
 
   const { data: attendanceData } = useQuery({
     queryKey: ['attendance'],
@@ -62,6 +73,38 @@ export default function HrPage() {
     enabled: tab === 'leaves',
   });
 
+  const attendanceMutation = useMutation({
+    mutationFn: (action: 'IN' | 'OUT') => selfAttendance(action),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['attendance'] });
+      toast.success(isRtl ? 'تم تسجيل حضورك' : 'Attendance recorded');
+    }
+  });
+
+  const leaveMutation = useMutation({
+    mutationFn: (data: any) => requestLeave(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['leaves'] });
+      setIsLeaveModalOpen(false);
+      toast.success(isRtl ? 'تم إرسال طلب الإجازة' : 'Leave request submitted');
+    }
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string, status: string }) => updateLeaveStatus(id, status),
+    onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['leaves'] });
+        toast.success(isRtl ? 'تم تحديث حالة الطلب' : 'Status updated');
+    }
+  });
+
+  const handleLeaveRequest = () => {
+    const start = new Date(leaveForm.startDate);
+    const end = new Date(leaveForm.endDate);
+    const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    leaveMutation.mutate({ ...leaveForm, daysCount: days });
+  };
+
   const SAMPLE_ATTENDANCE = attendanceData || [];
   const SAMPLE_LEAVES = leavesData || [];
 
@@ -79,22 +122,54 @@ export default function HrPage() {
       <PageHeader title={t.hr} description={t.hrSub} />
 
       <motion.div variants={fadeIn} className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label={t.present} value={presentCount} icon={<UserCheck size={18} />} delta="Live" trend="up" />
+        <div className="glass-card !p-6 border-brand/20 bg-brand/5 relative overflow-hidden group">
+            <div className="flex items-center justify-between mb-4">
+                <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center text-brand">
+                    <Clock size={20} />
+                </div>
+                <span className="text-[9px] font-black text-brand uppercase tracking-widest px-2 py-1 bg-brand/10 rounded-lg">Real-time</span>
+            </div>
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Daily Attendance</p>
+            <div className="flex gap-2">
+                <button 
+                    onClick={() => attendanceMutation.mutate('IN')}
+                    className="flex-1 py-2 rounded-lg bg-brand text-white text-[9px] font-black uppercase tracking-widest hover:bg-brand/90 transition-all"
+                >
+                    Check In
+                </button>
+                <button 
+                    onClick={() => attendanceMutation.mutate('OUT')}
+                    className="flex-1 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-[9px] font-black uppercase tracking-widest hover:bg-white/10 transition-all"
+                >
+                    Check Out
+                </button>
+            </div>
+        </div>
         <StatCard label={t.onLeave} value={SAMPLE_LEAVES.filter(l => l.status === 'APPROVED').length} icon={<Calendar size={18} />} />
         <StatCard label={t.late} value={lateCount} icon={<Clock size={18} />} trend="down" delta={String(lateCount)} />
         <StatCard label={t.totalPayroll} value="$42.5k" icon={<Briefcase size={18} />} />
       </motion.div>
 
       {/* Tabs */}
-      <div className="flex gap-3 overflow-x-auto pb-1">
-        {tabs.map(tb => (
-          <button key={tb.key} onClick={() => setTab(tb.key)} className={clsx(
-            'flex items-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap',
-            tab === tb.key ? 'bg-white text-black' : 'text-slate-500 hover:text-white hover:bg-white/5'
-          )}>
-            <tb.icon size={13} /> {tb.label}
-          </button>
-        ))}
+      <div className="flex items-center justify-between">
+        <div className="flex gap-3 overflow-x-auto pb-1">
+            {tabs.map(tb => (
+            <button key={tb.key} onClick={() => setTab(tb.key)} className={clsx(
+                'flex items-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap',
+                tab === tb.key ? 'bg-white text-black' : 'text-slate-500 hover:text-white hover:bg-white/5'
+            )}>
+                <tb.icon size={13} /> {tb.label}
+            </button>
+            ))}
+        </div>
+        {tab === 'leaves' && (
+            <button 
+                onClick={() => setIsLeaveModalOpen(true)}
+                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-brand text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-brand/20 hover:scale-105 transition-all"
+            >
+                <Plus size={14} /> {isRtl ? 'طلب إجازة' : 'Request Leave'}
+            </button>
+        )}
       </div>
 
       {/* Attendance Tab */}
@@ -136,19 +211,90 @@ export default function HrPage() {
       {tab === 'leaves' && (
         <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-3">
           {SAMPLE_LEAVES.map((l: any) => (
-            <motion.div key={l.id} variants={fadeIn} className="glass-card !p-5 flex items-center gap-4 hover:border-white/15 transition-all">
+            <motion.div key={l.id} variants={fadeIn} className="glass-card !p-5 flex items-center gap-4 hover:border-white/15 transition-all group">
               <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-sm font-black text-white">{l.userName?.[0] || '?'}</div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-white">{l.userName}</p>
-                <p className="text-[10px] text-slate-500 mt-0.5">{l.type} · {l.days || l.daysCount?.toString()} days · from {new Date(l.startDate).toLocaleDateString()}</p>
+                <div className="flex items-center gap-2">
+                    <p className="text-sm font-bold text-white">{l.userName}</p>
+                    <span className={clsx('text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-widest', statusColor[l.status])}>
+                        {l.status}
+                    </span>
+                </div>
+                <p className="text-[10px] text-slate-500 mt-0.5 font-black uppercase tracking-tight">
+                    {l.type} · {l.daysCount || l.days} DAYS · FROM {new Date(l.startDate).toLocaleDateString()}
+                </p>
+                {l.reason && <p className="text-[10px] text-slate-600 mt-1 italic">"{l.reason}"</p>}
               </div>
-              <span className={clsx('text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest flex-shrink-0', statusColor[l.status])}>
-                {l.status}
-              </span>
+              
+              {['ADMIN', 'SUPER_ADMIN', 'MANAGER'].includes(user?.role || '') && l.status === 'PENDING' && (
+                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button 
+                        onClick={() => approveMutation.mutate({ id: l.id, status: 'APPROVED' })}
+                        className="px-4 py-2 rounded-lg bg-emerald-500 text-white text-[9px] font-black uppercase tracking-widest hover:bg-emerald-600 shadow-lg shadow-emerald-500/20"
+                      >
+                          Approve
+                      </button>
+                      <button 
+                        onClick={() => approveMutation.mutate({ id: l.id, status: 'REJECTED' })}
+                        className="px-4 py-2 rounded-lg bg-rose-500 text-white text-[9px] font-black uppercase tracking-widest hover:bg-rose-600 shadow-lg shadow-rose-500/20"
+                      >
+                          Reject
+                      </button>
+                  </div>
+              )}
             </motion.div>
           ))}
         </motion.div>
       )}
+
+      {/* Leave Modal */}
+      <Modal open={isLeaveModalOpen} onClose={() => setIsLeaveModalOpen(false)} title={isRtl ? 'طلب إجازة جديد' : 'New Leave Request'}>
+          <div className="space-y-6 pt-2">
+              <Select 
+                label={isRtl ? 'نوع الإجازة' : 'Leave Type'}
+                value={leaveForm.type}
+                options={[
+                    { value: 'ANNUAL', label: isRtl ? 'سنوية' : 'Annual' },
+                    { value: 'SICK', label: isRtl ? 'مرضية' : 'Sick' },
+                    { value: 'EMERGENCY', label: isRtl ? 'طارئة' : 'Emergency' },
+                    { value: 'UNPAID', label: isRtl ? 'بدون راتب' : 'Unpaid' },
+                ]}
+                onChange={(e: any) => setLeaveForm({ ...leaveForm, type: e.target.value })}
+              />
+              <div className="grid grid-cols-2 gap-4">
+                  <Input 
+                    label={isRtl ? 'تاريخ البدء' : 'Start Date'}
+                    type="date"
+                    value={leaveForm.startDate}
+                    onChange={(e: any) => setLeaveForm({ ...leaveForm, startDate: e.target.value })}
+                  />
+                  <Input 
+                    label={isRtl ? 'تاريخ الانتهاء' : 'End Date'}
+                    type="date"
+                    value={leaveForm.endDate}
+                    onChange={(e: any) => setLeaveForm({ ...leaveForm, endDate: e.target.value })}
+                  />
+              </div>
+              <Input 
+                label={isRtl ? 'السبب' : 'Reason'}
+                placeholder="..."
+                value={leaveForm.reason}
+                onChange={(e: any) => setLeaveForm({ ...leaveForm, reason: e.target.value })}
+              />
+              <div className="flex justify-end gap-3 pt-6">
+                  <button onClick={() => setIsLeaveModalOpen(false)} className="px-6 py-2.5 rounded-xl bg-white/5 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                      {isRtl ? 'إلغاء' : 'Cancel'}
+                  </button>
+                  <button 
+                    onClick={handleLeaveRequest}
+                    disabled={leaveMutation.isPending}
+                    className="px-8 py-2.5 rounded-xl bg-brand text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-brand/20 disabled:opacity-50"
+                  >
+                      {leaveMutation.isPending ? 'Submitting...' : (isRtl ? 'إرسال الطلب' : 'Submit Request')}
+                  </button>
+              </div>
+          </div>
+      </Modal>
 
       {/* Payroll Tab */}
       {tab === 'payroll' && (

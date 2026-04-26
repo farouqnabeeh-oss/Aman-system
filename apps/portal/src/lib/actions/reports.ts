@@ -50,6 +50,17 @@ export async function getPerformanceReport(period: 'weekly' | 'monthly') {
         avgRating: u.receivedRatings.reduce((acc, curr) => acc + curr.stars, 0) / (u.receivedRatings.length || 1)
     })).sort((a, b) => b.tasksDone - a.tasksDone);
 
+    // 4. Departmental Load
+    const departments = ['CONTENT', 'DESIGN', 'DEVELOPMENT', 'SALES'];
+    const deptLoad = await Promise.all(departments.map(async (d) => {
+        const count = await prisma.task.count({ where: { project: { department: d as any }, status: { not: 'DONE' } } });
+        return { department: d, count };
+    }));
+
+    // 5. Timeline Fidelity (On time vs Late)
+    const onTime = await prisma.task.count({ where: { status: 'DONE', updatedAt: { lte: prisma.task.fields.dueDate } as any } });
+    const totalDone = await prisma.task.count({ where: { status: 'DONE' } });
+
     return { 
         success: true, 
         data: {
@@ -57,7 +68,9 @@ export async function getPerformanceReport(period: 'weekly' | 'monthly') {
             tasks,
             avgRating: ratings._avg.stars || 0,
             totalRatings: ratings._count._all,
-            topEmployees: employeeStats
+            topEmployees: employeeStats,
+            deptLoad,
+            fidelity: totalDone > 0 ? (onTime / totalDone) * 100 : 100
         } 
     };
   } catch (err) {
