@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { getSession } from './auth';
 import { logAction } from '@/lib/audit';
 import { CreateTaskSchema } from '@ems/shared';
+import { revalidatePath } from 'next/cache';
 
 export async function getTasks() {
   const session = await getSession();
@@ -54,8 +55,46 @@ export async function createTask(formData: any) {
       entityId: task.id,
       newValues: task,
     });
+    revalidatePath('/tasks');
     return { success: true, task };
   } catch (error) {
     return { success: false, message: 'Failed to create task' };
+  }
+}
+
+export async function deleteTask(id: string) {
+  const session = await getSession();
+  if (!session || !['ADMIN', 'SUPER_ADMIN', 'MANAGER'].includes(session.role)) {
+    return { success: false, message: 'Unauthorized' };
+  }
+
+  try {
+    await prisma.task.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
+    revalidatePath('/tasks');
+    return { success: true };
+  } catch (err) {
+    return { success: false, message: 'Failed to delete task' };
+  }
+}
+
+export async function updateTask(id: string, data: any) {
+  const session = await getSession();
+  if (!session) return { success: false, message: 'Unauthorized' };
+
+  try {
+    const updated = await prisma.task.update({
+      where: { id },
+      data: {
+        ...data,
+        tags: data.tags?.join(',') || data.tags,
+      },
+    });
+    revalidatePath('/tasks');
+    return { success: true, data: updated };
+  } catch (err) {
+    return { success: false, message: 'Failed to update task' };
   }
 }

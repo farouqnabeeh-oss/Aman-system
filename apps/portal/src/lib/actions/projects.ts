@@ -61,3 +61,37 @@ export async function createProject(formData: any) {
     return { success: false, message: 'Failed to create project' };
   }
 }
+
+export async function deleteProject(id: string) {
+  const session = await getSession();
+  if (!session || !['ADMIN', 'SUPER_ADMIN', 'MANAGER'].includes(session.role)) {
+    return { success: false, message: 'Unauthorized' };
+  }
+
+  try {
+    await prisma.project.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
+    revalidatePath('/projects');
+    return { success: true };
+  } catch (err) {
+    return { success: false, message: 'Failed to delete project' };
+  }
+}
+
+export async function updateProject(id: string, data: any) {
+  const session = await getSession();
+  if (!session) return { success: false, message: 'Unauthorized' };
+
+  try {
+    const updated = await prisma.project.update({
+      where: { id },
+      data,
+    });
+    revalidatePath('/projects');
+    return { success: true, data: updated };
+  } catch (err) {
+    return { success: false, message: 'Failed to update project' };
+  }
+}

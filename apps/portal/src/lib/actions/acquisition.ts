@@ -113,10 +113,45 @@ export async function updateClientStatus(clientId: string, status: string, packa
 export async function getLeads() {
   try {
     const leads = await prisma.client.findMany({
+      where: { deletedAt: null } as any,
       orderBy: { createdAt: 'desc' },
     });
     return { success: true, data: leads };
   } catch (err) {
     return { success: false, message: 'Failed to fetch leads' };
+  }
+}
+
+export async function deleteClient(id: string) {
+  const session = await getSession();
+  if (!session || !['ADMIN', 'SUPER_ADMIN', 'MANAGER'].includes(session.role)) {
+    return { success: false, message: 'Unauthorized' };
+  }
+
+  try {
+    await prisma.client.update({
+      where: { id },
+      data: { deletedAt: new Date() } as any,
+    });
+    revalidatePath('/acquisition');
+    return { success: true };
+  } catch (err) {
+    return { success: false, message: 'Failed to delete client' };
+  }
+}
+
+export async function updateClient(id: string, data: any) {
+  const session = await getSession();
+  if (!session) return { success: false, message: 'Unauthorized' };
+
+  try {
+    const updated = await prisma.client.update({
+      where: { id },
+      data,
+    });
+    revalidatePath('/acquisition');
+    return { success: true, data: updated };
+  } catch (err) {
+    return { success: false, message: 'Failed to update client' };
   }
 }

@@ -30,7 +30,7 @@ async function main() {
     data: {
       email: 'manager@sahab.digital',
       passwordHash: managerPass,
-      role: 'MANAGER',
+      role: 'SUPER_ADMIN',
       status: 'ACTIVE',
       firstName: 'المدير',
       lastName: 'العام',

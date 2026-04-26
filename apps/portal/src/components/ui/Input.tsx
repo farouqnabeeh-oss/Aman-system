@@ -32,7 +32,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         {label && <FieldLabel id={inputId} icon={icon}>{label}</FieldLabel>}
         <div className="relative group">
           {leftIcon && (
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none group-focus-within:text-brand transition-colors">
               {leftIcon}
             </div>
           )}
@@ -40,23 +40,23 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             id={inputId}
             className={clsx(
-              'w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition-all',
-              'focus:border-brand/40 focus:bg-white focus:shadow-[0_0_0_3px_rgba(28,147,178,0.05)]',
-              leftIcon && 'pl-10',
-              rightIcon && 'pr-10',
-              error && '!border-rose-300 focus:!border-rose-400 focus:!shadow-[0_0_0_3px_rgba(244,63,94,0.05)]',
+              'w-full bg-white/[0.03] border border-white/[0.08] rounded-2xl px-5 py-3.5 text-sm text-white placeholder:text-slate-600 outline-none transition-all',
+              'focus:border-brand/50 focus:bg-white/[0.05] focus:shadow-[0_0_0_4px_rgba(28,147,178,0.1)]',
+              leftIcon && 'pl-12',
+              rightIcon && 'pr-12',
+              error && '!border-rose-500/50 focus:!border-rose-500/80 focus:!shadow-[0_0_0_4px_rgba(244,63,94,0.1)]',
               className,
             )}
             {...props}
           />
           {rightIcon && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none group-focus-within:text-brand transition-colors">
               {rightIcon}
             </div>
           )}
         </div>
-        {error && <p className="text-[11px] font-bold text-rose-500 mt-1.5 flex items-center gap-1 uppercase tracking-widest">⚠ {error}</p>}
-        {hint && !error && <p className="text-[11px] font-bold text-slate-400 mt-1.5 uppercase tracking-widest">{hint}</p>}
+        {error && <p className="text-[10px] font-black text-rose-500 mt-2 flex items-center gap-1.5 uppercase tracking-widest animate-in fade-in slide-in-from-top-1">⚠ {error}</p>}
+        {hint && !error && <p className="text-[10px] font-black text-slate-500 mt-2 uppercase tracking-widest">{hint}</p>}
       </div>
     );
   },
@@ -80,17 +80,17 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         <textarea
           ref={ref}
           id={inputId}
-          rows={3}
+          rows={4}
           className={clsx(
-            'w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none resize-none leading-relaxed transition-all',
-            'focus:border-brand/40 focus:bg-white',
-            error && '!border-rose-300',
+            'w-full bg-white/[0.03] border border-white/[0.08] rounded-2xl px-5 py-4 text-sm text-white placeholder:text-slate-600 outline-none resize-none leading-relaxed transition-all',
+            'focus:border-brand/50 focus:bg-white/[0.05] focus:shadow-[0_0_0_4px_rgba(28,147,178,0.1)]',
+            error && '!border-rose-500/50',
             className
           )}
           {...props}
         />
-        {error && <p className="text-[11px] font-bold text-rose-500 mt-1.5 uppercase tracking-widest">⚠ {error}</p>}
-        {hint && !error && <p className="text-[11px] font-bold text-slate-400 mt-1.5 uppercase tracking-widest">{hint}</p>}
+        {error && <p className="text-[10px] font-black text-rose-500 mt-2 uppercase tracking-widest">⚠ {error}</p>}
+        {hint && !error && <p className="text-[10px] font-black text-slate-500 mt-2 uppercase tracking-widest">{hint}</p>}
       </div>
     );
   },
@@ -118,24 +118,25 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             ref={ref}
             id={inputId}
             className={clsx(
-              'w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm text-slate-900 outline-none appearance-none pr-9 cursor-pointer transition-all',
-              'focus:border-brand/40 focus:bg-white',
-              error && '!border-rose-300',
+              'w-full bg-white/[0.03] border border-white/[0.08] rounded-2xl px-5 py-3.5 text-sm text-white outline-none appearance-none pr-10 cursor-pointer transition-all',
+              'focus:border-brand/50 focus:bg-white/[0.05] focus:shadow-[0_0_0_4px_rgba(28,147,178,0.1)]',
+              'disabled:opacity-50 disabled:cursor-not-allowed',
+              error && '!border-rose-500/50',
               className
             )}
             {...props}
           >
-            {placeholder && <option value="" className="text-slate-400">{placeholder}</option>}
+            {placeholder && <option value="" className="bg-slate-900">{placeholder}</option>}
             {options.map(o => (
-              <option key={o.value} value={o.value}>{o.label}</option>
+              <option key={o.value} value={o.value} className="bg-slate-900">{o.label}</option>
             ))}
           </select>
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-            <ChevronDown size={14} className="text-slate-400" />
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 group-focus-within:text-brand transition-colors">
+            <ChevronDown size={14} />
           </div>
         </div>
-        {error && <p className="text-[11px] font-bold text-rose-500 mt-1.5 uppercase tracking-widest">⚠ {error}</p>}
-        {hint && !error && <p className="text-[11px] font-bold text-slate-400 mt-1.5 uppercase tracking-widest">{hint}</p>}
+        {error && <p className="text-[10px] font-black text-rose-500 mt-2 uppercase tracking-widest">⚠ {error}</p>}
+        {hint && !error && <p className="text-[10px] font-black text-slate-500 mt-2 uppercase tracking-widest">{hint}</p>}
       </div>
     );
   },
@@ -153,13 +154,13 @@ export function SearchInput({
 }) {
   return (
     <div className={clsx('relative group', className)}>
-      <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none group-focus-within:text-brand transition-colors" />
+      <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none group-focus-within:text-brand transition-colors" />
       <input
         type="text"
         value={value}
         placeholder={placeholder}
         onChange={e => onChange(e.target.value)}
-        className="w-full bg-slate-50 border border-slate-100 rounded-xl pl-9 pr-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-brand/40 focus:bg-white transition-all"
+        className="w-full bg-white/[0.03] border border-white/[0.08] rounded-2xl pl-12 pr-5 py-3.5 text-sm text-white placeholder:text-slate-600 outline-none focus:border-brand/50 focus:bg-white/[0.05] focus:shadow-[0_0_0_4px_rgba(28,147,178,0.1)] transition-all"
       />
     </div>
   );

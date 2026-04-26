@@ -93,6 +93,38 @@ export async function createTransaction(formData: any) {
   }
 }
 
+export async function deleteTransaction(id: string) {
+  const session = await getSession();
+  if (!session || !['ADMIN', 'SUPER_ADMIN', 'MANAGER'].includes(session.role)) {
+    return { success: false, message: 'Unauthorized' };
+  }
+
+  try {
+    await prisma.transaction.update({
+      where: { id },
+      data: { deletedAt: new Date(), status: 'CANCELLED' } as any,
+    });
+    return { success: true };
+  } catch (err) {
+    return { success: false, message: 'Failed to delete transaction' };
+  }
+}
+
+export async function updateTransaction(id: string, data: any) {
+  const session = await getSession();
+  if (!session) return { success: false, message: 'Unauthorized' };
+
+  try {
+    const updated = await prisma.transaction.update({
+      where: { id },
+      data,
+    });
+    return { success: true, data: updated };
+  } catch (err) {
+    return { success: false, message: 'Failed to update transaction' };
+  }
+}
+
 // -- Budgets --
 export async function getBudgets() {
   const session = await getSession();

@@ -129,6 +129,7 @@ model Client {
   invoices    Invoice[]
   projects    Project[]
   smDetails   SMClientDetails?
+  deletedAt   DateTime?
 
   @@index([email])
   @@index([status])
@@ -177,6 +178,7 @@ model Invoice {
   createdBy     User              @relation(fields: [createdById], references: [id])
   client        Client            @relation(fields: [clientId], references: [id])
   transactions  Transaction[]
+  deletedAt     DateTime?
 
   @@index([clientId])
   @@index([status])
@@ -216,6 +218,7 @@ model Transaction {
   updatedAt       DateTime @updatedAt
   createdBy       User     @relation(fields: [createdById], references: [id])
   invoice         Invoice? @relation(fields: [invoiceId], references: [id])
+  deletedAt       DateTime?
 
   @@index([type])
   @@index([status])
