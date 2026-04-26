@@ -82,7 +82,13 @@ export function UsersPage() {
   });
 
   const saveMutation = useMutation({
-    mutationFn: (dto: typeof form) => editingId ? api.patch(`/users/${editingId}`, dto) : api.post('/users', dto),
+    mutationFn: (dto: typeof form) => {
+      const payload: any = { ...dto };
+      if (!payload.department) delete payload.department;
+      if (!payload.position) delete payload.position;
+      if (!payload.password) delete payload.password;
+      return editingId ? api.patch(`/users/${editingId}`, payload) : api.post('/users', payload);
+    },
     onSuccess: () => { 
       setEditOpen(false); 
       qc.invalidateQueries({ queryKey: ['users'], refetchType: 'all' }); 

@@ -114,7 +114,14 @@ export function ProjectsPage() {
   });
 
   const saveMutation = useMutation({
-    mutationFn: () => editingId ? api.patch(`/projects/${editingId}`, { ...form, budget: parseFloat(form.budget) }) : api.post('/projects', { ...form, budget: parseFloat(form.budget) }),
+    mutationFn: () => {
+      const payload: any = { ...form, budget: parseFloat(form.budget) };
+      if (!payload.department) delete payload.department;
+      if (!payload.endDate) delete payload.endDate;
+      if (!payload.clientId) delete payload.clientId;
+      if (!payload.managerId) delete payload.managerId;
+      return editingId ? api.patch(`/projects/${editingId}`, payload) : api.post('/projects', payload);
+    },
     onSuccess: () => {
       setEditOpen(false);
       qc.invalidateQueries({ queryKey: ['projects'] });

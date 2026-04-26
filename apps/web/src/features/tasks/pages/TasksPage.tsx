@@ -140,7 +140,14 @@ export function TasksPage() {
   const { data: users } = useQuery({ queryKey: ['users-list'], queryFn: () => api.get<any>('/users', { params: { limit: 100 } }).then(r => r.data.data.items) });
 
   const saveMutation = useMutation({
-    mutationFn: () => editingId ? api.patch(`/tasks/${editingId}`, form) : api.post('/tasks', form),
+    mutationFn: () => {
+      const payload: any = { ...form };
+      if (!payload.assigneeId) delete payload.assigneeId;
+      if (!payload.dueDate) delete payload.dueDate;
+      if (!payload.estimatedHours) delete payload.estimatedHours;
+      else payload.estimatedHours = Number(payload.estimatedHours);
+      return editingId ? api.patch(`/tasks/${editingId}`, payload) : api.post('/tasks', payload);
+    },
     onSuccess: () => { 
       setEditOpen(false); 
       qc.invalidateQueries({ queryKey: ['tasks'] }); 

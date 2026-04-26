@@ -75,7 +75,11 @@ export function HrPage() {
    const { data: users } = useQuery({ queryKey: ['users-list'], queryFn: () => api.get<any>('/users', { params: { limit: 100 } }).then(r => r.data.data.items) });
 
    const createMutation = useMutation({
-      mutationFn: () => api.post('/hr/leaves', leaveForm),
+      mutationFn: () => {
+         const payload: any = { ...leaveForm };
+         if (!payload.reason) delete payload.reason;
+         return api.post('/hr/leaves', payload);
+      },
       onSuccess: () => { 
         qc.invalidateQueries({ queryKey: ['leaves'] }); 
         qc.invalidateQueries({ queryKey: ['dashboard'] });
@@ -83,6 +87,16 @@ export function HrPage() {
         setCreateLeaveOpen(false); 
         toast.success('Protocol Sent'); 
       },
+   });
+
+   const reviewMutation = useMutation({
+      mutationFn: ({ id, status }: { id: string, status: 'APPROVED' | 'REJECTED' }) => api.patch(`/hr/leaves/${id}/review`, { status }),
+      onSuccess: () => {
+         qc.invalidateQueries({ queryKey: ['leaves'] });
+         qc.invalidateQueries({ queryKey: ['dashboard'] });
+         qc.invalidateQueries({ queryKey: ['audit-logs'] });
+         toast.success(isRtl ? 'تم تحديث حالة الإجازة' : 'Leave status updated');
+      }
    });
 
    const checkInMutation = useMutation({
@@ -211,7 +225,11 @@ export function HrPage() {
                         { key: 'type', label: t.type, render: (l: any) => <span className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em]">{l.type}</span> },
                         { key: 'dates', label: t.dates, render: (l: any) => <span className="text-xs font-bold text-[var(--text-3)]">{new Date(l.startDate).toLocaleDateString()} — {new Date(l.endDate).toLocaleDateString()}</span> },
                         { key: 'status', label: t.status, render: (l: any) => statusBadge(l.status) },
-                        { key: 'actions', label: '', render: (l: any) => l.status === 'PENDING' && isOps && <div className="flex justify-end gap-2"><button className="p-2 rounded-xl bg-[var(--bg-glass)] text-[var(--text-3)] hover:text-brand"><Check size={14} /></button></div> }
+                        { key: 'actions', label: '', render: (l: any) => l.status === 'PENDING' && isOps && (
+                           <div className="flex justify-end gap-2">
+                              <button onClick={() => { if(confirm('Approve leave?')) reviewMutation.mutate({ id: l.id, status: 'APPROVED' })}} className="p-2 rounded-xl bg-teal-500/10 text-teal-500 hover:bg-teal-500 hover:text-white transition-all"><Check size={14} /></button>
+                           </div>
+                        ) }
                      ]} data={leaves?.items || []} keyFn={l => l.id} />
                   )}
                </>
