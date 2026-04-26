@@ -115,7 +115,18 @@ export async function login(formData: any) {
       path: '/',
     });
 
-    return { success: true, accessToken };
+    return { 
+      success: true, 
+      accessToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        status: user.status,
+      }
+    };
   } catch (error) {
     console.error('Login error:', error);
     return { success: false, message: 'An unexpected error occurred' };

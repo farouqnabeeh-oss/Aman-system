@@ -64,9 +64,13 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Command Palette Placeholder */}
       {cmdOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm" onClick={() => setCmdOpen(false)}>
-          <div className="w-full max-w-lg bg-white border border-slate-100 rounded-3xl p-8 shadow-2xl" onClick={e => e.stopPropagation()}>
-            <p className="text-slate-900 font-black uppercase tracking-tight">Command Palette</p>
-            <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-2">Node Integration Pending · Press ESC to close</p>
+          <div className="w-full max-w-lg bg-white border border-slate-100 rounded-3xl p-8 shadow-2xl text-center" onClick={e => e.stopPropagation()}>
+            <p className="text-slate-900 text-lg font-black uppercase tracking-tight">
+               {isRtl ? 'البحث غير متوفر حالياً' : 'Search Unavailable'}
+            </p>
+            <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-2">
+              {isRtl ? 'سيتم تفعيل محرك البحث الشامل قريباً · اضغط ESC للإغلاق' : 'Global Search Engine will be activated soon · Press ESC to close'}
+            </p>
           </div>
         </div>
       )}

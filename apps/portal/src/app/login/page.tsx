@@ -47,12 +47,15 @@ export default function LoginPage() {
   const t = translations[language as keyof typeof translations] || translations.en;
   const isRtl = language === 'ar';
 
+  const { setAuth } = useAuthStore();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
       const result = await loginAction({ employeeNumber, password });
-      if (result.success) {
+      if (result.success && result.user) {
+        setAuth(result.user, result.accessToken);
         toast.success(isRtl ? 'تم التصريح بالدخول الموحد' : 'Unified Access Authorized');
         router.push('/dashboard');
       } else {
