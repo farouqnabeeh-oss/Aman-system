@@ -66,19 +66,32 @@ export function ProjectsPage() {
     try {
       const res = await api.get('/projects', { params: { limit: 10000 } });
       const allProjects = res.data.data.items || [];
+      if (allProjects.length === 0) return toast.error(isRtl ? 'لا توجد مشاريع للتصدير' : 'No projects to export');
+      const headers = isRtl
+        ? ['الاسم', 'القسم', 'الحالة', 'نسبة الإنجاز', 'الميزانية', 'المدير', 'تاريخ البدء']
+        : ['Name', 'Department', 'Status', 'Progress %', 'Budget', 'Manager', 'Start Date'];
       const csv = [
-        ['Name', 'Department', 'Status', 'Progress', 'Budget', 'Manager'],
-        ...allProjects.map((p: any) => [`"${p.name}"`, `"${p.department}"`, `"${p.status}"`, `"${p.progress}"`, `"${p.budget}"`, `"${p.manager?.firstName || ''}"`])
+        headers,
+        ...allProjects.map((p: any) => [
+          `"${p.name}"`,
+          `"${p.department || ''}"`,
+          `"${p.status}"`,
+          `"${p.progress}"`,
+          `"${p.budget ?? ''}"`,
+          `"${p.manager?.firstName || ''} ${p.manager?.lastName || ''}"`,
+          `"${p.startDate ? new Date(p.startDate).toLocaleDateString() : ''}"`,
+        ])
       ].map(e => e.join(",")).join("\n");
       const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.setAttribute("href", url);
-      link.setAttribute("download", `projects_report_${new Date().toISOString().slice(0,10)}.csv`);
+      link.setAttribute("download", `projects_report_${new Date().toISOString().slice(0, 10)}.csv`);
       link.click();
-      toast.success(isRtl ? 'تم تصدير البيانات' : 'Projects exported');
-    } catch (error) {
-      toast.error('Export failed');
+      URL.revokeObjectURL(url);
+      toast.success(isRtl ? 'تم تصدير بيانات المشاريع' : 'Projects exported');
+    } catch {
+      toast.error(isRtl ? 'فشل التصدير' : 'Export failed');
     }
   };
 
@@ -105,8 +118,9 @@ export function ProjectsPage() {
     onSuccess: () => {
       setEditOpen(false);
       qc.invalidateQueries({ queryKey: ['projects'] });
-      setPage(1);
-      toast.success(isRtl ? 'تم التحديث بنجاح' : 'Success');
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+      qc.invalidateQueries({ queryKey: ['audit-logs'] });
+      toast.success(isRtl ? 'تم الحفظ' : 'Saved successfully');
     },
     onError: (err: any) => {
       toast.error(err.response?.data?.message || 'Action Failed');
@@ -115,7 +129,12 @@ export function ProjectsPage() {
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/projects/${id}`),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['projects'] }); toast.success('Deleted'); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['projects'] });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+      qc.invalidateQueries({ queryKey: ['audit-logs'] });
+      toast.success('Project Revoked');
+    },
   });
 
   const handleEdit = (p: any) => {
@@ -133,8 +152,8 @@ export function ProjectsPage() {
         description={t.projectsSub}
         action={
           <div className="flex gap-3">
-             <button onClick={exportProjects} className="clean-btn-secondary h-12 gap-2 text-[10px] uppercase tracking-widest border-[var(--border)]"><Download size={16}/> {isRtl ? 'تصدير' : 'Export'}</button>
-             {isAdminOrManager && <button onClick={() => { setEditingId(null); setForm({ name: '', description: '', managerId: '', department: '', startDate: '', endDate: '', budget: '' }); setEditOpen(true); }} className="clean-btn-primary h-12 gap-2 text-[10px] uppercase tracking-widest bg-brand shadow-brand/20"><Plus size={16} /> {t.newProject}</button>}
+            <button onClick={exportProjects} className="clean-btn-secondary h-12 gap-2 text-[10px] uppercase tracking-widest border-[var(--border)]"><Download size={16} /> {isRtl ? 'تصدير' : 'Export'}</button>
+            {isAdminOrManager && <button onClick={() => { setEditingId(null); setForm({ name: '', description: '', managerId: '', department: '', startDate: '', endDate: '', budget: '' }); setEditOpen(true); }} className="clean-btn-primary h-12 gap-2 text-[10px] uppercase tracking-widest bg-brand shadow-brand/20"><Plus size={16} /> {t.newProject}</button>}
           </div>
         }
       />
@@ -237,17 +256,20 @@ export function ProjectsPage() {
           </div>
 
           <div className="grid grid-cols-2 gap-6">
-            <Input label={isRtl ? 'تاريخ التدشين' : 'Deployment Date'} icon={Calendar} type="date" value={form.startDate} onChange={(e: any) => setForm(f => ({ ...f, startDate: e.target.value }))} />
+            <Input label={isRtl ? 'تاريخ البدء' : 'Deployment Date'} icon={Calendar} type="date" value={form.startDate} onChange={(e: any) => setForm(f => ({ ...f, startDate: e.target.value }))} />
             <Input label={isRtl ? 'تاريخ الإنجاز المتوقع' : 'Succession Date'} icon={Calendar} type="date" value={form.endDate} onChange={(e: any) => setForm(f => ({ ...f, endDate: e.target.value }))} />
           </div>
 
           <Input label={t.budget} icon={DollarSign} type="number" value={form.budget} onChange={(e: any) => setForm(f => ({ ...f, budget: e.target.value }))} />
 
           <div className="flex justify-end gap-4 mt-12 py-6 border-t border-[var(--border)]">
-            <button className="clean-btn-secondary px-10 h-12" onClick={() => setEditOpen(false)}>{t.cancel}</button>
-            <button className="clean-btn-primary px-10 h-12 shadow-brand/20" onClick={() => {
+            <button className="clean-btn-secondary px-10" onClick={() => setEditOpen(false)}>{t.cancel}</button>
+            <button className="clean-btn-primary px-10" onClick={() => {
+              if (!form.name || !form.managerId || !form.startDate) {
+                return toast.error(isRtl ? 'يرجى تعبئة الحقول المطلوبة' : 'Please fill required fields');
+              }
               if (confirm(isRtl ? 'هل أنت متأكد من حفظ البيانات؟' : 'Are you sure you want to save?')) {
-                saveMutation.mutate();
+                saveMutation.mutate()
               }
             }} disabled={saveMutation.isPending}>{t.save}</button>
           </div>

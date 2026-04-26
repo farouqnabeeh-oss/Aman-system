@@ -143,7 +143,8 @@ export class UsersService {
       }
     }
 
-    const { password, currentPassword, ...updateData } = dto;
+    const { password, currentPassword, confirmPassword, ...updateData } = dto;
+    void confirmPassword; // intentionally ignored — validation only
     const dataToUpdate: any = { ...updateData, updatedById: actorId };
 
     if (password) {

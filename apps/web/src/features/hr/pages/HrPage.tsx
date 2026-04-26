@@ -41,18 +41,18 @@ const TRANSLATIONS = {
       attendance: 'Attendance Grid',
       checkIn: 'Clock In',
       checkOut: 'Clock Out',
-      newLeave: 'New Protocol',
-      employee: 'Operator',
+      newLeave: 'New Leave Request',
+      employee: 'Employee',
       type: 'Type',
       dates: 'Duration',
       status: 'Status',
-      totalPresent: 'Present Operators',
+      totalPresent: 'Present Today',
       totalLate: 'Late Arrivals',
       onLeave: 'On Leave',
       attendanceLogs: 'Live Access Feed',
-      manualEntry: 'Deploy Manual Record',
-      save: 'Verify & Save',
-      cancel: 'Abort',
+      manualEntry: 'Add Manual Record',
+      save: 'Save Request',
+      cancel: 'Cancel',
    }
 };
 
@@ -76,13 +76,21 @@ export function HrPage() {
 
    const createMutation = useMutation({
       mutationFn: () => api.post('/hr/leaves', leaveForm),
-      onSuccess: () => { qc.invalidateQueries({ queryKey: ['leaves'] }); setCreateLeaveOpen(false); toast.success('Protocol Sent'); },
+      onSuccess: () => { 
+        qc.invalidateQueries({ queryKey: ['leaves'] }); 
+        qc.invalidateQueries({ queryKey: ['dashboard'] });
+        qc.invalidateQueries({ queryKey: ['audit-logs'] });
+        setCreateLeaveOpen(false); 
+        toast.success('Protocol Sent'); 
+      },
    });
 
    const checkInMutation = useMutation({
       mutationFn: () => api.post('/hr/attendance/check-in'),
       onSuccess: () => {
          qc.invalidateQueries({ queryKey: ['attendance'] });
+         qc.invalidateQueries({ queryKey: ['dashboard'] });
+         qc.invalidateQueries({ queryKey: ['audit-logs'] });
          toast.dismiss('att-toast');
          toast.success(isRtl ? 'تم تسجيل الحضور' : 'Clocked In');
       },
@@ -96,6 +104,8 @@ export function HrPage() {
       mutationFn: () => api.post('/hr/attendance/check-out'),
       onSuccess: () => {
          qc.invalidateQueries({ queryKey: ['attendance'] });
+         qc.invalidateQueries({ queryKey: ['dashboard'] });
+         qc.invalidateQueries({ queryKey: ['audit-logs'] });
          toast.dismiss('att-toast');
          toast.success(isRtl ? 'تم تسجيل الانصراف' : 'Clocked Out');
       },
@@ -171,12 +181,16 @@ export function HrPage() {
                   </button>
                </div>
 
+               {/* المدير: يرى أداة الإضافة اليدوية + زر طلب إجازة (للمدير نفسه) */}
                {isOps && (
-                  <button onClick={() => setManualAttOpen(true)} className="clean-btn-secondary h-12 gap-2 text-[10px] uppercase tracking-widest border-[var(--border)]"><Monitor size={16} /> {t.manualEntry}</button>
+                  <button onClick={() => setManualAttOpen(true)} className="clean-btn-secondary h-12 gap-2 text-[10px] uppercase tracking-widest border-[var(--border)]">
+                     <Monitor size={16} /> {t.manualEntry}
+                  </button>
                )}
-               {!isOps && (
-                  <button onClick={() => setCreateLeaveOpen(true)} className="clean-btn-primary h-12 gap-2 text-[10px] uppercase tracking-widest bg-brand shadow-brand/20"><Plus size={16} /> {t.newLeave}</button>
-               )}
+               {/* كل المستخدمين (بما فيهم المدير) يمكنهم طلب إجازة */}
+               <button onClick={() => setCreateLeaveOpen(true)} className="clean-btn-primary h-12 gap-2 text-[10px] uppercase tracking-widest bg-brand shadow-brand/20">
+                  <Plus size={16} /> {t.newLeave}
+               </button>
             </div>
          </div>
 

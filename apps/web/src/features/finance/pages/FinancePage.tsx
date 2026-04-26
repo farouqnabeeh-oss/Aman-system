@@ -196,14 +196,35 @@ function Transactions() {
       setEditOpen(false);
       qc.invalidateQueries({ queryKey: ['transactions'] });
       qc.invalidateQueries({ queryKey: ['finance'] });
+      qc.invalidateQueries({ queryKey: ['finance-summary'] });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+      qc.invalidateQueries({ queryKey: ['audit-logs'] });
       setPage(1);
       toast.success('Operation Successful');
     },
   });
 
+   const createTransMutation = useMutation({
+      mutationFn: () => api.post('/finance/transactions', form),
+      onSuccess: () => { 
+        qc.invalidateQueries({ queryKey: ['transactions'] }); 
+        qc.invalidateQueries({ queryKey: ['finance-summary'] });
+        qc.invalidateQueries({ queryKey: ['dashboard'] });
+        qc.invalidateQueries({ queryKey: ['audit-logs'] });
+        setEditOpen(false); 
+        toast.success(isRtl ? 'تم إضافة المعاملة' : 'Transaction Added'); 
+      },
+   });
+
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/finance/transactions/${id}`),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['transactions'] }); toast.success('Deleted'); },
+    onSuccess: () => { 
+      qc.invalidateQueries({ queryKey: ['transactions'] }); 
+      qc.invalidateQueries({ queryKey: ['finance-summary'] });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+      qc.invalidateQueries({ queryKey: ['audit-logs'] });
+      toast.success('Deleted'); 
+    },
   });
 
   const handleEdit = (item: any) => {
@@ -279,37 +300,68 @@ function Invoices() {
   const t = TRANSLATIONS[language];
   const [page, setPage] = useState(1);
   const [createOpen, setCreateOpen] = useState(false);
-  const [form, setForm] = useState({ invoiceNumber: '', client: '', amount: '', status: 'PENDING', dueDate: '' });
+
+  // Form state with correct fields matching backend API
+  const [form, setForm] = useState({
+    clientName: '',  // display-only for creating quick client
+    dueDate: '',
+    taxRate: 0,
+    discount: 0,
+    currency: 'ILS',
+    notes: '',
+    lineItems: [{ description: '', quantity: 1, unitPrice: 0 }],
+  });
+
+  const { data: clientsData } = useQuery({
+    queryKey: ['clients'],
+    queryFn: () => api.get<any>('/finance/clients').then(r => r.data.data),
+  });
+
+  const [selectedClientId, setSelectedClientId] = useState('');
 
   const { data, isLoading } = useQuery({
     queryKey: ['invoices', page],
-    queryFn: () => api.get<any>('/finance/invoices', { params: { page, sortBy: 'createdAt', sortOrder: 'desc' } }).then(r => r.data.data),
+    queryFn: () => api.get<any>('/finance/invoices', { params: { page } }).then(r => r.data.data),
   });
 
+  const isFormValid = selectedClientId && form.dueDate && form.lineItems[0].description && form.lineItems[0].unitPrice > 0;
+
   const createMutation = useMutation({
-    mutationFn: () => api.post('/finance/invoices', { ...form, amount: parseFloat(form.amount) }),
+    mutationFn: () => api.post('/finance/invoices', {
+      clientId: selectedClientId,
+      dueDate: form.dueDate,
+      taxRate: form.taxRate,
+      discount: form.discount,
+      currency: form.currency,
+      notes: form.notes,
+      lineItems: form.lineItems.filter(li => li.description && li.unitPrice > 0),
+    }),
     onSuccess: () => {
       setCreateOpen(false);
       qc.invalidateQueries({ queryKey: ['invoices'] });
       qc.invalidateQueries({ queryKey: ['finance'] });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+      qc.invalidateQueries({ queryKey: ['audit-logs'] });
       setPage(1);
-      toast.success('Created');
+      setSelectedClientId('');
+      setForm({ clientName: '', dueDate: '', taxRate: 0, discount: 0, currency: 'ILS', notes: '', lineItems: [{ description: '', quantity: 1, unitPrice: 0 }] });
+      toast.success(isRtl ? 'تم إنشاء الفاتورة بنجاح' : 'Invoice Created');
     },
+    onError: (err: any) => toast.error(err.response?.data?.message || 'Failed to create invoice'),
   });
+
+  const clients = Array.isArray(clientsData) ? clientsData : [];
+
+  const addLineItem = () => setForm(f => ({ ...f, lineItems: [...f.lineItems, { description: '', quantity: 1, unitPrice: 0 }] }));
+  const updateLineItem = (idx: number, field: string, value: any) => setForm(f => ({ ...f, lineItems: f.lineItems.map((li, i) => i === idx ? { ...li, [field]: value } : li) }));
 
   const cols = [
     { key: 'num', label: 'ID', render: (i: any) => <span className="text-[10px] font-black text-slate-600 font-mono">#{i.invoiceNumber || i.id.slice(0, 8)}</span> },
-    { key: 'client', label: t.client, render: (i: any) => <span className="text-sm font-bold text-white">{i.client}</span> },
-    { key: 'amount', label: t.amount, render: (i: any) => <span className="text-sm font-black text-white">{formatCurrency(i.amount, isRtl)}</span> },
+    { key: 'client', label: t.client, render: (i: any) => <span className="text-sm font-bold text-white">{i.client?.name || '—'}</span> },
+    { key: 'total', label: t.amount, render: (i: any) => <span className="text-sm font-black text-white">{formatCurrency(Number(i.total ?? i.subtotal ?? 0), isRtl)}</span> },
     { key: 'due', label: t.dueDate, render: (i: any) => <span className="text-[11px] font-bold text-slate-500">{new Date(i.dueDate).toLocaleDateString(language)}</span> },
     { key: 'status', label: t.status, render: (i: any) => statusBadge(i.status) },
-    {
-      key: 'actions', label: '', render: () => (
-        <div className="flex justify-end gap-2">
-          <button className="p-2.5 rounded-xl hover:bg-white/10 text-slate-600 hover:text-white transition-all"><ArrowUpRight size={14} /></button>
-        </div>
-      )
-    }
+    { key: 'actions', label: '', render: () => (<div className="flex justify-end gap-2"><button className="p-2.5 rounded-xl hover:bg-white/10 text-slate-600 hover:text-white transition-all"><ArrowUpRight size={14} /></button></div>) }
   ];
 
   return (
@@ -325,21 +377,78 @@ function Invoices() {
       </div>
 
       <Modal open={createOpen} onClose={() => setCreateOpen(false)} title={t.newInvoice}>
-        <div className="space-y-8 pt-4">
-          <Input label={isRtl ? 'رقم الفاتورة' : 'Invoice Identifier'} icon={Target} placeholder="INV-2026-001" value={form.invoiceNumber} onChange={(e: any) => setForm(f => ({ ...f, invoiceNumber: e.target.value }))} />
-          <Input label={t.client} icon={Users} value={form.client} onChange={(e: any) => setForm(f => ({ ...f, client: e.target.value }))} />
-          <div className="grid grid-cols-2 gap-6">
-            <Input label={t.amount} icon={DollarSign} type="number" value={form.amount} onChange={(e: any) => setForm(f => ({ ...f, amount: e.target.value }))} />
-            <Input label={t.dueDate} icon={Calendar} type="date" value={form.dueDate} onChange={(e: any) => setForm(f => ({ ...f, dueDate: e.target.value }))} />
+        <div className="space-y-6 pt-4">
+          {/* Client selection */}
+          <div>
+            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">{t.client} *</label>
+            <select
+              value={selectedClientId}
+              onChange={e => setSelectedClientId(e.target.value)}
+              className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm font-bold text-white outline-none focus:border-white/30"
+            >
+              <option value="">{isRtl ? '— اختر العميل —' : '— Select Client —'}</option>
+              {clients.map((c: any) => <option key={c.id} value={c.id}>{c.name} {c.company ? `(${c.company})` : ''}</option>)}
+            </select>
           </div>
-          <Select label={t.status} icon={Zap} value={form.status} options={['PENDING', 'PAID', 'OVERDUE', 'CANCELLED'].map(s => ({ value: s, label: s }))} onChange={(e: any) => setForm(f => ({ ...f, status: e.target.value }))} />
-          <div className="flex justify-end gap-4 mt-12 py-6 border-t border-white/5">
+
+          {/* Due date & currency */}
+          <div className="grid grid-cols-2 gap-6">
+            <Input label={t.dueDate + ' *'} icon={Calendar} type="date" value={form.dueDate} onChange={(e: any) => setForm(f => ({ ...f, dueDate: e.target.value }))} />
+            <Select label={isRtl ? 'العملة' : 'Currency'} icon={DollarSign} value={form.currency} options={[{ value: 'ILS', label: '₪ شيكل' }, { value: 'USD', label: '$ دولار' }]} onChange={(e: any) => setForm(f => ({ ...f, currency: e.target.value }))} />
+          </div>
+
+          {/* Line items */}
+          <div>
+            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">{isRtl ? 'بنود الفاتورة *' : 'Line Items *'}</label>
+            <div className="space-y-3">
+              {form.lineItems.map((li, idx) => (
+                <div key={idx} className="grid grid-cols-3 gap-3">
+                  <input
+                    placeholder={isRtl ? 'وصف البند' : 'Description'}
+                    value={li.description}
+                    onChange={e => updateLineItem(idx, 'description', e.target.value)}
+                    className="col-span-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-white/30"
+                  />
+                  <input
+                    type="number" min="1"
+                    placeholder={isRtl ? 'الكمية' : 'Qty'}
+                    value={li.quantity}
+                    onChange={e => updateLineItem(idx, 'quantity', Number(e.target.value))}
+                    className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-white/30"
+                  />
+                  <input
+                    type="number" min="0" step="0.01"
+                    placeholder={isRtl ? 'السعر' : 'Unit Price'}
+                    value={li.unitPrice || ''}
+                    onChange={e => updateLineItem(idx, 'unitPrice', Number(e.target.value))}
+                    className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-white/30"
+                  />
+                </div>
+              ))}
+            </div>
+            <button onClick={addLineItem} className="mt-3 text-[10px] font-black text-slate-500 hover:text-white uppercase tracking-widest flex items-center gap-2 transition-colors">
+              <Plus size={12} /> {isRtl ? 'إضافة بند' : 'Add Item'}
+            </button>
+          </div>
+
+          {/* Tax & Discount */}
+          <div className="grid grid-cols-2 gap-6">
+            <Input label={isRtl ? 'نسبة الضريبة %' : 'Tax Rate %'} icon={Zap} type="number" value={String(form.taxRate)} onChange={(e: any) => setForm(f => ({ ...f, taxRate: Number(e.target.value) }))} />
+            <Input label={isRtl ? 'الخصم' : 'Discount'} icon={DollarSign} type="number" value={String(form.discount)} onChange={(e: any) => setForm(f => ({ ...f, discount: Number(e.target.value) }))} />
+          </div>
+
+          <div className="flex justify-end gap-4 mt-4 py-6 border-t border-white/5">
             <button className="clean-btn-secondary px-10" onClick={() => setCreateOpen(false)}>{t.cancel}</button>
-            <button className="clean-btn-primary px-10" onClick={() => {
-              if (confirm(isRtl ? 'هل أنت متأكد من حفظ البيانات؟' : 'Are you sure you want to save?')) {
-                createMutation.mutate();
-              }
-            }} disabled={createMutation.isPending}>{t.save}</button>
+            <button
+              className="clean-btn-primary px-10"
+              onClick={() => {
+                if (!isFormValid) return toast.error(isRtl ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill all required fields');
+                if (confirm(isRtl ? 'هل أنت متأكد من حفظ البيانات؟' : 'Are you sure you want to save?')) {
+                  createMutation.mutate();
+                }
+              }}
+              disabled={createMutation.isPending || !isFormValid}
+            >{t.save}</button>
           </div>
         </div>
       </Modal>

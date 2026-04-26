@@ -100,11 +100,12 @@ export function ProfilePage() {
 
    const updateMutation = useMutation({
       mutationFn: (dto: any) => {
-         const payload = { ...dto };
+         // إزالة confirmPassword — للتحقق في الـ frontend فقط
+         const { confirmPassword, ...payload } = dto;
+         void confirmPassword;
          if (!payload.password) {
             delete payload.password;
             delete payload.currentPassword;
-            delete payload.confirmPassword;
          }
          return api.patch(`/users/${user?.id}`, payload);
       },
@@ -112,7 +113,10 @@ export function ProfilePage() {
          updateUser(res.data.data);
          qc.invalidateQueries({ queryKey: ['me'] });
          setEditOpen(false);
-         toast.success(isRtl ? 'تم تحديث السجلات' : 'Identity Synced');
+         toast.success(isRtl ? 'تم تحديث البيانات بنجاح' : 'Profile Updated');
+      },
+      onError: (err: any) => {
+         toast.error(err.response?.data?.message || (isRtl ? 'فشل تحديث البيانات' : 'Update Failed'));
       }
    });
 

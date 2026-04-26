@@ -49,6 +49,7 @@ export function AuditLogPage() {
         action: action || undefined 
       } 
     }).then(r => r.data.data),
+    staleTime: 0,
   });
 
   const cols = [

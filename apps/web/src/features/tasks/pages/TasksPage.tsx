@@ -99,9 +99,20 @@ export function TasksPage() {
   });
 
   const exportTasks = () => {
+    if (tasks.length === 0) return toast.error(isRtl ? 'لا توجد مهام للتصدير' : 'No tasks to export');
+    const headers = isRtl
+      ? ['العنوان', 'المشروع', 'المُكلف', 'الحالة', 'الأولوية', 'الموعد النهائي']
+      : ['Title', 'Project', 'Assignee', 'Status', 'Priority', 'Due Date'];
     const csv = [
-      ['Title', 'Project', 'Assignee', 'Status', 'Priority', 'Due Date'],
-      ...tasks.map((t: any) => [`"${t.title}"`, `"${t.project?.name}"`, `"${t.assignee?.firstName}"`, `"${t.status}"`, `"${t.priority}"`, `"${t.dueDate}"`])
+      headers,
+      ...tasks.map((task: any) => [
+        `"${task.title}"`,
+        `"${task.project?.name || ''}"`,
+        `"${task.assignee ? task.assignee.firstName + ' ' + task.assignee.lastName : ''}"`,
+        `"${task.status}"`,
+        `"${task.priority}"`,
+        `"${task.dueDate ? new Date(task.dueDate).toLocaleDateString() : ''}"`,
+      ])
     ].map(e => e.join(",")).join("\n");
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -109,7 +120,8 @@ export function TasksPage() {
     link.setAttribute("href", url);
     link.setAttribute("download", `tasks_report_${new Date().toISOString().slice(0,10)}.csv`);
     link.click();
-    toast.success(isRtl ? 'تم تصدير البيانات بنجاح' : 'Tasks exported successfully');
+    URL.revokeObjectURL(url);
+    toast.success(isRtl ? 'تم تصدير بيانات المهام' : 'Tasks exported successfully');
   };
 
   const STATUS_COLS = [
@@ -130,8 +142,10 @@ export function TasksPage() {
   const saveMutation = useMutation({
     mutationFn: () => editingId ? api.patch(`/tasks/${editingId}`, form) : api.post('/tasks', form),
     onSuccess: () => { 
-      setEditOpen(false);
+      setEditOpen(false); 
       qc.invalidateQueries({ queryKey: ['tasks'] }); 
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+      qc.invalidateQueries({ queryKey: ['audit-logs'] });
       toast.success(isRtl ? 'تم حفظ التغييرات' : 'Operational Update Success'); 
     },
     onError: (err: any) => {
@@ -141,7 +155,12 @@ export function TasksPage() {
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/tasks/${id}`),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['tasks'] }); toast.success('Deleted'); },
+    onSuccess: () => { 
+      qc.invalidateQueries({ queryKey: ['tasks'] }); 
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+      qc.invalidateQueries({ queryKey: ['audit-logs'] });
+      toast.success('Deleted'); 
+    },
   });
 
   const handleEdit = (task: any) => {
@@ -278,6 +297,9 @@ export function TasksPage() {
             <div className="flex justify-end gap-4 pt-12 border-t border-[var(--border)]">
               <button className="clean-btn-secondary px-10" onClick={() => setEditOpen(false)}>{t.cancel}</button>
               <button className="clean-btn-primary px-10" onClick={() => {
+                if (!form.title || !form.projectId || !form.dueDate) {
+                   return toast.error(isRtl ? 'يرجى تعبئة الحقول المطلوبة' : 'Please fill required fields');
+                }
                 if (confirm(isRtl ? 'هل أنت متأكد من حفظ البيانات؟' : 'Are you sure you want to save?')) {
                   saveMutation.mutate()
                 }

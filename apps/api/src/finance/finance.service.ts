@@ -53,6 +53,23 @@ export class FinanceService {
     await this.auditLog.log({ userId, action: 'DELETE', entity: 'transactions', entityId: id });
   }
 
+  async updateTransaction(id: string, dto: any, userId: string) {
+    const existing = await this.prisma.transaction.findUnique({ where: { id } });
+    if (!existing) throw new Error('Transaction not found');
+    const { amount, transactionDate, ...rest } = dto;
+    const updated = await this.prisma.transaction.update({
+      where: { id },
+      data: {
+        ...rest,
+        ...(amount !== undefined ? { amount: Number(amount) } : {}),
+        ...(transactionDate ? { transactionDate: new Date(transactionDate) } : {}),
+      },
+      include: { createdBy: { select: USER_SELECT } },
+    });
+    await this.auditLog.log({ userId, action: 'UPDATE', entity: 'transactions', entityId: id, newValues: dto });
+    return this.serializeTransaction(updated);
+  }
+
   // ── Invoices ──────────────────────────────────────────────────────────────
   async getInvoices(filters: InvoiceFiltersDto) {
     const { clientId, status, dateFrom, dateTo, page, limit } = filters;

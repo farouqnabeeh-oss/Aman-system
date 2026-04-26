@@ -85,16 +85,24 @@ export function UsersPage() {
     mutationFn: (dto: typeof form) => editingId ? api.patch(`/users/${editingId}`, dto) : api.post('/users', dto),
     onSuccess: () => { 
       setEditOpen(false); 
-      qc.invalidateQueries({ queryKey: ['users'] }); 
-      qc.invalidateQueries({ queryKey: ['users-list'] });
+      qc.invalidateQueries({ queryKey: ['users'], refetchType: 'all' }); 
+      qc.invalidateQueries({ queryKey: ['users-list'], refetchType: 'all' });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+      qc.invalidateQueries({ queryKey: ['audit-logs'] });
       setPage(1); 
-      toast.success('Protocol Successful'); 
+      toast.success(isRtl ? 'تم حفظ البيانات بنجاح' : 'Saved Successfully'); 
     },
+    onError: (err: any) => toast.error(err.response?.data?.message || 'Action Failed'),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/users/${id}`),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['users'] }); toast.success('Access Revoked'); },
+    onSuccess: () => { 
+      qc.invalidateQueries({ queryKey: ['users'] }); 
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+      qc.invalidateQueries({ queryKey: ['audit-logs'] });
+      toast.success('Access Revoked'); 
+    },
   });
 
   const handleEdit = (u: any) => {
@@ -107,9 +115,21 @@ export function UsersPage() {
     try {
       const res = await api.get('/users', { params: { limit: 10000, page: 1, sortBy: 'createdAt', sortOrder: 'desc' } });
       const allUsers = res.data.data.items || [];
+      if (allUsers.length === 0) return toast.error(isRtl ? 'لا توجد بيانات للتصدير' : 'No data to export');
+      const headers = isRtl
+        ? ['الاسم', 'البريد الإلكتروني', 'الصلاحية', 'القسم', 'المسمى الوظيفي', 'الحالة', 'تاريخ الإضافة']
+        : ['Name', 'Email', 'Role', 'Department', 'Position', 'Status', 'Created At'];
       const csv = [
-        ['Name', 'Email', 'Role', 'Department', 'Position'],
-        ...allUsers.map((u: any) => [`"${u.firstName} ${u.lastName}"`, `"${u.email}"`, `"${u.role}"`, `"${u.department || ''}"`, `"${u.position || ''}"`])
+        headers,
+        ...allUsers.map((u: any) => [
+          `"${u.firstName} ${u.lastName}"`,
+          `"${u.email}"`,
+          `"${u.role}"`,
+          `"${u.department || ''}"`  ,
+          `"${u.position || ''}"`,
+          `"${u.status}"`,
+          `"${new Date(u.createdAt).toLocaleDateString()}"`,
+        ])
       ].map(e => e.join(",")).join("\n");
       const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
@@ -117,9 +137,10 @@ export function UsersPage() {
       link.setAttribute("href", url);
       link.setAttribute("download", `team_report_${new Date().toISOString().slice(0,10)}.csv`);
       link.click();
-      toast.success(isRtl ? 'تم تصدير الفريق' : 'Team exported');
-    } catch (error) {
-      toast.error('Export failed');
+      URL.revokeObjectURL(url);
+      toast.success(isRtl ? 'تم تصدير بيانات الفريق' : 'Team data exported');
+    } catch {
+      toast.error(isRtl ? 'فشل التصدير' : 'Export failed');
     }
   };
 

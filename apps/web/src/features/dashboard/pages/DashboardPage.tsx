@@ -80,6 +80,8 @@ export function DashboardPage() {
   const { data: kpis, isLoading: kpisLoading, error: kpisError } = useQuery({
     queryKey: ['dashboard', 'kpis'],
     queryFn: () => api.get<any>('/dashboard/kpis').then(r => r.data.data),
+    staleTime: 0,
+    refetchInterval: 30000,
   });
 
   const { data: revenue, isLoading: revenueLoading } = useQuery({
@@ -95,6 +97,8 @@ export function DashboardPage() {
   const { data: activity, isLoading: activityLoading } = useQuery({
     queryKey: ['dashboard', 'activity'],
     queryFn: () => api.get<any>('/dashboard/recent-activity').then(r => r.data.data),
+    staleTime: 0,
+    refetchInterval: 10000,
   });
 
   if (kpisError) return <ErrorState message="Failed to load command center" onRetry={() => window.location.reload()} />;

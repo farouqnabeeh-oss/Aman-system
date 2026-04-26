@@ -31,6 +31,12 @@ export class FinanceController {
     return { success: true, data: await this.financeService.createTransaction(dto, actor.id) };
   }
 
+  @Patch('transactions/:id') @Roles('MANAGER', 'ADMIN', 'SUPER_ADMIN')
+  async updateTransaction(@Param('id') id: string, @Body() dto: any, @CurrentUser() actor: RequestUser) {
+    const tx = await this.financeService.updateTransaction(id, dto, actor.id);
+    return { success: true, data: tx };
+  }
+
   @Delete('transactions/:id') @Roles('MANAGER', 'ADMIN', 'SUPER_ADMIN') @HttpCode(HttpStatus.OK)
   async deleteTransaction(@Param('id') id: string, @CurrentUser() actor: RequestUser) {
     await this.financeService.deleteTransaction(id, actor.id);

@@ -73,19 +73,28 @@ export function FilesPage() {
       return api.post('/files/upload', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
     },
     onSuccess: () => { 
-      qc.invalidateQueries({ queryKey: ['files'] }); 
+      qc.invalidateQueries({ queryKey: ['files'], refetchType: 'all' });
+      qc.invalidateQueries({ queryKey: ['file-folders'], refetchType: 'all' });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+      qc.invalidateQueries({ queryKey: ['audit-logs'] });
       toast.dismiss('upload-toast');
-      toast.success(isRtl ? 'تم الرفع بنجاح' : 'Asset Deployed'); 
+      toast.success(isRtl ? 'تم رفع الملف بنجاح' : 'File Uploaded Successfully'); 
     },
-    onError: () => {
+    onError: (err: any) => {
       toast.dismiss('upload-toast');
-      toast.error(isRtl ? 'فشل الرفع' : 'Upload Failed');
+      const msg = err.response?.data?.message || (isRtl ? 'فشل رفع الملف' : 'Upload Failed');
+      toast.error(msg);
     }
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/files/${id}`),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['files'] }); toast.success(isRtl ? 'تم الحذف' : 'Terminated'); },
+    onSuccess: () => { 
+      qc.invalidateQueries({ queryKey: ['files'] }); 
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+      qc.invalidateQueries({ queryKey: ['audit-logs'] });
+      toast.success(isRtl ? 'تم الحذف' : 'Terminated'); 
+    },
   });
 
   const files = data?.items ?? [];
