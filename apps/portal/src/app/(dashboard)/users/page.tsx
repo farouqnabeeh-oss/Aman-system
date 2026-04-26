@@ -129,6 +129,8 @@ export default function UsersPage() {
           toast.success('System updated');
           setEditOpen(false);
           loadUsers();
+        } else {
+          toast.error(res.error || 'Update failed');
         }
       } else {
         const finalDept = form.department === 'OTHER' ? form.customDept : form.department;
@@ -140,6 +142,8 @@ export default function UsersPage() {
           toast.success('Personnel deployed');
           setEditOpen(false);
           loadUsers();
+        } else {
+          toast.error(res.error || 'Creation failed');
         }
       }
     } catch (err: any) {
@@ -196,30 +200,30 @@ export default function UsersPage() {
       </motion.div>
 
       <motion.div variants={fadeIn} className="flex flex-wrap items-center gap-4">
-        <div className="flex-1 min-w-[280px] flex items-center gap-4 bg-white/[0.03] border border-white/[0.08] rounded-2xl px-5 py-3.5 focus-within:border-brand/40 transition-all">
-          <Search size={18} className="text-slate-600 flex-shrink-0" />
+        <div className="flex-1 min-w-[280px] flex items-center gap-4 bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 focus-within:border-brand/40 transition-all">
+          <Search size={18} className="text-slate-400 flex-shrink-0" />
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder={t.search}
-            className="bg-transparent text-sm text-white outline-none w-full font-medium placeholder:text-slate-700"
+            className="bg-transparent text-sm text-slate-900 outline-none w-full font-medium placeholder:text-slate-400"
           />
         </div>
 
         <select
           value={roleFilter}
           onChange={e => setRoleFilter(e.target.value)}
-          className="bg-white/[0.03] border border-white/[0.08] rounded-xl px-5 py-3.5 text-[10px] font-black text-slate-400 outline-none uppercase tracking-widest cursor-pointer hover:bg-white/[0.05] transition-all"
+          className="bg-slate-50 border border-slate-200 rounded-xl px-5 py-3.5 text-[10px] font-black text-slate-500 outline-none uppercase tracking-widest cursor-pointer hover:bg-slate-100 transition-all"
         >
           <option value="">{t.allRoles}</option>
           {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
         </select>
 
-        <div className="flex bg-white/[0.03] rounded-xl border border-white/[0.08] p-1">
-          <button onClick={() => setViewMode('grid')} className={clsx('p-2.5 rounded-lg transition-all', viewMode === 'grid' ? 'bg-brand text-white shadow-lg shadow-brand/10' : 'text-slate-600 hover:text-white')}>
+        <div className="flex bg-slate-50 rounded-xl border border-slate-200 p-1 shadow-sm">
+          <button onClick={() => setViewMode('grid')} className={clsx('p-2.5 rounded-lg transition-all', viewMode === 'grid' ? 'bg-brand text-white shadow-lg shadow-brand/10' : 'text-slate-400 hover:text-slate-900')}>
             <LayoutGrid size={16} />
           </button>
-          <button onClick={() => setViewMode('list')} className={clsx('p-2.5 rounded-lg transition-all', viewMode === 'list' ? 'bg-brand text-white shadow-lg shadow-brand/10' : 'text-slate-600 hover:text-white')}>
+          <button onClick={() => setViewMode('list')} className={clsx('p-2.5 rounded-lg transition-all', viewMode === 'list' ? 'bg-brand text-white shadow-lg shadow-brand/10' : 'text-slate-400 hover:text-slate-900')}>
             <List size={16} />
           </button>
         </div>
@@ -230,16 +234,16 @@ export default function UsersPage() {
           {[1,2,3,4,5,6,7,8].map(i => <div key={i} className="glass-card h-64 animate-pulse bg-white/[0.02] border-white/5" />)}
         </div>
       ) : users.length === 0 ? (
-        <div className="py-32 text-center glass-card border-dashed border-white/5 bg-white/[0.01]">
-            <UserCircle size={48} className="mx-auto text-slate-800 mb-4 opacity-20" />
-            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t.noUsers}</p>
+        <div className="py-32 text-center glass-card border-dashed border-slate-200 bg-white">
+            <UserCircle size={48} className="mx-auto text-slate-200 mb-4" />
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t.noUsers}</p>
         </div>
       ) : viewMode === 'grid' ? (
         <motion.div variants={stagger} initial="hidden" animate="show" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {users.map((u: any) => (
-            <motion.div key={u.id} variants={fadeIn} className="glass-card group !p-8 flex flex-col items-center text-center hover:border-brand/20 hover:bg-white/[0.04] transition-all relative overflow-hidden">
+            <motion.div key={u.id} variants={fadeIn} className="glass-card group !p-8 flex flex-col items-center text-center border-slate-100 bg-white hover:bg-slate-50 transition-all relative overflow-hidden shadow-sm">
               <div className="relative mb-6">
-                <div className="w-20 h-20 rounded-3xl bg-white text-black flex items-center justify-center font-black text-2xl shadow-2xl group-hover:scale-110 transition-transform">
+                <div className="w-20 h-20 rounded-3xl bg-slate-50 border border-slate-200 text-slate-900 flex items-center justify-center font-black text-2xl shadow-sm group-hover:scale-110 transition-transform">
                   {u.firstName?.[0] || '?'}
                 </div>
                 <div className={clsx(
@@ -248,29 +252,29 @@ export default function UsersPage() {
                 )} />
               </div>
 
-              <h4 className="text-sm font-black text-white mb-1 uppercase tracking-tight">{u.firstName} {u.lastName}</h4>
+              <h4 className="text-sm font-black text-slate-900 mb-1 uppercase tracking-tight">{u.firstName} {u.lastName}</h4>
               <p className="text-[9px] font-black text-brand uppercase tracking-[0.2em] mb-4">{u.role}</p>
               
               <div className="flex flex-col gap-2 mb-8">
                   {u.department && (
-                    <span className="text-[9px] font-black text-slate-500 bg-white/5 px-3 py-1 rounded-lg uppercase tracking-widest border border-white/5">{u.department}</span>
+                    <span className="text-[9px] font-black text-slate-400 bg-slate-50 px-3 py-1 rounded-lg uppercase tracking-widest border border-slate-100">{u.department}</span>
                   )}
-                  <span className="text-[9px] font-black text-slate-700 uppercase tracking-widest">#{u.employeeNumber}</span>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">#{u.employeeNumber}</span>
               </div>
 
-              <div className="w-full grid grid-cols-2 gap-4 border-t border-white/5 pt-6 mb-6">
+              <div className="w-full grid grid-cols-2 gap-4 border-t border-slate-100 pt-6 mb-6">
                 <div>
-                  <p className="text-[8px] font-black text-slate-600 uppercase tracking-widest mb-1">{t.tasks}</p>
-                  <p className="text-lg font-black text-white">{u.tasksCount ?? 0}</p>
+                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">{t.tasks}</p>
+                  <p className="text-lg font-black text-slate-900">{u.tasksCount ?? 0}</p>
                 </div>
                 <div>
-                  <p className="text-[8px] font-black text-slate-600 uppercase tracking-widest mb-1">{t.projects}</p>
-                  <p className="text-lg font-black text-white">{u.projectsCount ?? 0}</p>
+                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">{t.projects}</p>
+                  <p className="text-lg font-black text-slate-900">{u.projectsCount ?? 0}</p>
                 </div>
               </div>
 
               <div className="flex gap-2 w-full mt-auto opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0">
-                <button onClick={() => handleEdit(u)} className="flex-1 py-3 rounded-xl bg-white/5 border border-white/10 text-[9px] font-black text-slate-400 uppercase tracking-widest hover:bg-white/10 hover:text-white transition-all">
+                <button onClick={() => handleEdit(u)} className="flex-1 py-3 rounded-xl bg-slate-50 border border-slate-200 text-[9px] font-black text-slate-500 uppercase tracking-widest hover:bg-slate-100 hover:text-brand transition-all">
                   {t.edit}
                 </button>
                 <button onClick={() => handleDelete(u.id)} className="p-3 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all">
@@ -281,32 +285,32 @@ export default function UsersPage() {
           ))}
         </motion.div>
       ) : (
-        <motion.div variants={fadeIn} className="glass-card !p-0 overflow-hidden border-white/5 bg-white/[0.01]">
+        <motion.div variants={fadeIn} className="glass-card !p-0 overflow-hidden border-slate-100 bg-white shadow-sm">
           <div className="overflow-x-auto no-scrollbar">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-white/[0.06] bg-white/[0.02]">
-                  <th className="px-8 py-5 text-start text-[9px] font-black text-slate-500 uppercase tracking-widest">{t.firstName}</th>
-                  <th className="px-8 py-5 text-start text-[9px] font-black text-slate-500 uppercase tracking-widest">{t.role}</th>
-                  <th className="px-8 py-5 text-start text-[9px] font-black text-slate-500 uppercase tracking-widest">{t.dept}</th>
-                  <th className="px-8 py-5 text-start text-[9px] font-black text-slate-500 uppercase tracking-widest">{t.status}</th>
+                <tr className="border-b border-slate-100 bg-slate-50/50">
+                  <th className="px-8 py-5 text-start text-[9px] font-black text-slate-400 uppercase tracking-widest">{t.firstName}</th>
+                  <th className="px-8 py-5 text-start text-[9px] font-black text-slate-400 uppercase tracking-widest">{t.role}</th>
+                  <th className="px-8 py-5 text-start text-[9px] font-black text-slate-400 uppercase tracking-widest">{t.dept}</th>
+                  <th className="px-8 py-5 text-start text-[9px] font-black text-slate-400 uppercase tracking-widest">{t.status}</th>
                   <th className="px-8 py-5"></th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-slate-50">
                 {users.map((u: any) => (
                   <tr key={u.id} className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-all group">
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-xl bg-white text-black flex items-center justify-center font-black text-sm">{u.firstName?.[0]}</div>
+                        <div className="w-10 h-10 rounded-xl bg-brand/5 text-brand border border-brand/10 flex items-center justify-center font-black text-sm">{u.firstName?.[0]}</div>
                         <div>
-                          <p className="text-xs font-black text-white uppercase tracking-tight">{u.firstName} {u.lastName}</p>
-                          <p className="text-[10px] font-bold text-slate-600">{u.email}</p>
+                          <p className="text-xs font-black text-slate-900 uppercase tracking-tight">{u.firstName} {u.lastName}</p>
+                          <p className="text-[10px] font-bold text-slate-400">{u.email}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-8 py-5">
-                      <span className="text-[9px] font-black text-brand bg-brand/10 px-2.5 py-1 rounded-lg uppercase tracking-widest border border-brand/20">{u.role}</span>
+                      <span className="text-[9px] font-black text-brand bg-brand/5 px-2.5 py-1 rounded-lg uppercase tracking-widest border border-brand/10">{u.role}</span>
                     </td>
                     <td className="px-8 py-5">
                       <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{u.department || 'GENERAL'}</span>
@@ -314,13 +318,13 @@ export default function UsersPage() {
                     <td className="px-8 py-5">
                       <span className={clsx(
                         'text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest border',
-                        u.status === 'ACTIVE' ? 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20' : 'text-slate-600 bg-white/5 border-white/10'
+                        u.status === 'ACTIVE' ? 'text-emerald-600 bg-emerald-50 border-emerald-100' : 'text-slate-400 bg-slate-50 border-slate-200'
                       )}>{u.status}</span>
                     </td>
                     <td className="px-8 py-5 text-end">
                         <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                            <button onClick={() => handleEdit(u)} className="p-2 rounded-lg bg-white/5 text-slate-500 hover:text-white"><Edit2 size={14} /></button>
-                            <button onClick={() => handleDelete(u.id)} className="p-2 rounded-lg bg-white/5 text-slate-500 hover:text-rose-500"><Trash2 size={14} /></button>
+                            <button onClick={() => handleEdit(u)} className="p-2 rounded-lg bg-slate-50 text-slate-400 hover:text-brand border border-slate-200"><Edit2 size={14} /></button>
+                            <button onClick={() => handleDelete(u.id)} className="p-2 rounded-lg bg-slate-50 text-slate-400 hover:text-rose-500 border border-slate-200"><Trash2 size={14} /></button>
                         </div>
                     </td>
                   </tr>
@@ -368,8 +372,8 @@ export default function UsersPage() {
             <Input label={t.enterDept} value={form.customDept} onChange={(e: any) => setForm(f => ({...f, customDept: e.target.value}))} />
           )}
 
-          <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-white/5">
-            <button className="px-8 py-3 rounded-xl bg-white/5 text-[10px] font-black text-slate-500 uppercase tracking-widest" onClick={() => setEditOpen(false)}>
+          <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-slate-100">
+            <button className="px-8 py-3 rounded-xl bg-slate-100 text-[10px] font-black text-slate-500 uppercase tracking-widest hover:bg-slate-200 transition-all" onClick={() => setEditOpen(false)}>
               {t.cancel}
             </button>
             <button

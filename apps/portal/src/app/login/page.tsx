@@ -73,7 +73,7 @@ export default function LoginPage() {
       
       {/* Subtle Pattern Background */}
       <div className="absolute inset-0 z-0 opacity-[0.03] pointer-events-none overflow-hidden">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#1C93B2_1px,transparent_1px),linear-gradient(to_bottom,#1C93B2_1px,transparent_1px)] bg-[size:40px_40px]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#1C93B2_1px,transparent_1px),linear-gradient(to_bottom,#1C93B2_1px,transparent_1px)] bg-[size:60px_60px]" />
       </div>
 
       {/* Top Bar Navigation */}
@@ -150,7 +150,7 @@ export default function LoginPage() {
                   <input 
                     type="text" 
                     required
-                    placeholder="9:XX:XXXX"
+                    placeholder="EMP-XXX"
                     className={`w-full bg-slate-50 border border-slate-100 rounded-2xl ${isRtl ? 'pr-6 pl-14' : 'pl-14 pr-6'} py-5 text-sm text-slate-900 placeholder:text-slate-300 focus:bg-white focus:border-brand/30 focus:shadow-[0_0_0_4px_rgba(28,147,178,0.05)] outline-none transition-all`}
                     value={employeeNumber}
                     onChange={(e) => setEmployeeNumber(e.target.value)}

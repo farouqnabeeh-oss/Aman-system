@@ -83,9 +83,14 @@ export async function rateEmployee(receiverId: string, stars: number, comment?: 
 }
 
 export async function getPeerRatings(userId: string) {
+  const session = await getSession();
+  const targetId = userId === 'current' ? session?.userId : userId;
+  
+  if (!targetId) return { success: false, message: 'Invalid User ID' };
+
   try {
     const ratings = await prisma.rating.findMany({
-      where: { receiverId: userId },
+      where: { receiverId: targetId },
       include: {
         giver: { select: { firstName: true, lastName: true } },
       },

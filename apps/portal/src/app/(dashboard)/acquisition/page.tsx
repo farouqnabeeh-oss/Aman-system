@@ -72,7 +72,14 @@ export default function AcquisitionPage() {
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
-    const [form, setForm] = useState({ name: '', phone: '', status: 'POTENTIAL' });
+    const [form, setForm] = useState({ 
+        name: '', 
+        phone: '', 
+        status: 'POTENTIAL',
+        packagePrice: '',
+        packageDesc: '',
+        endDate: ''
+    });
 
     const { data: stats = { POTENTIAL: 0, NEGOTIATING: 0, AGREED: 0 } } = useQuery({
         queryKey: ['acquisition-stats'],
@@ -109,9 +116,11 @@ export default function AcquisitionPage() {
             toast.success(editingId ? 'System updated' : 'Lead deployed');
             setIsModalOpen(false);
             setEditingId(null);
-            setForm({ name: '', phone: '', status: 'POTENTIAL' });
+            setForm({ name: '', phone: '', status: 'POTENTIAL', packagePrice: '', packageDesc: '', endDate: '' });
             queryClient.invalidateQueries({ queryKey: ['acquisition-stats'] });
             queryClient.invalidateQueries({ queryKey: ['leads'] });
+        } else {
+            toast.error(res.message || 'Operation failed');
         }
     };
 
@@ -127,7 +136,14 @@ export default function AcquisitionPage() {
 
     const handleEdit = (l: any) => {
         setEditingId(l.id);
-        setForm({ name: l.name, phone: l.phone || '', status: l.status });
+        setForm({ 
+            name: l.name, 
+            phone: l.phone || '', 
+            status: l.status,
+            packagePrice: l.smDetails?.packagePrice?.toString() || '',
+            packageDesc: l.smDetails?.packageDesc || '',
+            endDate: l.smDetails?.endDate ? new Date(l.smDetails.endDate).toISOString().split('T')[0] : ''
+        });
         setIsModalOpen(true);
     };
 
@@ -137,7 +153,7 @@ export default function AcquisitionPage() {
                 title={t.title}
                 description={t.subtitle}
                 action={
-                    <button onClick={() => { setEditingId(null); setForm({ name: '', phone: '', status: 'POTENTIAL' }); setIsModalOpen(true); }} className="flex items-center gap-2 px-6 py-3 rounded-xl bg-brand text-white text-[10px] font-black uppercase tracking-widest hover:bg-brand/90 transition-all shadow-lg shadow-brand/20">
+                    <button onClick={() => { setEditingId(null); setForm({ name: '', phone: '', status: 'POTENTIAL', packagePrice: '', packageDesc: '', endDate: '' }); setIsModalOpen(true); }} className="flex items-center gap-2 px-6 py-3 rounded-xl bg-brand text-white text-[10px] font-black uppercase tracking-widest hover:bg-brand/90 transition-all shadow-lg">
                         <Plus size={14} /> {t.addLead}
                     </button>
                 }
@@ -157,25 +173,25 @@ export default function AcquisitionPage() {
                     </h4>
                     <div className="space-y-3">
                         {expiring.length === 0 ? (
-                            <div className="glass-card py-20 text-center border-dashed border-white/5 bg-white/[0.01]">
-                                <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">{t.noExpiring}</p>
+                            <div className="glass-card py-20 text-center border-dashed border-slate-200 bg-white">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t.noExpiring}</p>
                             </div>
                         ) : expiring.map((c: any) => (
-                            <div key={c.id} className="glass-card !p-8 flex items-center justify-between border-white/5 bg-white/[0.02] group hover:bg-white/[0.04] transition-all relative overflow-hidden">
+                            <div key={c.id} className="glass-card !p-8 flex items-center justify-between border-slate-100 bg-white group hover:bg-slate-50 transition-all relative overflow-hidden shadow-sm">
                                 <div className="flex items-center gap-6">
                                     <div className="w-14 h-14 rounded-2xl bg-brand/10 border border-brand/20 flex items-center justify-center text-brand transition-all group-hover:scale-110">
                                         <Calendar size={24} />
                                     </div>
                                     <div>
-                                        <p className="text-sm font-black text-white uppercase tracking-tight mb-1">{c.name}</p>
+                                        <p className="text-sm font-black text-slate-900 uppercase tracking-tight mb-1">{c.name}</p>
                                         <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest">
                                             {isRtl ? 'ينتهي في' : 'Critical Expiry'}: {new Date(c.smDetails.endDate).toLocaleDateString()}
                                         </p>
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-1">{t.packagePrice}</p>
-                                    <p className="text-lg font-black text-white">${Number(c.smDetails.packagePrice).toLocaleString()}</p>
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">{t.packagePrice}</p>
+                                    <p className="text-lg font-black text-slate-900">${Number(c.smDetails.packagePrice).toLocaleString()}</p>
                                 </div>
                             </div>
                         ))}
@@ -184,7 +200,7 @@ export default function AcquisitionPage() {
 
                 {/* Quick Actions / Summary */}
                 <motion.div variants={fadeIn} className="lg:col-span-4">
-                    <div className="glass-card !p-10 border-brand/10 bg-brand/[0.03] shadow-inner relative overflow-hidden">
+                    <div className="glass-card !p-10 border-brand/10 bg-brand/[0.03] shadow-sm relative overflow-hidden">
                         <div className="absolute -top-10 -right-10 w-40 h-40 bg-brand/5 rounded-full blur-3xl" />
                         <h4 className="text-[10px] font-black text-brand mb-10 flex items-center gap-3 uppercase tracking-[0.3em]">
                             <TrendingUp size={18} /> Conversion Analytics
@@ -192,16 +208,16 @@ export default function AcquisitionPage() {
                         <div className="space-y-8">
                             <div>
                                 <div className="flex justify-between items-end mb-3">
-                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Win Probability</p>
-                                    <p className="text-2xl font-black text-white">{Math.round((stats.AGREED / (stats.POTENTIAL + stats.NEGOTIATING + stats.AGREED || 1)) * 100)}%</p>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Win Probability</p>
+                                    <p className="text-2xl font-black text-slate-900">{Math.round((stats.AGREED / (stats.POTENTIAL + stats.NEGOTIATING + stats.AGREED || 1)) * 100)}%</p>
                                 </div>
-                                <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
-                                    <motion.div initial={{ width: 0 }} animate={{ width: `${(stats.AGREED / (stats.POTENTIAL + stats.NEGOTIATING + stats.AGREED || 1)) * 100}%` }} className="h-full bg-brand shadow-[0_0_15px_rgba(28,147,178,0.5)]" />
+                                <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                                    <motion.div initial={{ width: 0 }} animate={{ width: `${(stats.AGREED / (stats.POTENTIAL + stats.NEGOTIATING + stats.AGREED || 1)) * 100}%` }} className="h-full bg-brand" />
                                 </div>
                             </div>
-                            <div className="flex justify-between items-end border-t border-white/5 pt-6">
-                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Negotiation Velocity</p>
-                                <p className="text-2xl font-black text-white">{stats.NEGOTIATING}</p>
+                            <div className="flex justify-between items-end border-t border-slate-100 pt-6">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Negotiation Velocity</p>
+                                <p className="text-2xl font-black text-slate-900">{stats.NEGOTIATING}</p>
                             </div>
                         </div>
                     </div>
@@ -209,52 +225,52 @@ export default function AcquisitionPage() {
             </div>
 
             {/* All Leads List */}
-            <motion.div variants={fadeIn} className="glass-card !p-0 overflow-hidden border-white/5 bg-white/[0.01]">
-                <div className="px-10 py-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
-                    <h4 className="text-[10px] font-black text-white uppercase tracking-[0.3em]">{t.allLeads}</h4>
-                    <div className="flex items-center gap-4 bg-white/[0.03] rounded-xl px-4 py-2 border border-white/5">
-                        <Search size={14} className="text-slate-600" />
-                        <input className="bg-transparent text-[10px] font-black uppercase text-white outline-none placeholder:text-slate-700" placeholder="Filter List..." />
+            <motion.div variants={fadeIn} className="glass-card !p-0 overflow-hidden border-slate-100 bg-white shadow-sm">
+                <div className="px-10 py-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
+                    <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.3em]">{t.allLeads}</h4>
+                    <div className="flex items-center gap-4 bg-white rounded-xl px-4 py-2 border border-slate-200">
+                        <Search size={14} className="text-slate-400" />
+                        <input className="bg-transparent text-[10px] font-black uppercase text-slate-900 outline-none placeholder:text-slate-300" placeholder="Filter List..." />
                     </div>
                 </div>
                 <div className="overflow-x-auto no-scrollbar">
                     <table className="w-full text-left">
                         <thead>
-                            <tr className="border-b border-white/5 bg-white/[0.01]">
-                                <th className="px-10 py-5 text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">{t.clientName}</th>
-                                <th className="px-10 py-5 text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">{t.phone}</th>
-                                <th className="px-10 py-5 text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">{t.status}</th>
-                                <th className="px-10 py-5 text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">Deployment</th>
+                            <tr className="border-b border-slate-100 bg-slate-50/50">
+                                <th className="px-10 py-5 text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{t.clientName}</th>
+                                <th className="px-10 py-5 text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{t.phone}</th>
+                                <th className="px-10 py-5 text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{t.status}</th>
+                                <th className="px-10 py-5 text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Deployment</th>
                                 <th className="px-10 py-5"></th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-white/[0.02]">
+                        <tbody className="divide-y divide-slate-50">
                             {isLoading ? (
-                                Array(5).fill(0).map((_, i) => <tr key={i}><td colSpan={5} className="px-10 py-6"><div className="h-4 bg-white/5 rounded-lg animate-pulse" /></td></tr>)
+                                Array(5).fill(0).map((_, i) => <tr key={i}><td colSpan={5} className="px-10 py-6"><div className="h-4 bg-slate-50 rounded-lg animate-pulse" /></td></tr>)
                             ) : leads.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="px-10 py-20 text-center text-slate-700 text-[10px] font-black uppercase tracking-widest">{t.noLeads}</td>
+                                    <td colSpan={5} className="px-10 py-20 text-center text-slate-400 text-[10px] font-black uppercase tracking-widest">{t.noLeads}</td>
                                 </tr>
                             ) : leads.map((l: any) => (
-                                <tr key={l.id} className="hover:bg-white/[0.02] transition-all group">
-                                    <td className="px-10 py-5 text-sm font-black text-white uppercase tracking-tight group-hover:text-brand transition-colors">{l.name}</td>
-                                    <td className="px-10 py-5 text-xs font-black text-slate-600 tracking-wider">{l.phone || 'NO-CONTACT'}</td>
+                                <tr key={l.id} className="hover:bg-slate-50 transition-all group">
+                                    <td className="px-10 py-5 text-sm font-black text-slate-900 uppercase tracking-tight group-hover:text-brand transition-colors">{l.name}</td>
+                                    <td className="px-10 py-5 text-xs font-black text-slate-400 tracking-wider">{l.phone || 'NO-CONTACT'}</td>
                                     <td className="px-10 py-5">
                                         <span className={clsx(
                                             'text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest border transition-all',
-                                            l.status === 'AGREED' ? 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20' :
-                                            l.status === 'NEGOTIATING' ? 'text-amber-500 bg-amber-500/10 border-amber-500/20' : 'text-brand bg-brand/10 border border-brand/20'
+                                            l.status === 'AGREED' ? 'text-emerald-600 bg-emerald-50 border-emerald-100' :
+                                            l.status === 'NEGOTIATING' ? 'text-amber-600 bg-amber-50 border-amber-100' : 'text-brand bg-brand/10 border border-brand/20'
                                         )}>
                                             {l.status}
                                         </span>
                                     </td>
-                                    <td className="px-10 py-5 text-[10px] text-slate-700 font-black uppercase tracking-widest">
+                                    <td className="px-10 py-5 text-[10px] text-slate-400 font-black uppercase tracking-widest">
                                         {new Date(l.createdAt).toLocaleDateString()}
                                     </td>
                                     <td className="px-10 py-5 text-right">
                                         <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                                            <button onClick={() => handleEdit(l)} className="p-2 rounded-lg bg-white/5 text-slate-600 hover:text-white transition-all"><Edit2 size={14} /></button>
-                                            <button onClick={() => handleDelete(l.id)} className="p-2 rounded-lg bg-white/5 text-slate-600 hover:text-rose-500 transition-all"><Trash2 size={14} /></button>
+                                            <button onClick={() => handleEdit(l)} className="p-2 rounded-lg bg-slate-100 text-slate-400 hover:text-slate-900 transition-all"><Edit2 size={14} /></button>
+                                            <button onClick={() => handleDelete(l.id)} className="p-2 rounded-lg bg-slate-100 text-slate-400 hover:text-rose-500 transition-all"><Trash2 size={14} /></button>
                                         </div>
                                     </td>
                                 </tr>
@@ -267,8 +283,10 @@ export default function AcquisitionPage() {
             {/* Add/Edit Modal */}
             <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? t.edit : t.addLead}>
                 <div className="space-y-6 pt-2">
-                    <Input label={t.clientName} icon={Users} value={form.name} onChange={(e: any) => setForm({ ...form, name: e.target.value })} placeholder="Client or Company Name" />
-                    <Input label={t.phone} icon={TrendingUp} value={form.phone} onChange={(e: any) => setForm({ ...form, phone: e.target.value })} placeholder="+971 ..." />
+                    <div className="grid grid-cols-2 gap-4">
+                        <Input label={t.clientName} icon={Users} value={form.name} onChange={(e: any) => setForm({ ...form, name: e.target.value })} placeholder="Client or Company Name" />
+                        <Input label={t.phone} icon={TrendingUp} value={form.phone} onChange={(e: any) => setForm({ ...form, phone: e.target.value })} placeholder="+971 ..." />
+                    </div>
                     <Select
                         label={t.status}
                         icon={Clock}
@@ -280,8 +298,19 @@ export default function AcquisitionPage() {
                         ]}
                         onChange={(e: any) => setForm({ ...form, status: e.target.value })}
                     />
-                    <div className="flex justify-end gap-3 pt-8 border-t border-white/5">
-                        <button className="px-8 py-3 rounded-xl bg-white/5 text-[10px] font-black text-slate-500 uppercase tracking-widest" onClick={() => setIsModalOpen(false)}>Cancel</button>
+
+                    {form.status === 'AGREED' && (
+                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-4 pt-4 border-t border-slate-100">
+                            <div className="grid grid-cols-2 gap-4">
+                                <Input label={t.packagePrice} type="number" value={form.packagePrice} onChange={(e: any) => setForm({ ...form, packagePrice: e.target.value })} placeholder="5000" />
+                                <Input label={t.expiryDate} type="date" value={form.endDate} onChange={(e: any) => setForm({ ...form, endDate: e.target.value })} />
+                            </div>
+                            <Input label={t.packageDesc} value={form.packageDesc} onChange={(e: any) => setForm({ ...form, packageDesc: e.target.value })} placeholder="Silver Package - 12 Posts" />
+                        </motion.div>
+                    )}
+
+                    <div className="flex justify-end gap-3 pt-8 border-t border-slate-100">
+                        <button className="px-8 py-3 rounded-xl bg-slate-50 text-[10px] font-black text-slate-500 uppercase tracking-widest hover:bg-slate-100" onClick={() => setIsModalOpen(false)}>Cancel</button>
                         <button
                             onClick={handleSave}
                             className="px-10 py-3 rounded-xl bg-brand text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-brand/20"

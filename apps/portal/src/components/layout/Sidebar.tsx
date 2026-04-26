@@ -71,8 +71,8 @@ export function Sidebar() {
       animate={{ width: sidebarCollapsed ? 72 : 256 }}
       transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
       className={clsx(
-        'fixed top-0 bottom-0 z-50 flex flex-col bg-[#0B0F1A]/80 backdrop-blur-xl',
-        'border-white/5',
+        'fixed top-0 bottom-0 z-50 flex flex-col bg-white/80 backdrop-blur-xl',
+        'border-slate-200',
         isRtl ? 'right-0 border-l' : 'left-0 border-r',
         'transition-transform duration-300 lg:translate-x-0',
         isRtl
@@ -82,7 +82,7 @@ export function Sidebar() {
     >
       {/* Brand */}
       <div className={clsx(
-        'relative flex items-center h-16 px-4 border-b border-white/5 flex-shrink-0',
+        'relative flex items-center h-16 px-4 border-b border-slate-100 flex-shrink-0',
         sidebarCollapsed ? 'justify-center' : 'gap-3'
       )}>
         <div className="relative flex-shrink-0">
@@ -98,8 +98,8 @@ export function Sidebar() {
               exit={{ opacity: 0, x: -10 }}
               transition={{ duration: 0.2 }}
             >
-              <p className="text-sm font-black text-white tracking-tight leading-none">{t.brand}</p>
-              <p className="text-[10px] text-slate-500 mt-0.5 uppercase tracking-widest font-black">Unified Node v1.0</p>
+              <p className="text-sm font-black text-slate-900 tracking-tight leading-none">{t.brand}</p>
+              <p className="text-[10px] text-slate-400 mt-0.5 uppercase tracking-widest font-black">Unified Node v1.0</p>
             </motion.div>
           )}
         </AnimatePresence>
@@ -157,11 +157,11 @@ export function Sidebar() {
       </nav>
 
       {/* Profile footer */}
-      <div className="relative border-t border-white/[0.05] p-3 flex-shrink-0">
+      <div className="relative border-t border-slate-100 p-3 flex-shrink-0">
         <Link
           href="/profile"
           className={clsx(
-            'flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition-all group',
+            'flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 transition-all group',
             sidebarCollapsed && 'justify-center'
           )}
         >
@@ -176,8 +176,8 @@ export function Sidebar() {
                 exit={{ opacity: 0 }}
                 className="flex-1 min-w-0"
               >
-                <p className="text-xs font-semibold text-white truncate">{user?.firstName} {user?.lastName}</p>
-                <p className="text-[10px] text-slate-500 truncate uppercase tracking-wider">{user?.role?.replace('_', ' ')}</p>
+                <p className="text-xs font-semibold text-slate-800 truncate">{user?.firstName} {user?.lastName}</p>
+                <p className="text-[10px] text-slate-400 truncate uppercase tracking-wider">{user?.role?.replace('_', ' ')}</p>
               </motion.div>
             )}
           </AnimatePresence>
@@ -189,7 +189,7 @@ export function Sidebar() {
         onClick={toggleCollapsed}
         className={clsx(
           'hidden lg:flex absolute top-[60px] w-5 h-5 rounded-full items-center justify-center z-10',
-          'bg-slate-800 border border-white/10 text-slate-400 hover:text-white hover:border-white/20 transition-all',
+          'bg-white border border-slate-200 text-slate-400 hover:text-brand hover:border-brand/30 transition-all',
           isRtl ? 'left-[-10px]' : 'right-[-10px]'
         )}
       >

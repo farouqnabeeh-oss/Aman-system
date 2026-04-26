@@ -1,9 +1,6 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "apps/portal/package.json",
-      "use": "@vercel/next"
-    }
-  ]
+  "buildCommand": "pnpm --filter portal run build",
+  "outputDirectory": "apps/portal/.next",
+  "framework": "nextjs"
 }

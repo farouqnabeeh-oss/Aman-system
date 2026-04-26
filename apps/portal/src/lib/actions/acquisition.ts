@@ -64,17 +64,30 @@ export async function createClientLead(data: any) {
   if (!session) return { success: false, message: 'Unauthorized' };
 
   try {
+    const { packagePrice, packageDesc, endDate, ...clientData } = data;
+
     const client = await prisma.client.create({
       data: {
-        ...data,
+        ...clientData,
         createdById: session.userId,
+        ...(clientData.status === 'AGREED' ? {
+          smDetails: {
+            create: {
+              startDate: new Date(),
+              endDate: endDate ? new Date(endDate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+              packagePrice: packagePrice ? Number(packagePrice) : null,
+              packageDesc: packageDesc || null,
+            }
+          }
+        } : {})
       },
     });
 
     revalidatePath('/acquisition');
     return { success: true, data: client };
   } catch (err) {
-    return { success: false, message: 'Failed to create lead' };
+    console.error('Create lead error:', err);
+    return { success: false, message: 'Failed to create lead. Check if email is unique.' };
   }
 }
 
@@ -145,13 +158,35 @@ export async function updateClient(id: string, data: any) {
   if (!session) return { success: false, message: 'Unauthorized' };
 
   try {
+    const { packagePrice, packageDesc, endDate, ...clientData } = data;
+
     const updated = await prisma.client.update({
       where: { id },
-      data,
+      data: {
+        ...clientData,
+        ...(clientData.status === 'AGREED' ? {
+          smDetails: {
+            upsert: {
+              create: {
+                startDate: new Date(),
+                endDate: endDate ? new Date(endDate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+                packagePrice: packagePrice ? Number(packagePrice) : null,
+                packageDesc: packageDesc || null,
+              },
+              update: {
+                endDate: endDate ? new Date(endDate) : undefined,
+                packagePrice: packagePrice ? Number(packagePrice) : undefined,
+                packageDesc: packageDesc || undefined,
+              }
+            }
+          }
+        } : {})
+      },
     });
     revalidatePath('/acquisition');
     return { success: true, data: updated };
   } catch (err) {
+    console.error('Update client error:', err);
     return { success: false, message: 'Failed to update client' };
   }
 }

@@ -59,21 +59,21 @@ export function Topbar({ onOpenCommand }: { onOpenCommand?: () => void }) {
   }, [onOpenCommand]);
 
   return (
-    <header className="relative h-16 flex items-center justify-between px-4 lg:px-6 flex-shrink-0 z-40 bg-[#0B0F1A]/80 backdrop-blur-md border-b border-white/5">
+    <header className="relative h-16 flex items-center justify-between px-4 lg:px-6 flex-shrink-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-100">
 
       {/* Left: Mobile toggle + breadcrumb */}
       <div className="flex items-center gap-3">
         <button
           onClick={toggleSidebar}
-          className="lg:hidden flex items-center justify-center w-9 h-9 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-brand"
+          className="lg:hidden flex items-center justify-center w-9 h-9 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 hover:text-brand"
         >
           <Menu size={18} />
         </button>
 
         {/* Breadcrumb path pill */}
-        <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-slate-500">
+        <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-100 text-xs text-slate-500">
           <Zap size={12} className="text-brand" />
-          <span className="capitalize font-black tracking-tight uppercase">
+          <span className="capitalize font-black tracking-tight uppercase text-slate-700">
             {pathname.split('/').filter(Boolean).join(' / ') || 'dashboard'}
           </span>
         </div>
@@ -82,12 +82,12 @@ export function Topbar({ onOpenCommand }: { onOpenCommand?: () => void }) {
       {/* Center: Search bar */}
       <button
         onClick={onOpenCommand}
-        className="flex items-center gap-3 w-full max-w-xs mx-4 px-4 py-2.5 rounded-xl text-slate-500 cursor-pointer transition-all duration-200 hover:text-brand hover:bg-white/5 border border-white/10 group"
+        className="flex items-center gap-3 w-full max-w-xs mx-4 px-4 py-2.5 rounded-xl text-slate-500 cursor-pointer transition-all duration-200 hover:text-brand hover:bg-slate-50 border border-slate-200 group"
       >
-        <Search size={14} className="text-slate-300 flex-shrink-0 group-hover:text-brand" />
+        <Search size={14} className="text-slate-400 flex-shrink-0 group-hover:text-brand" />
         <span className="flex-1 text-left text-[10px] font-black uppercase tracking-widest">{t.search}</span>
         <div className="hidden sm:flex items-center gap-1">
-          <kbd className="h-5 px-1.5 rounded-md text-[9px] font-mono text-slate-500 flex items-center gap-0.5 border border-white/10 bg-white/5">
+          <kbd className="h-5 px-1.5 rounded-md text-[9px] font-mono text-slate-400 flex items-center gap-0.5 border border-slate-200 bg-slate-50">
             <Command size={9} />K
           </kbd>
         </div>
@@ -98,14 +98,14 @@ export function Topbar({ onOpenCommand }: { onOpenCommand?: () => void }) {
         {/* Language toggle */}
         <button
           onClick={() => setLanguage(language === 'ar' ? 'en' : 'ar')}
-          className="flex items-center justify-center w-9 h-9 rounded-xl bg-white/5 border border-white/10 text-slate-500 hover:text-brand transition-all"
+          className="flex items-center justify-center w-9 h-9 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 hover:text-brand transition-all"
           title={language === 'ar' ? 'Switch to English' : 'تحويل للعربية'}
         >
           <Languages size={15} />
         </button>
 
         {/* Notifications */}
-        <Link href="/notifications" className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-white/5 border border-white/10 text-slate-500 hover:text-brand transition-all">
+        <Link href="/notifications" className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 hover:text-brand transition-all">
           <Bell size={16} />
           <AnimatePresence>
             {unread > 0 && (
@@ -128,16 +128,16 @@ export function Topbar({ onOpenCommand }: { onOpenCommand?: () => void }) {
             className={clsx(
               'flex items-center gap-2.5 pl-2 pr-3 py-1.5 rounded-xl transition-all duration-200 border text-left',
               dropdownOpen
-                ? 'bg-brand/10 border-brand/20'
-                : 'bg-white/5 border-white/10 hover:border-brand/20'
+                ? 'bg-brand/5 border-brand/20'
+                : 'bg-slate-50 border-slate-200 hover:border-brand/20'
             )}
           >
             <div className="w-7 h-7 rounded-lg bg-brand flex items-center justify-center text-white font-black text-xs shadow-md shadow-brand/10 flex-shrink-0">
               {user?.firstName?.[0]}
             </div>
             <div className="hidden sm:block">
-              <p className="text-xs font-black text-white leading-none uppercase tracking-tight">{user?.firstName}</p>
-              <p className="text-[9px] font-black text-slate-500 mt-0.5 uppercase tracking-widest">{user?.role?.replace('_', ' ')}</p>
+              <p className="text-xs font-black text-slate-900 leading-none uppercase tracking-tight">{user?.firstName}</p>
+              <p className="text-[9px] font-black text-slate-400 mt-0.5 uppercase tracking-widest">{user?.role?.replace('_', ' ')}</p>
             </div>
             <ChevronDown size={12} className={clsx('text-slate-500 transition-transform', dropdownOpen && 'rotate-180')} />
           </button>
@@ -150,22 +150,22 @@ export function Topbar({ onOpenCommand }: { onOpenCommand?: () => void }) {
                 exit={{ opacity: 0, y: 5, scale: 0.97 }}
                 transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
                 className={clsx(
-                  'absolute top-full mt-2 w-52 rounded-2xl p-2 z-50 bg-[#0B0F1A] border border-white/10 shadow-2xl backdrop-blur-xl bg-opacity-95',
+                  'absolute top-full mt-2 w-52 rounded-2xl p-2 z-50 bg-white border border-slate-200 shadow-2xl',
                   isRtl ? 'left-0' : 'right-0'
                 )}
               >
                 {/* User info header */}
                 <div className="px-3 py-2 mb-1">
-                  <p className="text-xs font-black text-white uppercase tracking-tight">{user?.firstName} {user?.lastName}</p>
-                  <p className="text-[10px] font-bold text-slate-500 mt-0.5 truncate uppercase tracking-widest">{user?.email}</p>
+                  <p className="text-xs font-black text-slate-900 uppercase tracking-tight">{user?.firstName} {user?.lastName}</p>
+                  <p className="text-[10px] font-bold text-slate-400 mt-0.5 truncate uppercase tracking-widest">{user?.email}</p>
                 </div>
                 
-                <div className="h-px bg-white/5 mb-1" />
+                <div className="h-px bg-slate-100 mb-1" />
 
                 <Link
                   href="/profile"
                   onClick={() => setDropdownOpen(false)}
-                  className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-400 hover:bg-brand/10 hover:text-brand transition-all text-xs font-black uppercase tracking-widest"
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-500 hover:bg-brand/5 hover:text-brand transition-all text-xs font-black uppercase tracking-widest"
                 >
                   <User size={14} /> {t.profile}
                 </Link>

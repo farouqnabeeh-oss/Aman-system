@@ -50,7 +50,7 @@ const stagger = { show: { transition: { staggerChildren: 0.08 } } };
 
 function KpiCard({ label, value, delta, icon, trend }: any) {
   return (
-    <motion.div variants={fadeIn} className="glass-card p-6 border-white/[0.05] bg-white/[0.02]">
+    <motion.div variants={fadeIn} className="glass-card p-6 border-slate-100 bg-white shadow-sm">
       <div className="flex items-start justify-between mb-4">
         <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-brand/10 text-brand">
           {icon}
@@ -58,15 +58,15 @@ function KpiCard({ label, value, delta, icon, trend }: any) {
         {delta && (
           <div className={clsx(
             "flex items-center gap-1 text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest",
-            trend === 'up' ? 'text-emerald-500 bg-emerald-500/10' : trend === 'down' ? 'text-rose-500 bg-rose-500/10' : 'text-slate-500 bg-white/5'
+            trend === 'up' ? 'text-emerald-600 bg-emerald-50' : trend === 'down' ? 'text-rose-600 bg-rose-50' : 'text-slate-500 bg-slate-50'
           )}>
             {trend === 'up' ? <TrendingUp size={11} /> : trend === 'down' ? <TrendingDown size={11} /> : null}
             {delta}
           </div>
         )}
       </div>
-      <p className="text-[10px] text-slate-500 mb-1 uppercase tracking-widest font-black">{label}</p>
-      <p className="text-2xl font-black text-white tracking-tight">{value}</p>
+      <p className="text-[10px] text-slate-400 mb-1 uppercase tracking-widest font-black">{label}</p>
+      <p className="text-2xl font-black text-slate-900 tracking-tight">{value}</p>
     </motion.div>
   );
 }
@@ -117,12 +117,12 @@ export default function DashboardPage() {
       {/* Header */}
       <motion.div variants={fadeIn} className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black text-white mb-1 uppercase tracking-tight">{t.title}</h1>
-          <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest">{t.sub}</p>
+          <h1 className="text-2xl font-black text-slate-900 mb-1 uppercase tracking-tight">{t.title}</h1>
+          <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">{t.sub}</p>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/5 bg-white/[0.03]">
+        <div className="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-100 bg-slate-50">
           <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">{t.health}: 100% ONLINE</span>
+          <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">{t.health}: 100% ONLINE</span>
         </div>
       </motion.div>
 
@@ -137,25 +137,25 @@ export default function DashboardPage() {
       {/* Admin Quick View (Secretary & Extensions) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Secretary Watchlist Summary */}
-        <motion.div variants={fadeIn} className="glass-card p-6 border-white/[0.05] bg-white/[0.02]">
+        <motion.div variants={fadeIn} className="glass-card p-6 border-slate-100 bg-white">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
               <Clock size={16} className="text-brand" />
-              <h3 className="text-sm font-black text-white uppercase tracking-tight">{isRtl ? 'ملخص الحضور (السكرتيرة)' : 'Attendance Sync'}</h3>
+              <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">{isRtl ? 'ملخص الحضور (السكرتيرة)' : 'Attendance Sync'}</h3>
             </div>
           </div>
           <div className="space-y-3">
             {attendance.slice(0, 5).map(a => (
-              <div key={a.id} className="flex items-center justify-between p-3 rounded-xl bg-white/[0.03] border border-white/5">
+              <div key={a.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-[10px] font-black text-white">
+                  <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-[10px] font-black text-slate-400 shadow-sm">
                     {a.name?.[0]}
                   </div>
                   <div>
-                    <p className="text-xs font-black text-white uppercase tracking-tight">{a.name}</p>
+                    <p className="text-xs font-black text-slate-900 uppercase tracking-tight">{a.name}</p>
                     <p className={clsx(
                       "text-[9px] font-black uppercase tracking-widest",
-                      a.attendance?.status === 'PRESENT' ? 'text-emerald-500' : 'text-slate-600'
+                      a.attendance?.status === 'PRESENT' ? 'text-emerald-500' : 'text-slate-400'
                     )}>{a.attendance?.status || 'ABSENT'}</p>
                   </div>
                 </div>
@@ -173,23 +173,23 @@ export default function DashboardPage() {
         </motion.div>
 
         {/* Extension Requests */}
-        <motion.div variants={fadeIn} className="glass-card p-6 border-white/[0.05] bg-white/[0.02]">
+        <motion.div variants={fadeIn} className="glass-card p-6 border-slate-100 bg-white">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
               <Zap size={16} className="text-amber-500" />
-              <h3 className="text-sm font-black text-white uppercase tracking-tight">{isRtl ? 'طلبات تمديد الموعد' : 'Extension Requests'}</h3>
+              <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">{isRtl ? 'طلبات تمديد الموعد' : 'Extension Requests'}</h3>
             </div>
           </div>
           <div className="space-y-3">
             {extensions.length === 0 ? (
-              <p className="text-[10px] font-black text-slate-600 py-10 text-center uppercase tracking-widest">No pending requests</p>
+              <p className="text-[10px] font-black text-slate-400 py-10 text-center uppercase tracking-widest">No pending requests</p>
             ) : extensions.map(e => (
-              <div key={e.id} className="p-4 rounded-xl bg-white/[0.03] border border-white/5">
+              <div key={e.id} className="p-4 rounded-xl bg-slate-50 border border-slate-100 shadow-sm">
                 <div className="flex justify-between items-start mb-2">
-                  <p className="text-xs font-black text-white uppercase tracking-tight">{e.task?.title}</p>
+                  <p className="text-xs font-black text-slate-900 uppercase tracking-tight">{e.task?.title}</p>
                   <span className="text-[9px] text-rose-500 font-black uppercase tracking-widest">{new Date(e.requestedDate).toLocaleDateString()}</span>
                 </div>
-                <p className="text-[10px] text-slate-500 mb-3 italic">"{e.reason}"</p>
+                <p className="text-[10px] text-slate-400 mb-3 italic">"{e.reason}"</p>
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleExtension(e.id, true)}
@@ -199,7 +199,7 @@ export default function DashboardPage() {
                   </button>
                   <button
                     onClick={() => handleExtension(e.id, false)}
-                    className="flex-1 py-2 rounded-lg bg-white/5 text-rose-500 border border-white/10 text-[9px] font-black uppercase tracking-widest hover:bg-rose-500/10 transition-all"
+                    className="flex-1 py-2 rounded-lg bg-white text-rose-600 border border-rose-100 text-[9px] font-black uppercase tracking-widest hover:bg-rose-50 transition-all"
                   >
                     Reject
                   </button>
@@ -259,13 +259,13 @@ export default function DashboardPage() {
 
           <div className="flex-1 space-y-4">
             {(stats?.recentLogs || []).map((a: any) => (
-              <div key={a.id} className="flex items-start gap-3 p-3 rounded-2xl bg-white/[0.02] border border-white/[0.05] group hover:border-brand/20 transition-all">
-                <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center text-[10px] font-black text-slate-500 group-hover:text-brand transition-colors">
+              <div key={a.id} className="flex items-start gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-100 group hover:border-brand/20 transition-all shadow-sm">
+                <div className="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-[10px] font-black text-slate-400 group-hover:text-brand transition-colors">
                   {a.user[0]}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[11px] text-slate-400 leading-tight">
-                    <span className="font-black text-white uppercase tracking-tight">{a.user}</span> {a.action} <span className="font-bold text-brand">{a.entity}</span>
+                  <p className="text-[11px] text-slate-500 leading-tight">
+                    <span className="font-black text-slate-900 uppercase tracking-tight">{a.user}</span> {a.action} <span className="font-bold text-brand">{a.entity}</span>
                   </p>
                   <div className="flex items-center gap-1 mt-1">
                     <Clock size={8} className="text-slate-600" />
@@ -278,7 +278,7 @@ export default function DashboardPage() {
 
           <Link
             href="/audit"
-            className="mt-6 flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-white/5 text-[10px] font-black text-slate-500 hover:text-brand hover:bg-white/[0.08] transition-all uppercase tracking-widest"
+            className="mt-6 flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-slate-50 text-[10px] font-black text-slate-400 hover:text-brand hover:bg-white transition-all uppercase tracking-widest border border-slate-100"
           >
             {t.viewAll}
             <ChevronRight size={14} />

@@ -115,18 +115,18 @@ export default function SecretaryPage() {
 
       {/* Toolbar */}
       <motion.div variants={fadeIn} className="flex flex-wrap items-center gap-4">
-        <div className="flex-1 min-w-[300px] flex items-center gap-4 bg-white/[0.03] border border-white/10 rounded-2xl px-5 py-3.5 focus-within:border-brand/30 transition-all">
+        <div className="flex-1 min-w-[300px] flex items-center gap-4 bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 focus-within:border-brand/30 transition-all">
           <Search size={18} className="text-slate-400 flex-shrink-0" />
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder={t.search}
-            className="bg-transparent text-sm text-white outline-none w-full font-black uppercase tracking-tight placeholder:text-slate-600"
+            className="bg-transparent text-sm text-slate-900 outline-none w-full font-black uppercase tracking-tight placeholder:text-slate-400"
           />
         </div>
-        <div className="flex items-center gap-3 px-5 py-3.5 bg-white/[0.03] rounded-2xl border border-white/10">
+        <div className="flex items-center gap-3 px-5 py-3.5 bg-slate-50 rounded-2xl border border-slate-200">
             <Calendar size={16} className="text-brand" />
-            <span className="text-[11px] font-black text-white uppercase tracking-widest">{new Date().toLocaleDateString(isRtl ? 'ar-EG' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+            <span className="text-[11px] font-black text-slate-700 uppercase tracking-widest">{new Date().toLocaleDateString(isRtl ? 'ar-EG' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
         </div>
       </motion.div>
 
@@ -135,7 +135,7 @@ export default function SecretaryPage() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-white/5 bg-white/[0.02]">
+              <tr className="border-b border-slate-100 bg-slate-50/50">
                 <th className="px-6 py-5 text-start text-[9px] font-black text-slate-500 uppercase tracking-widest">{t.employee}</th>
                 <th className="px-6 py-5 text-start text-[9px] font-black text-slate-500 uppercase tracking-widest">{t.status}</th>
                 <th className="px-6 py-5 text-start text-[9px] font-black text-slate-500 uppercase tracking-widest">{t.checkIn}</th>
@@ -144,7 +144,7 @@ export default function SecretaryPage() {
                 <th className="px-6 py-5 text-center text-[9px] font-black text-slate-500 uppercase tracking-widest">{t.actions}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-slate-50">
               {filtered.map((e) => (
                 <EmployeeRow 
                     key={e.id} 
@@ -189,15 +189,15 @@ function EmployeeRow({ employee, t, isRtl, onUpdate, isSaving }: any) {
     };
 
     return (
-        <tr className="hover:bg-white/[0.02] transition-colors">
+        <tr className="hover:bg-slate-50/80 transition-colors group">
             <td className="px-6 py-5">
                 <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-xl bg-brand/5 border border-brand/10 flex items-center justify-center font-black text-xs text-brand transition-all">
                         {employee.name?.[0]}
                     </div>
                     <div>
-                        <p className="text-sm font-black text-white uppercase tracking-tight">{employee.name}</p>
-                        <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">ID: {employee.employeeNumber} · {employee.department}</p>
+                        <p className="text-sm font-black text-slate-900 uppercase tracking-tight">{employee.name}</p>
+                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">ID: {employee.employeeNumber} · {employee.department}</p>
                     </div>
                 </div>
             </td>
@@ -222,7 +222,7 @@ function EmployeeRow({ employee, t, isRtl, onUpdate, isSaving }: any) {
                     type="time" 
                     value={checkIn}
                     onChange={(e) => setCheckIn(e.target.value)}
-                    className="bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white outline-none focus:border-brand/30 focus:bg-white/10 font-bold transition-all"
+                    className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-900 outline-none focus:border-brand/30 focus:bg-white font-bold transition-all"
                 />
             </td>
             <td className="px-6 py-5">
@@ -230,7 +230,7 @@ function EmployeeRow({ employee, t, isRtl, onUpdate, isSaving }: any) {
                     type="time" 
                     value={checkOut}
                     onChange={(e) => setCheckOut(e.target.value)}
-                    className="bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white outline-none focus:border-brand/30 focus:bg-white/10 font-bold transition-all"
+                    className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-900 outline-none focus:border-brand/30 focus:bg-white font-bold transition-all"
                 />
             </td>
             <td className="px-6 py-5">
@@ -239,7 +239,7 @@ function EmployeeRow({ employee, t, isRtl, onUpdate, isSaving }: any) {
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="..."
-                    className="bg-transparent border-b border-white/10 text-xs text-white font-bold outline-none focus:border-brand/30 w-full placeholder:text-slate-700"
+                    className="bg-transparent border-b border-slate-200 text-xs text-slate-900 font-bold outline-none focus:border-brand/30 w-full placeholder:text-slate-300"
                 />
             </td>
             <td className="px-6 py-5 text-center">
@@ -248,7 +248,7 @@ function EmployeeRow({ employee, t, isRtl, onUpdate, isSaving }: any) {
                     disabled={!hasChanges || isSaving}
                     className={clsx(
                         'p-2.5 rounded-xl transition-all shadow-sm',
-                        hasChanges ? 'bg-brand text-white hover:bg-brand/90 shadow-brand/10' : 'bg-white/5 text-slate-700 pointer-events-none'
+                        hasChanges ? 'bg-brand text-white hover:bg-brand/90 shadow-brand/10' : 'bg-slate-50 text-slate-300 pointer-events-none'
                     )}
                 >
                     {isSaving ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Save size={16} />}

@@ -95,17 +95,22 @@ export default function ProjectsPage() {
       return;
     }
     setSaving(true);
+    
+    // Ensure dates are ISO strings for the schema
     const res = await createProject({
         ...form,
         budget: Number(form.budget),
-        startDate: new Date(form.startDate),
-        endDate: form.endDate ? new Date(form.endDate) : undefined
+        startDate: new Date(form.startDate).toISOString(),
+        endDate: form.endDate ? new Date(form.endDate).toISOString() : undefined
     });
+
     if (res.success) {
       toast.success(isRtl ? 'تم إنشاء المشروع' : 'Project initiated');
       setIsModalOpen(false);
       setForm({ name: '', description: '', managerId: '', status: 'PLANNING', department: 'MANAGEMENT', budget: '', startDate: new Date().toISOString().split('T')[0], endDate: '' });
       queryClient.invalidateQueries({ queryKey: ['projects'] });
+    } else {
+      toast.error(res.message || 'Operation failed');
     }
     setSaving(false);
   };
@@ -147,9 +152,9 @@ export default function ProjectsPage() {
       </motion.div>
 
       <motion.div variants={fadeIn} className="flex flex-wrap items-center gap-4">
-        <div className="flex-1 min-w-[280px] flex items-center gap-4 bg-white/[0.03] border border-white/[0.08] rounded-2xl px-5 py-3.5 focus-within:border-brand/40 transition-all">
-          <Search size={18} className="text-slate-600" />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t.search} className="bg-transparent text-sm text-white outline-none w-full font-medium placeholder:text-slate-600" />
+        <div className="flex-1 min-w-[280px] flex items-center gap-4 bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 focus-within:border-brand/40 transition-all shadow-sm">
+          <Search size={18} className="text-slate-400" />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t.search} className="bg-transparent text-sm text-slate-900 outline-none w-full font-medium placeholder:text-slate-400" />
         </div>
       </motion.div>
 
@@ -157,27 +162,27 @@ export default function ProjectsPage() {
         {isLoading ? (
             Array(6).fill(0).map((_, i) => <div key={i} className="glass-card h-52 animate-pulse bg-white/[0.02] border-white/5" />)
         ) : filtered.length === 0 ? (
-            <div className="col-span-full py-20 text-center glass-card border-dashed border-white/5 bg-white/[0.01]">
-                <FolderKanban size={48} className="mx-auto text-slate-800 mb-4 opacity-20" />
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t.noProjects}</p>
+            <div className="col-span-full py-20 text-center glass-card border-dashed border-slate-200 bg-white shadow-sm">
+                <FolderKanban size={48} className="mx-auto text-slate-200 mb-4" />
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t.noProjects}</p>
             </div>
         ) : filtered.map((p: any) => (
-          <motion.div key={p.id} variants={fadeIn} className="glass-card !p-8 border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-all group relative overflow-hidden">
+          <motion.div key={p.id} variants={fadeIn} className="glass-card !p-8 border-slate-100 bg-white hover:bg-slate-50 transition-all group relative overflow-hidden shadow-sm">
             <div className="flex justify-between items-start mb-8">
               <div className="max-w-[70%]">
-                <h4 className="text-lg font-black text-white mb-2 uppercase tracking-tight truncate" title={p.name}>{p.name}</h4>
+                <h4 className="text-lg font-black text-slate-900 mb-2 uppercase tracking-tight truncate" title={p.name}>{p.name}</h4>
                 <div className="flex items-center gap-2">
                     <span className="text-[9px] font-black text-brand uppercase tracking-widest">{p.department}</span>
-                    <span className="w-1 h-1 rounded-full bg-white/10" />
-                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest truncate">{p.manager?.firstName} {p.manager?.lastName}</span>
+                    <span className="w-1 h-1 rounded-full bg-slate-200" />
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest truncate">{p.manager?.firstName} {p.manager?.lastName}</span>
                 </div>
               </div>
               <div className="flex flex-col items-end gap-2">
-                  <span className={clsx('text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest border', statusColors[p.status] || statusColors.PLANNING)}>
+                  <span className={clsx('text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest border', statusColors[p.status] || 'text-slate-500 bg-slate-50 border-slate-100')}>
                     {p.status}
                   </span>
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
-                      <button onClick={() => handleDelete(p.id)} className="p-2 rounded-lg bg-white/5 text-slate-600 hover:text-rose-500 transition-all"><Trash2 size={14} /></button>
+                      <button onClick={() => handleDelete(p.id)} className="p-2 rounded-lg bg-slate-100 text-slate-400 hover:text-rose-500 transition-all shadow-sm"><Trash2 size={14} /></button>
                   </div>
               </div>
             </div>
@@ -185,22 +190,22 @@ export default function ProjectsPage() {
             <div className="space-y-4">
               <div>
                 <div className="flex justify-between text-[10px] font-black uppercase tracking-widest mb-3">
-                  <span className="text-slate-600">{t.progress}</span>
-                  <span className="text-white">{p.progress || 0}%</span>
+                  <span className="text-slate-400">{t.progress}</span>
+                  <span className="text-slate-900">{p.progress || 0}%</span>
                 </div>
-                <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
                   <motion.div initial={{ width: 0 }} animate={{ width: `${p.progress || 0}%` }} className="h-full bg-brand" />
                 </div>
               </div>
 
-              <div className="flex justify-between items-center pt-6 border-t border-white/5">
+              <div className="flex justify-between items-center pt-6 border-t border-slate-100">
                 <div className="flex items-center gap-2">
                     <div className="w-6 h-6 rounded-lg bg-brand/10 border border-brand/20 flex items-center justify-center text-[10px] font-black text-brand">
-                        {p.tasks?.length || 0}
+                        {p.tasksCount || 0}
                     </div>
-                    <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Active Tasks</span>
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Active Tasks</span>
                 </div>
-                <button className="text-[9px] font-black text-white uppercase tracking-widest hover:text-brand transition-all flex items-center gap-1">
+                <button className="text-[9px] font-black text-slate-900 uppercase tracking-widest hover:text-brand transition-all flex items-center gap-1">
                     {isRtl ? 'التفاصيل' : 'Details'} <ExternalLink size={10} />
                 </button>
               </div>
@@ -246,8 +251,8 @@ export default function ProjectsPage() {
             <Input label={t.endDate} type="date" value={form.endDate} onChange={(e: any) => setForm({...form, endDate: e.target.value})} />
           </div>
 
-          <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-white/5">
-            <button className="px-6 py-3 rounded-xl bg-white/5 text-[10px] font-black text-slate-500 uppercase tracking-widest" onClick={() => setIsModalOpen(false)}>
+          <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-slate-100">
+            <button className="px-6 py-3 rounded-xl bg-slate-50 text-[10px] font-black text-slate-500 uppercase tracking-widest hover:bg-slate-100" onClick={() => setIsModalOpen(false)}>
               {t.cancel}
             </button>
             <button 

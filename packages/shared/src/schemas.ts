@@ -24,7 +24,9 @@ import {
 // Primitive helpers
 // ─────────────────────────────────────────────────────────────────────────────
 const cuid = z.string().min(1, 'ID is required');
-const isoDate = z.string().datetime({ offset: true });
+const isoDate = z.preprocess((arg) => {
+  if (typeof arg === "string" || arg instanceof Date) return new Date(arg);
+}, z.date());
 const email = z.string().email('Invalid email address').toLowerCase().trim();
 const password = z
   .string()

@@ -93,13 +93,13 @@ export default function SocialMediaPage() {
             <PageHeader title={t.title} description={t.subtitle} />
 
             {/* Role Indicator */}
-            <div className="flex items-center gap-4 bg-white/[0.02] border border-white/5 rounded-2xl px-6 py-4">
+            <div className="flex items-center gap-4 bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 shadow-sm">
                 <div className="w-12 h-12 rounded-2xl bg-brand/10 border border-brand/20 flex items-center justify-center text-brand">
                     <Users size={20} />
                 </div>
                 <div>
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-0.5">{isRtl ? 'صلاحياتك الحالية' : 'Current Role Access'}</p>
-                    <p className="text-sm font-black text-white uppercase tracking-tight">{user?.role?.replace('_', ' ')} · {user?.position || 'Team Member'}</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">{isRtl ? 'صلاحياتك الحالية' : 'Current Role Access'}</p>
+                    <p className="text-sm font-black text-slate-900 uppercase tracking-tight">{user?.role?.replace('_', ' ')} · {user?.position || 'Team Member'}</p>
                 </div>
             </div>
 
@@ -108,7 +108,7 @@ export default function SocialMediaPage() {
                 {tabs.map(tb => (
                     <button key={tb.key} onClick={() => setTab(tb.key)} className={clsx(
                         'flex items-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap',
-                        tab === tb.key ? 'bg-brand text-white shadow-lg shadow-brand/20' : 'text-slate-500 hover:text-white hover:bg-white/5'
+                        tab === tb.key ? 'bg-brand text-white shadow-lg shadow-brand/20' : 'text-slate-500 hover:text-brand hover:bg-slate-50 border border-transparent hover:border-slate-100'
                     )}>
                         <tb.icon size={14} /> {tb.label}
                     </button>
@@ -144,18 +144,18 @@ function ClientsTab({ clients, t, isRtl, user }: any) {
         <motion.div variants={fadeIn} initial="hidden" animate="show" className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {clients.length === 0 && <p className="text-slate-600 text-[10px] font-black uppercase tracking-widest py-10">No clients agreed yet.</p>}
             {clients.map((c: any) => (
-                <div key={c.id} className="glass-card group p-8 border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-all">
+                <div key={c.id} className="glass-card group p-8 border-slate-100 bg-white hover:bg-slate-50 transition-all shadow-sm">
                     <div className="flex justify-between items-start mb-8">
                         <div>
-                            <h4 className="text-lg font-black text-white mb-1 uppercase tracking-tight">{c.name}</h4>
-                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                            <h4 className="text-lg font-black text-slate-900 mb-1 uppercase tracking-tight">{c.name}</h4>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                                 {new Date(c.smDetails?.startDate || c.createdAt).toLocaleDateString()} - {new Date(c.smDetails?.endDate || Date.now()).toLocaleDateString()}
                             </p>
                         </div>
                         <div className={clsx(
-                            'px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border',
-                            c.smDetails?.contentStatus === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' :
-                                c.smDetails?.contentStatus === 'REWRITE' ? 'bg-rose-500/10 text-rose-500 border-rose-500/20' : 'bg-amber-500/10 text-amber-500 border-amber-500/20'
+                            'px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border shadow-sm',
+                            c.smDetails?.contentStatus === 'APPROVED' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                                c.smDetails?.contentStatus === 'REWRITE' ? 'bg-rose-50 text-rose-600 border-rose-100' : 'bg-amber-50 text-amber-600 border-amber-100'
                         )}>
                             {c.smDetails?.contentStatus || 'PENDING'}
                         </div>
@@ -165,10 +165,10 @@ function ClientsTab({ clients, t, isRtl, user }: any) {
                     <div className="space-y-6 mb-8">
                         <div>
                             <div className="flex justify-between text-[9px] font-black uppercase tracking-widest mb-3">
-                                <span className="text-slate-500">{t.designs} ({c.smDetails?.doneDesigns || 0}/{c.smDetails?.targetDesigns || 0})</span>
+                                <span className="text-slate-400">{t.designs} ({c.smDetails?.doneDesigns || 0}/{c.smDetails?.targetDesigns || 0})</span>
                                 <span className="text-brand">{Math.round(((c.smDetails?.doneDesigns || 0) / (c.smDetails?.targetDesigns || 1)) * 100)}%</span>
                             </div>
-                            <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                            <div className="h-1.5 bg-slate-50 rounded-full overflow-hidden border border-slate-100">
                                 <motion.div
                                     initial={{ width: 0 }}
                                     animate={{ width: `${Math.min(100, ((c.smDetails?.doneDesigns || 0) / (c.smDetails?.targetDesigns || 1)) * 100)}%` }}
@@ -178,23 +178,23 @@ function ClientsTab({ clients, t, isRtl, user }: any) {
                         </div>
                         <div>
                             <div className="flex justify-between text-[9px] font-black uppercase tracking-widest mb-3">
-                                <span className="text-slate-500">{t.videos} ({c.smDetails?.doneVideos || 0}/{c.smDetails?.targetVideos || 0})</span>
-                                <span className="text-white">{Math.round(((c.smDetails?.doneVideos || 0) / (c.smDetails?.targetVideos || 1)) * 100)}%</span>
+                                <span className="text-slate-400">{t.videos} ({c.smDetails?.doneVideos || 0}/{c.smDetails?.targetVideos || 0})</span>
+                                <span className="text-slate-900">{Math.round(((c.smDetails?.doneVideos || 0) / (c.smDetails?.targetVideos || 1)) * 100)}%</span>
                             </div>
-                            <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                            <div className="h-1.5 bg-slate-50 rounded-full overflow-hidden border border-slate-100">
                                 <motion.div
                                     initial={{ width: 0 }}
                                     animate={{ width: `${Math.min(100, ((c.smDetails?.doneVideos || 0) / (c.smDetails?.targetVideos || 1)) * 100)}%` }}
-                                    className="h-full bg-white/20"
+                                    className="h-full bg-slate-900"
                                 />
                             </div>
                         </div>
                     </div>
 
                     {/* Content Preview */}
-                    <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-6 mb-8">
-                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3">{t.content}</p>
-                        <p className="text-xs text-slate-400 leading-relaxed italic font-medium">
+                    <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 mb-8 shadow-sm">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">{t.content}</p>
+                        <p className="text-xs text-slate-600 leading-relaxed italic font-medium">
                             {c.smDetails?.content || (isRtl ? 'لا يوجد محتوى مكتوب بعد...' : 'No content written yet...')}
                         </p>
                     </div>
@@ -204,19 +204,19 @@ function ClientsTab({ clients, t, isRtl, user }: any) {
                         <div className="flex gap-2">
                             <button
                                 onClick={() => handleApprove(c.id, 'APPROVED')}
-                                className="flex-1 py-3.5 rounded-xl bg-brand text-white text-[10px] font-black uppercase tracking-widest hover:bg-brand/90 transition-all shadow-lg shadow-brand/10"
+                                className="flex-1 py-3.5 rounded-xl bg-brand text-white text-[10px] font-black uppercase tracking-widest hover:bg-brand/90 transition-all shadow-lg"
                             >
                                 <CheckCircle size={14} className="inline mb-0.5 mr-2" /> {t.approve}
                             </button>
                             <button
                                 onClick={() => handleApprove(c.id, 'REWRITE')}
-                                className="flex-1 py-3.5 rounded-xl bg-white/5 text-rose-500 border border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-rose-500/10 transition-all"
+                                className="flex-1 py-3.5 rounded-xl bg-slate-50 text-rose-600 border border-rose-100 text-[10px] font-black uppercase tracking-widest hover:bg-rose-50 transition-all"
                             >
                                 <AlertCircle size={14} className="inline mb-0.5 mr-2" /> {t.rewrite}
                             </button>
                             <button
                                 onClick={() => setEditing(c)}
-                                className="p-3.5 rounded-xl bg-white/5 text-slate-500 border border-white/10 hover:text-brand hover:border-brand/30 transition-all"
+                                className="p-3.5 rounded-xl bg-slate-50 text-slate-400 border border-slate-100 hover:text-brand hover:border-brand/30 transition-all shadow-sm"
                             >
                                 <Target size={16} />
                             </button>
@@ -236,8 +236,8 @@ function ClientsTab({ clients, t, isRtl, user }: any) {
                         <Input label="Done Designs" type="number" value={editing?.smDetails?.doneDesigns || 0} onChange={(e: any) => setEditing({ ...editing, smDetails: { ...editing.smDetails, doneDesigns: parseInt(e.target.value) } })} />
                         <Input label="Done Videos" type="number" value={editing?.smDetails?.doneVideos || 0} onChange={(e: any) => setEditing({ ...editing, smDetails: { ...editing.smDetails, doneVideos: parseInt(e.target.value) } })} />
                     </div>
-                    <div className="flex justify-end gap-3 pt-6 border-t border-white/5">
-                        <button className="px-6 py-3 rounded-xl bg-white/5 text-[10px] font-black text-slate-500 uppercase tracking-widest" onClick={() => setEditing(null)}>Cancel</button>
+                    <div className="flex justify-end gap-3 pt-6 border-t border-slate-100">
+                        <button className="px-6 py-3 rounded-xl bg-slate-50 text-[10px] font-black text-slate-500 uppercase tracking-widest hover:bg-slate-100" onClick={() => setEditing(null)}>Cancel</button>
                         <button
                             className="px-10 py-3 rounded-xl bg-brand text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-brand/20"
                             onClick={async () => {
@@ -286,25 +286,25 @@ function WriterTab({ clients, t, isRtl }: any) {
                         key={c.id}
                         onClick={() => { setSelected(c); setText(c.smDetails?.content || ''); }}
                         className={clsx(
-                            'w-full text-start p-5 rounded-2xl border transition-all flex flex-col gap-1',
-                            selected?.id === c.id ? 'bg-brand border-brand text-white shadow-lg shadow-brand/20' : 'bg-white/[0.02] border-white/5 text-slate-500 hover:bg-white/[0.05]'
+                            'w-full text-start p-5 rounded-2xl border transition-all flex flex-col gap-1 shadow-sm',
+                            selected?.id === c.id ? 'bg-brand border-brand text-white shadow-lg shadow-brand/20' : 'bg-white border-slate-100 text-slate-500 hover:bg-slate-50'
                         )}
                     >
                         <span className="text-sm font-black uppercase tracking-tight">{c.name}</span>
                         <span className={clsx(
                             "text-[9px] font-black uppercase tracking-widest",
-                            selected?.id === c.id ? 'text-white/60' : 'text-slate-600'
+                            selected?.id === c.id ? 'text-white/60' : 'text-slate-400'
                         )}>Status: {c.smDetails?.contentStatus || 'NONE'}</span>
                     </button>
                 ))}
             </div>
             <div className="md:col-span-2">
                 {selected ? (
-                    <div className="glass-card !p-8 h-full flex flex-col border-white/5 bg-white/[0.02]">
+                    <div className="glass-card !p-8 h-full flex flex-col border-slate-100 bg-white shadow-sm">
                         <div className="flex justify-between items-center mb-8">
-                            <h4 className="text-lg font-black text-white uppercase tracking-tight">{selected.name}</h4>
+                            <h4 className="text-lg font-black text-slate-900 uppercase tracking-tight">{selected.name}</h4>
                             {selected.smDetails?.contentStatus === 'REWRITE' && (
-                                <div className="flex items-center gap-2 text-rose-500 bg-rose-500/10 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-rose-500/20">
+                                <div className="flex items-center gap-2 text-rose-600 bg-rose-50 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-rose-100 shadow-sm">
                                     <AlertCircle size={14} /> {t.rewrite}
                                 </div>
                             )}
@@ -313,7 +313,7 @@ function WriterTab({ clients, t, isRtl }: any) {
                             value={text}
                             onChange={e => setText(e.target.value)}
                             placeholder={isRtl ? 'اكتب المحتوى هنا...' : 'Write content here...'}
-                            className="flex-1 bg-white/[0.03] border border-white/5 rounded-2xl p-6 text-sm text-white outline-none focus:bg-white/[0.05] focus:border-brand/40 transition-all min-h-[400px] leading-relaxed resize-none font-medium placeholder:text-slate-700"
+                            className="flex-1 bg-slate-50 border border-slate-100 rounded-2xl p-6 text-sm text-slate-900 outline-none focus:bg-white focus:border-brand/40 transition-all min-h-[400px] leading-relaxed resize-none font-medium placeholder:text-slate-300 shadow-inner"
                         />
                         <button
                             onClick={handleSave}
@@ -323,7 +323,7 @@ function WriterTab({ clients, t, isRtl }: any) {
                         </button>
                     </div>
                 ) : (
-                    <div className="glass-card flex flex-col items-center justify-center py-40 text-slate-700 border-dashed border-white/5 bg-white/[0.01]">
+                    <div className="glass-card flex flex-col items-center justify-center py-40 text-slate-300 border-dashed border-slate-100 bg-white">
                         <PenTool size={48} className="mb-6 opacity-20 text-brand" />
                         <p className="text-[10px] font-black uppercase tracking-[0.3em]">{isRtl ? 'اختر مصلحة للبدء في الكتابة' : 'Select a client to start writing'}</p>
                     </div>
@@ -344,27 +344,27 @@ function CreativeTab({ clients, t, isRtl }: any) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {clients.map((c: any) => (
-                    <div key={c.id} className="glass-card !p-6 border-white/5 bg-white/[0.02]">
+                    <div key={c.id} className="glass-card !p-6 border-slate-100 bg-white shadow-sm">
                         <div className="flex justify-between items-center mb-6">
-                            <span className="text-xs font-black text-white uppercase tracking-tight">{c.name}</span>
+                            <span className="text-xs font-black text-slate-900 uppercase tracking-tight">{c.name}</span>
                             <span className="text-[9px] font-black text-brand bg-brand/10 px-2 py-1 rounded-lg uppercase tracking-widest border border-brand/20">{t.target}</span>
                         </div>
                         <div className="flex items-center gap-8 mb-6">
                             <div className="flex-1">
-                                <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-1">{t.designs}</p>
-                                <p className="text-2xl font-black text-white">{c.smDetails?.targetDesigns || 0}</p>
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">{t.designs}</p>
+                                <p className="text-2xl font-black text-slate-900">{c.smDetails?.targetDesigns || 0}</p>
                             </div>
                             <div className="flex-1">
-                                <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-1">{t.videos}</p>
-                                <p className="text-2xl font-black text-white">{c.smDetails?.targetVideos || 0}</p>
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">{t.videos}</p>
+                                <p className="text-2xl font-black text-slate-900">{c.smDetails?.targetVideos || 0}</p>
                             </div>
                         </div>
-                        <div className="pt-6 border-t border-white/5">
-                            <div className="flex justify-between text-[9px] font-black text-slate-600 uppercase tracking-widest mb-2.5">
+                        <div className="pt-6 border-t border-slate-100">
+                            <div className="flex justify-between text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2.5">
                                 <span>Deadline</span>
                                 <span className="text-rose-500">48h remaining</span>
                             </div>
-                            <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                            <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
                                 <div className="h-full bg-rose-500 w-[60%]" />
                             </div>
                         </div>
@@ -406,8 +406,8 @@ function TeamTab({ t, isRtl }: any) {
 
     return (
         <motion.div variants={fadeIn} initial="hidden" animate="show" className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="glass-card !p-10 border-white/5 bg-white/[0.02]">
-                <h4 className="text-lg font-black text-white mb-10 uppercase tracking-tight">{isRtl ? 'تقييم أداء زميل' : 'Rate Peer Performance'}</h4>
+            <div className="glass-card !p-10 border-slate-100 bg-white shadow-sm">
+                <h4 className="text-lg font-black text-slate-900 mb-10 uppercase tracking-tight">{isRtl ? 'تقييم أداء زميل' : 'Rate Peer Performance'}</h4>
                 <div className="space-y-8">
                     <Select 
                         label="Select Colleague"
@@ -426,7 +426,7 @@ function TeamTab({ t, isRtl }: any) {
                                     onClick={() => setRating({ ...rating, stars: s })}
                                     className={clsx(
                                         'w-12 h-12 rounded-2xl flex items-center justify-center transition-all border',
-                                        rating.stars >= s ? 'bg-amber-500 border-amber-600 text-white shadow-lg shadow-amber-500/20' : 'bg-white/5 border-white/10 text-slate-700'
+                                        rating.stars >= s ? 'bg-amber-500 border-amber-600 text-white shadow-lg shadow-amber-500/20' : 'bg-slate-50 border-slate-100 text-slate-300'
                                     )}
                                 >
                                     <Star size={18} fill={rating.stars >= s ? 'currentColor' : 'none'} />
@@ -452,27 +452,27 @@ function TeamTab({ t, isRtl }: any) {
             </div>
 
             <div className="space-y-4">
-                <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] mb-4 px-2">Recent Peer Feedbacks</h4>
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-4 px-2">Recent Peer Feedbacks</h4>
                 <div className="space-y-3">
                     {feed.length === 0 ? (
-                        <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest py-10 text-center">No feedbacks yet.</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest py-10 text-center">No feedbacks yet.</p>
                     ) : feed.map((f: any) => (
-                        <div key={f.id} className="glass-card !p-6 border-white/5 bg-white/[0.02] group hover:border-brand/20 transition-all">
+                        <div key={f.id} className="glass-card !p-6 border-slate-100 bg-white group hover:border-brand/20 transition-all shadow-sm">
                             <div className="flex justify-between items-start mb-4">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center font-black text-slate-500 text-xs group-hover:text-brand group-hover:bg-brand/10 transition-all">
+                                    <div className="w-10 h-10 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center font-black text-slate-400 text-xs group-hover:text-brand group-hover:bg-brand/10 group-hover:border-brand/20 transition-all shadow-sm">
                                         {f.giver?.firstName?.[0]}
                                     </div>
                                     <div>
-                                        <p className="text-xs font-black text-white uppercase tracking-tight">{f.giver?.firstName} {f.giver?.lastName}</p>
-                                        <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest">{new Date(f.createdAt).toLocaleDateString()}</p>
+                                        <p className="text-xs font-black text-slate-900 uppercase tracking-tight">{f.giver?.firstName} {f.giver?.lastName}</p>
+                                        <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest">{new Date(f.createdAt).toLocaleDateString()}</p>
                                     </div>
                                 </div>
                                 <div className="flex gap-0.5 text-amber-500">
                                     {[1, 2, 3, 4, 5].map(s => <Star key={s} size={11} fill={f.stars >= s ? 'currentColor' : 'none'} />)}
                                 </div>
                             </div>
-                            <p className="text-xs text-slate-400 leading-relaxed italic font-medium">"{f.comment}"</p>
+                            <p className="text-xs text-slate-500 leading-relaxed italic font-medium">"{f.comment}"</p>
                         </div>
                     ))}
                 </div>

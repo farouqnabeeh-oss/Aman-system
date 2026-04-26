@@ -95,9 +95,13 @@ export default function PayrollPage() {
 
   const mutation = useMutation({
     mutationFn: ({ id, isPaid }: { id: string, isPaid: boolean }) => updatePayrollStatus(id, isPaid),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['payroll'] });
-      toast.success(isRtl ? 'تم تحديث الحالة بنجاح' : 'Status updated successfully');
+    onSuccess: (res) => {
+      if (res.success) {
+        queryClient.invalidateQueries({ queryKey: ['payroll'] });
+        toast.success(isRtl ? 'تم تحديث الحالة بنجاح' : 'Status updated successfully');
+      } else {
+        toast.error(res.message || 'Update failed');
+      }
     },
     onError: () => {
       toast.error(isRtl ? 'فشل تحديث الحالة' : 'Failed to update status');
@@ -120,43 +124,43 @@ export default function PayrollPage() {
       />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="glass-card p-6 flex items-center gap-4">
+        <div className="glass-card p-6 flex items-center gap-4 bg-white border-slate-100 shadow-sm">
           <div className="w-12 h-12 rounded-2xl bg-brand/10 flex items-center justify-center text-brand">
             <DollarSign size={24} />
           </div>
           <div>
             <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{isRtl ? 'إجمالي الرواتب' : 'Total Payroll'}</p>
-            <p className="text-xl font-black text-white mt-1">
+            <p className="text-xl font-black text-slate-900 mt-1">
               {records?.reduce((acc: number, curr: any) => acc + Number(curr.netSalary), 0).toLocaleString()}
             </p>
           </div>
         </div>
       </div>
 
-      <div className="glass-card overflow-hidden">
+      <div className="glass-card overflow-hidden border-slate-100 bg-white shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse" dir={isRtl ? 'rtl' : 'ltr'}>
             <thead>
-              <tr className="border-b border-white/5 bg-white/[0.02]">
-                <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">{t.employee}</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">{t.month}/{t.year}</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">{t.base}</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">{t.net}</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">{t.status}</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">{isRtl ? 'الإجراءات' : 'Actions'}</th>
+              <tr className="border-b border-slate-100 bg-slate-50/50">
+                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t.employee}</th>
+                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t.month}/{t.year}</th>
+                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t.base}</th>
+                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t.net}</th>
+                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">{t.status}</th>
+                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">{isRtl ? 'الإجراءات' : 'Actions'}</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-slate-50">
               {records?.map((r: any) => (
-                <tr key={r.id} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors group">
+                <tr key={r.id} className="hover:bg-slate-50 transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-slate-400 font-bold text-[10px]">
+                      <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 font-bold text-[10px]">
                         {r.user.firstName?.[0]}
                       </div>
                       <div>
-                        <p className="text-xs font-bold text-white uppercase tracking-tight">{r.user.firstName} {r.user.lastName}</p>
-                        <p className="text-[9px] text-slate-500 uppercase tracking-widest">{r.user.position}</p>
+                        <p className="text-xs font-bold text-slate-900 uppercase tracking-tight">{r.user.firstName} {r.user.lastName}</p>
+                        <p className="text-[9px] text-slate-400 uppercase tracking-widest">{r.user.position}</p>
                       </div>
                     </div>
                   </td>
@@ -168,7 +172,7 @@ export default function PayrollPage() {
                   </td>
                   <td className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-tight">${Number(r.baseSalary).toLocaleString()}</td>
                   <td className="px-6 py-4">
-                    <span className="text-sm font-black text-white tracking-tighter">${Number(r.netSalary).toLocaleString()}</span>
+                    <span className="text-sm font-black text-slate-900 tracking-tighter">${Number(r.netSalary).toLocaleString()}</span>
                   </td>
                   <td className="px-6 py-4 text-center">
                     <div className="flex justify-center">
@@ -248,7 +252,7 @@ export default function PayrollPage() {
                   <p className="text-xl font-black text-brand">${(Number(form.baseSalary) + Number(form.allowances) - Number(form.deductions)).toLocaleString()}</p>
               </div>
               <div className="flex justify-end gap-3 pt-4">
-                  <button onClick={() => setIsModalOpen(false)} className="px-6 py-2.5 rounded-xl bg-white/5 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                  <button onClick={() => setIsModalOpen(false)} className="px-6 py-2.5 rounded-xl bg-slate-50 text-[10px] font-black text-slate-500 uppercase tracking-widest hover:bg-slate-100">
                       {isRtl ? 'إلغاء' : 'Cancel'}
                   </button>
                   <button 

@@ -40,17 +40,17 @@ const T = {
 };
 
 const priorityColor: Record<string, string> = {
-  CRITICAL: 'text-rose-500 bg-rose-500/10 border-rose-500/20',
-  HIGH: 'text-amber-500 bg-amber-500/10 border-amber-500/20',
-  MEDIUM: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
-  LOW: 'text-slate-500 bg-white/5 border-white/10',
+  CRITICAL: 'text-rose-600 bg-rose-50 border-rose-100',
+  HIGH: 'text-amber-600 bg-amber-50 border-amber-100',
+  MEDIUM: 'text-blue-600 bg-blue-50 border-blue-100',
+  LOW: 'text-slate-500 bg-slate-50 border-slate-200',
 };
 
 const statusMap: Record<string, { icon: any, label: string, color: string }> = {
-  TODO: { icon: Clock, label: 'Todo', color: 'text-slate-500' },
-  IN_PROGRESS: { icon: Zap, label: 'Progress', color: 'text-blue-400' },
-  IN_REVIEW: { icon: AlertCircle, label: 'Review', color: 'text-amber-400' },
-  DONE: { icon: CheckCircle, label: 'Done', color: 'text-emerald-400' },
+  TODO: { icon: Clock, label: 'Todo', color: 'text-slate-400' },
+  IN_PROGRESS: { icon: Zap, label: 'Progress', color: 'text-blue-500' },
+  IN_REVIEW: { icon: AlertCircle, label: 'Review', color: 'text-amber-500' },
+  DONE: { icon: CheckCircle, label: 'Done', color: 'text-emerald-500' },
 };
 
 const fadeIn = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } };
@@ -104,12 +104,20 @@ export default function TasksPage() {
       return;
     }
     setSaving(true);
-    const res = await createTask(form);
+    
+    // Ensure dates are ISO strings for the schema
+    const res = await createTask({
+        ...form,
+        dueDate: form.dueDate ? new Date(form.dueDate).toISOString() : undefined
+    });
+
     if (res.success) {
       toast.success('Task deployed');
       setIsModalOpen(false);
       setForm({ title: '', description: '', priority: 'MEDIUM', projectId: '', assigneeId: '', dueDate: '' });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    } else {
+      toast.error(res.message || 'Operation failed');
     }
     setSaving(false);
   };
@@ -162,13 +170,13 @@ export default function TasksPage() {
       </motion.div>
 
       <motion.div variants={fadeIn} className="flex flex-wrap items-center gap-4">
-        <div className="flex-1 min-w-[280px] flex items-center gap-4 bg-white/[0.03] border border-white/[0.08] rounded-2xl px-5 py-3.5 focus-within:border-brand/40 transition-all">
-          <Search size={18} className="text-slate-600" />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t.search} className="bg-transparent text-sm text-white outline-none w-full font-medium placeholder:text-slate-600" />
+        <div className="flex-1 min-w-[280px] flex items-center gap-4 bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 focus-within:border-brand/40 transition-all">
+          <Search size={18} className="text-slate-400" />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t.search} className="bg-transparent text-sm text-slate-900 outline-none w-full font-medium placeholder:text-slate-400" />
         </div>
-        <select value={priorityFilter} onChange={e => setPriorityFilter(e.target.value)} className="bg-white/[0.03] border border-white/[0.08] rounded-xl px-5 py-3.5 text-[10px] font-black text-slate-400 outline-none uppercase tracking-widest cursor-pointer hover:bg-white/[0.05] transition-all">
-          <option value="">{t.allPriority}</option>
-          {['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].map(p => <option key={p} value={p}>{p}</option>)}
+        <select value={priorityFilter} onChange={e => setPriorityFilter(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-xl px-5 py-3.5 text-[10px] font-black text-slate-500 outline-none uppercase tracking-widest cursor-pointer hover:bg-slate-100 transition-all">
+          <option value="" className="bg-white">{t.allPriority}</option>
+          {['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].map(p => <option key={p} value={p} className="bg-white">{p}</option>)}
         </select>
       </motion.div>
 
@@ -176,25 +184,25 @@ export default function TasksPage() {
         {isLoading ? (
             Array(5).fill(0).map((_, i) => <div key={i} className="glass-card h-20 animate-pulse bg-white/[0.02] border-white/5" />)
         ) : filtered.length === 0 ? (
-            <div className="py-20 text-center glass-card border-dashed border-white/5 bg-white/[0.01]">
-                <Clock size={48} className="mx-auto text-slate-800 mb-4 opacity-20" />
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t.noTasks}</p>
+            <div className="py-20 text-center glass-card border-dashed border-slate-200 bg-white">
+                <Clock size={48} className="mx-auto text-slate-200 mb-4" />
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t.noTasks}</p>
             </div>
         ) : filtered.map((task: any) => {
           const Status = statusMap[task.status] || statusMap.TODO;
           return (
-            <motion.div key={task.id} variants={fadeIn} className="glass-card !p-5 flex items-center gap-5 hover:border-brand/20 hover:bg-white/[0.04] transition-all group relative overflow-hidden">
+            <motion.div key={task.id} variants={fadeIn} className="glass-card !p-5 flex items-center gap-5 hover:border-brand/20 hover:bg-slate-50 transition-all group relative overflow-hidden">
               <div className="flex-shrink-0 relative">
-                  <div className={clsx("w-10 h-10 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-center transition-all group-hover:scale-110", Status.color)}>
+                  <div className={clsx("w-10 h-10 rounded-2xl bg-white border border-slate-100 flex items-center justify-center transition-all group-hover:scale-110 shadow-sm", Status.color)}>
                     <Status.icon size={18} />
                   </div>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-black text-white uppercase tracking-tight mb-1">{task.title}</p>
+                <p className="text-sm font-black text-slate-900 uppercase tracking-tight mb-1">{task.title}</p>
                 <div className="flex items-center gap-3">
-                    <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">{task.projectName}</span>
-                    <span className="w-1 h-1 rounded-full bg-white/10" />
-                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{task.assigneeName || 'Unassigned'}</span>
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{task.projectName}</span>
+                    <span className="w-1 h-1 rounded-full bg-slate-200" />
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{task.assigneeName || 'Unassigned'}</span>
                 </div>
               </div>
               
@@ -205,7 +213,7 @@ export default function TasksPage() {
                   {task.dueDate && (
                       <span className={clsx(
                           "text-[9px] font-black uppercase tracking-widest",
-                          new Date(task.dueDate) < new Date() && task.status !== 'DONE' ? 'text-rose-500' : 'text-slate-600'
+                          new Date(task.dueDate) < new Date() && task.status !== 'DONE' ? 'text-rose-500' : 'text-slate-400'
                       )}>
                           {new Date(task.dueDate).toLocaleDateString()}
                       </span>
@@ -215,21 +223,21 @@ export default function TasksPage() {
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
                 <select 
                     onChange={(e) => handleStatusUpdate(task.id, e.target.value)}
-                    className="p-2 rounded-lg bg-white/5 border border-white/10 text-[9px] font-black text-slate-400 uppercase outline-none cursor-pointer hover:text-white"
+                    className="p-2 rounded-lg bg-slate-50 border border-slate-200 text-[9px] font-black text-slate-500 uppercase outline-none cursor-pointer hover:text-brand"
                     value={task.status}
                 >
-                    {Object.keys(statusMap).map(s => <option key={s} value={s}>{s}</option>)}
+                    {Object.keys(statusMap).map(s => <option key={s} value={s} className="bg-white text-slate-900">{s}</option>)}
                 </select>
                 <button 
                     onClick={() => setExtModal(task)}
-                    className="p-2 rounded-lg bg-white/5 text-slate-500 hover:text-amber-500 hover:bg-amber-500/10 transition-all"
+                    className="p-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-amber-500 hover:bg-amber-50 transition-all"
                     title="Request Extension"
                 >
                     <Clock size={16} />
                 </button>
                 <button 
                     onClick={() => handleDelete(task.id)}
-                    className="p-2 rounded-lg bg-white/5 text-slate-500 hover:text-rose-500 hover:bg-rose-500/10 transition-all"
+                    className="p-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-all"
                 >
                     <Trash2 size={16} />
                 </button>
@@ -272,8 +280,8 @@ export default function TasksPage() {
             />
           </div>
 
-          <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-white/5">
-            <button className="px-6 py-3 rounded-xl bg-white/5 text-[10px] font-black text-slate-500 uppercase tracking-widest" onClick={() => setIsModalOpen(false)}>
+          <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-slate-100">
+            <button className="px-6 py-3 rounded-xl bg-slate-100 text-[10px] font-black text-slate-500 uppercase tracking-widest hover:bg-slate-200" onClick={() => setIsModalOpen(false)}>
               {t.cancel}
             </button>
             <button 
@@ -290,14 +298,14 @@ export default function TasksPage() {
       {/* Extension Modal */}
       <Modal open={!!extModal} onClose={() => setExtModal(null)} title="Request Extension">
           <div className="space-y-6 pt-2">
-              <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/10 mb-2">
-                <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1">Target Task</p>
-                <p className="text-sm font-bold text-white">{extModal?.title}</p>
+              <div className="p-4 rounded-xl bg-amber-50 border border-amber-100 mb-2 shadow-sm">
+                <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1">Target Task</p>
+                <p className="text-sm font-bold text-slate-900">{extModal?.title}</p>
               </div>
               <Input label="Requested New Date" type="date" value={extForm.date} onChange={(e: any) => setExtForm({...extForm, date: e.target.value})} />
               <Input label="Reason for Extension" value={extForm.reason} onChange={(e: any) => setExtForm({...extForm, reason: e.target.value})} placeholder="Why is more time needed?" />
-              <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-white/5">
-                  <button className="px-6 py-3 rounded-xl bg-white/5 text-[10px] font-black text-slate-500 uppercase tracking-widest" onClick={() => setExtModal(null)}>Cancel</button>
+              <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-slate-100">
+                  <button className="px-6 py-3 rounded-xl bg-slate-100 text-[10px] font-black text-slate-500 uppercase tracking-widest hover:bg-slate-200" onClick={() => setExtModal(null)}>Cancel</button>
                   <button 
                     disabled={requesting}
                     className="px-10 py-3 rounded-xl bg-amber-500 text-black text-[10px] font-black uppercase tracking-widest hover:bg-amber-600 disabled:opacity-50 shadow-lg shadow-amber-500/20"
