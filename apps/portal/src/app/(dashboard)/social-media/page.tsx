@@ -101,10 +101,10 @@ export default function SocialMediaPage() {
 
             {/* Stats Bar */}
             <motion.div variants={fadeIn} className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard label={isRtl ? 'إجمالي العملاء' : 'Total Clients'} value={stats?.totalClients || 0} icon={<Users size={18} />} />
-                <StatCard label={isRtl ? 'محتوى معتمد' : 'Approved Content'} value={stats?.approvedContent || 0} icon={<CheckCircle size={18} />} trend="up" />
-                <StatCard label={isRtl ? 'تصاميم منجزة' : 'Designs Done'} value={stats?.doneDesigns || 0} icon={<ImageIcon size={18} />} delta={`/${stats?.totalDesigns || 0}`} />
-                <StatCard label={isRtl ? 'فيديوهات منجزة' : 'Videos Done'} value={stats?.doneVideos || 0} icon={<Video size={18} />} delta={`/${stats?.totalVideos || 0}`} />
+                <StatCard label={isRtl ? 'إجمالي العملاء' : 'Total Clients'} value={(stats as any)?.totalClients || 0} icon={<Users size={18} />} />
+                <StatCard label={isRtl ? 'محتوى معتمد' : 'Approved Content'} value={(stats as any)?.approvedContent || 0} icon={<CheckCircle size={18} />} trend="up" />
+                <StatCard label={isRtl ? 'تصاميم منجزة' : 'Designs Done'} value={(stats as any)?.doneDesigns || 0} icon={<ImageIcon size={18} />} delta={`/${(stats as any)?.totalDesigns || 0}`} />
+                <StatCard label={isRtl ? 'فيديوهات منجزة' : 'Videos Done'} value={(stats as any)?.doneVideos || 0} icon={<Video size={18} />} delta={`/${(stats as any)?.totalVideos || 0}`} />
             </motion.div>
 
             {/* Role Indicator */}
