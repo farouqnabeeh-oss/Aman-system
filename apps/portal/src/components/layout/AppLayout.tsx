@@ -29,6 +29,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   // Placeholder for command palette state
   const [cmdOpen, setCmdOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
 
