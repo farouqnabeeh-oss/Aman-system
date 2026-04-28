@@ -8,7 +8,7 @@ import { CreateProjectSchema } from '@ems/shared';
 
 export async function getProjects() {
   const session = await getSession();
-  if (!session) return { success: false, message: 'Unauthorized' };
+  if (!session) return { success: false, error: 'Unauthorized' };
 
   try {
     const projects = await prisma.project.findMany({
@@ -28,18 +28,20 @@ export async function getProjects() {
 
     return { success: true, data: mapped };
   } catch (err) {
-    return { success: false, message: 'Failed to fetch projects' };
+    return { success: false, error: 'Failed to fetch projects' };
   }
 }
 
 export async function createProject(formData: any) {
   const session = await getSession();
   if (!session || (session.role !== 'SUPER_ADMIN' && session.role !== 'ADMIN' && session.role !== 'MANAGER')) {
-    return { success: false, message: 'Unauthorized' };
+    return { success: false, error: 'Unauthorized' };
   }
 
   const validated = CreateProjectSchema.safeParse(formData);
-  if (!validated.success) return { success: false, error: validated.error.flatten().fieldErrors };
+  if (!validated.success) {
+    return { success: false, error: validated.error.errors.map(e => e.message).join(', ') };
+  }
 
   try {
     const project = await prisma.project.create({
@@ -56,16 +58,17 @@ export async function createProject(formData: any) {
       newValues: project,
     });
     revalidatePath('/projects');
-    return { success: true, project };
+    revalidatePath('/dashboard');
+    return { success: true, data: project };
   } catch (error) {
-    return { success: false, message: 'Failed to create project' };
+    return { success: false, error: 'Failed to create project' };
   }
 }
 
 export async function deleteProject(id: string) {
   const session = await getSession();
   if (!session || !['ADMIN', 'SUPER_ADMIN', 'MANAGER'].includes(session.role)) {
-    return { success: false, message: 'Unauthorized' };
+    return { success: false, error: 'Unauthorized' };
   }
 
   try {
@@ -73,25 +76,40 @@ export async function deleteProject(id: string) {
       where: { id },
       data: { deletedAt: new Date() },
     });
+    await logAction({
+      userId: session.userId,
+      action: 'DELETE',
+      entity: 'Project',
+      entityId: id,
+    });
     revalidatePath('/projects');
+    revalidatePath('/dashboard');
     return { success: true };
   } catch (err) {
-    return { success: false, message: 'Failed to delete project' };
+    return { success: false, error: 'Failed to delete project' };
   }
 }
 
 export async function updateProject(id: string, data: any) {
   const session = await getSession();
-  if (!session) return { success: false, message: 'Unauthorized' };
+  if (!session) return { success: false, error: 'Unauthorized' };
 
   try {
     const updated = await prisma.project.update({
       where: { id },
       data,
     });
+    await logAction({
+      userId: session.userId,
+      action: 'UPDATE',
+      entity: 'Project',
+      entityId: id,
+      newValues: updated,
+    });
     revalidatePath('/projects');
+    revalidatePath('/dashboard');
     return { success: true, data: updated };
   } catch (err) {
-    return { success: false, message: 'Failed to update project' };
+    return { success: false, error: 'Failed to update project' };
   }
 }

@@ -6,7 +6,7 @@ import { useUIStore } from '@/store/ui.store';
 import { User, Mail, Shield, Zap, Lock, Save, Camera, Edit2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { PageHeader } from '@/components/ui/States';
-import { Input } from '@/components/ui/Input';
+import { Input, Textarea } from '@/components/ui/Input';
 import { updateUser } from '@/lib/actions/users';
 import toast from 'react-hot-toast';
 
@@ -19,6 +19,10 @@ export default function ProfilePage() {
     const [form, setForm] = useState({
         firstName: user?.firstName || '',
         lastName: user?.lastName || '',
+        phone: (user as any)?.phone || '',
+        position: user?.position || '',
+        bio: (user as any)?.bio || '',
+        department: user?.department || '',
         password: '',
         confirmPassword: ''
     });
@@ -34,12 +38,21 @@ export default function ProfilePage() {
         const res = await updateUser(user.id, {
             firstName: form.firstName,
             lastName: form.lastName,
+            phone: form.phone,
+            position: form.position,
+            bio: form.bio,
+            department: form.department as any,
             ...(form.password ? { password: form.password } : {})
         });
 
         if (res.success) {
             toast.success(isRtl ? 'تم تحديث الملف الشخصي' : 'Profile updated successfully');
-            updateStoreUser({ firstName: form.firstName, lastName: form.lastName });
+            updateStoreUser({ 
+                firstName: form.firstName, 
+                lastName: form.lastName,
+                position: form.position,
+                department: form.department as any
+            });
             setForm({ ...form, password: '', confirmPassword: '' });
         } else {
             toast.error(res.error || 'Update failed');
@@ -48,7 +61,7 @@ export default function ProfilePage() {
     };
 
     return (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-5xl mx-auto space-y-8">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-6xl mx-auto space-y-8">
             <PageHeader
                 title={isRtl ? 'إدارة الهوية الرقمية' : 'Identity Management'}
                 description={isRtl ? 'تحكم في بياناتك الشخصية وإعدادات الأمان الخاصة بك' : 'Control your personal data and secure access protocols'}
@@ -57,48 +70,48 @@ export default function ProfilePage() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 {/* Profile Info Card */}
                 <div className="lg:col-span-4 space-y-6">
-                    <div className="glass-card !p-10 flex flex-col items-center text-center border-white/5 bg-white/[0.02] relative overflow-hidden group">
-                        <div className="absolute top-0 left-0 w-full h-1 bg-brand shadow-[0_0_15px_rgba(28,147,178,0.5)]" />
+                    <div className="glass-card !p-10 flex flex-col items-center text-center border-slate-100 bg-white shadow-sm relative overflow-hidden group">
+                        <div className="absolute top-0 left-0 w-full h-1 bg-brand shadow-[0_0_15px_rgba(28,147,178,0.2)]" />
 
                         <div className="relative mb-8">
-                            <div className="w-28 h-28 rounded-[2.5rem] bg-white text-black flex items-center justify-center font-black text-4xl shadow-2xl group-hover:scale-105 transition-transform">
+                            <div className="w-28 h-28 rounded-[2.5rem] bg-slate-50 border border-slate-200 text-slate-900 flex items-center justify-center font-black text-4xl shadow-sm group-hover:scale-105 transition-transform">
                                 {user.firstName?.[0]}{user.lastName?.[0]}
                             </div>
-                            <button className="absolute bottom-0 right-0 w-10 h-10 rounded-2xl bg-brand text-white flex items-center justify-center border-4 border-[#0B0F1A] hover:bg-brand/90 transition-all">
+                            <button className="absolute bottom-0 right-0 w-10 h-10 rounded-2xl bg-brand text-white flex items-center justify-center border-4 border-white hover:bg-brand/90 transition-all shadow-lg">
                                 <Camera size={16} />
                             </button>
                         </div>
 
-                        <h2 className="text-xl font-black text-white uppercase tracking-tight mb-2">
+                        <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight mb-2">
                             {user.firstName} {user.lastName}
                         </h2>
 
                         <div className="flex flex-col gap-2">
-                            <span className="text-[10px] font-black text-brand bg-brand/10 px-4 py-1.5 rounded-xl uppercase tracking-[0.2em] border border-brand/20">
+                            <span className="text-[10px] font-black text-brand bg-brand/5 px-4 py-1.5 rounded-xl uppercase tracking-[0.2em] border border-brand/10">
                                 {user.role?.replace('_', ' ')}
                             </span>
-                            <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                                 {user.position || 'Department Personnel'}
                             </span>
                         </div>
 
-                        <div className="w-full grid grid-cols-2 gap-4 mt-10 pt-10 border-t border-white/5">
+                        <div className="w-full grid grid-cols-2 gap-4 mt-10 pt-10 border-t border-slate-100">
                             <div className={isRtl ? 'text-right' : 'text-left'}>
-                                <p className="text-[9px] font-black text-slate-700 uppercase tracking-widest mb-1">Status</p>
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Status</p>
                                 <div className="flex items-center gap-2">
-                                    <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
-                                    <span className="text-[10px] font-black text-white uppercase">{user.status}</span>
+                                    <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]" />
+                                    <span className="text-[10px] font-black text-slate-900 uppercase">{user.status}</span>
                                 </div>
                             </div>
                             <div className={isRtl ? 'text-left' : 'text-right'}>
-                                <p className="text-[9px] font-black text-slate-700 uppercase tracking-widest mb-1">Emp ID</p>
-                                <p className="text-[10px] font-black text-white uppercase">#{(user as any).employeeNumber || '001'}</p>
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Emp ID</p>
+                                <p className="text-[10px] font-black text-slate-900 uppercase">#{(user as any).employeeNumber || '001'}</p>
                             </div>
                         </div>
                     </div>
 
-                    <div className="glass-card !p-8 border-white/5 bg-white/[0.01]">
-                        <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] mb-6 flex items-center gap-3">
+                    <div className="glass-card !p-8 border-slate-100 bg-white shadow-sm">
+                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-6 flex items-center gap-3">
                             <Shield size={16} className="text-brand" /> System Privileges
                         </h4>
                         <div className="space-y-4">
@@ -114,13 +127,13 @@ export default function ProfilePage() {
 
                 {/* Edit Form Card */}
                 <div className="lg:col-span-8">
-                    <div className="glass-card !p-12 border-white/5 bg-white/[0.02]">
+                    <div className="glass-card !p-12 border-slate-100 bg-white shadow-sm">
                         <div className="flex items-center justify-between mb-12">
                             <div>
-                                <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-3">
+                                <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest flex items-center gap-3">
                                     <Edit2 size={18} className="text-brand" /> {isRtl ? 'تعديل البيانات' : 'Profile Settings'}
                                 </h3>
-                                <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mt-1">Update your primary information and security cipher</p>
+                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">Update your primary information and security cipher</p>
                             </div>
                         </div>
 
@@ -139,17 +152,40 @@ export default function ProfilePage() {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <Input
+                                    label={isRtl ? 'رقم الهاتف' : 'Command Phone'}
+                                    value={form.phone}
+                                    onChange={(e: any) => setForm({ ...form, phone: e.target.value })}
+                                />
+                                <Input
+                                    label={isRtl ? 'المسمى الوظيفي' : 'Functional Position'}
+                                    value={form.position}
+                                    onChange={(e: any) => setForm({ ...form, position: e.target.value })}
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div className="opacity-60 pointer-events-none">
                                     <Input label={isRtl ? 'البريد الإلكتروني' : 'Command Email'} value={user.email} disabled />
                                 </div>
-                                <div className="opacity-60 pointer-events-none">
-                                    <Input label={isRtl ? 'المستوى الوظيفي' : 'Role Level'} value={user.role} disabled />
-                                </div>
+                                <Input
+                                    label={isRtl ? 'القسم' : 'Functional Department'}
+                                    value={form.department}
+                                    onChange={(e: any) => setForm({ ...form, department: e.target.value })}
+                                />
                             </div>
 
-                            <div className="pt-10 border-t border-white/5">
-                                <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] mb-8 flex items-center gap-3">
-                                    <Lock size={16} /> Security Protocol
+                            <Textarea
+                                label={isRtl ? 'السيرة الذاتية' : 'Professional Bio'}
+                                value={form.bio}
+                                onChange={(e: any) => setForm({ ...form, bio: e.target.value })}
+                                placeholder="Describe your operational focus..."
+                                rows={4}
+                            />
+
+                            <div className="pt-10 border-t border-slate-100">
+                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-8 flex items-center gap-3">
+                                    <Lock size={16} className="text-slate-900" /> Security Protocol
                                 </h4>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <Input

@@ -1,290 +1,280 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Users, AlertCircle, Activity, ArrowUpRight, Zap,
-  TrendingUp, TrendingDown, ChevronRight, Clock,
-  DollarSign, CheckCircle, BarChart2
+  Users, Activity, ArrowUpRight, ArrowDownLeft, Zap,
+  TrendingUp, Clock, DollarSign, BarChart2, Search,
+  PieChart as PieChartIcon, ShieldCheck, Target,
+  LayoutDashboard, CheckCircle2, AlertTriangle, Layers
 } from 'lucide-react';
 import { useUIStore } from '@/store/ui.store';
 import {
-  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer
+  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  BarChart, Bar, PieChart, Pie, Cell
 } from 'recharts';
-import Link from 'next/link';
-import { getPendingExtensions, approveExtension } from '@/lib/actions/extensions';
-import { getEmployeesForSecretary } from '@/lib/actions/hr';
-import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import toast from 'react-hot-toast';
 import { clsx } from 'clsx';
 import { getDashboardStats } from '@/lib/actions/dashboard';
+import { StatCard } from '@/components/ui/States';
+import Link from 'next/link';
 
 const T = {
   ar: {
-    title: 'مركز القيادة', sub: 'لوحة تحكم استراتيجية متكاملة',
-    revenue: 'إجمالي الإيرادات', users: 'فريق العمل',
-    tasks: 'المهام النشطة', projects: 'المشاريع',
-    revChart: 'مخطط التدفق المالي', activity: 'سجل النشاط المباشر',
-    viewAll: 'عرض كل السجلات', health: 'صحة النظام',
+    title: 'مركز القيادة والتحكم',
+    sub: 'الذكاء الاصطناعي وإدارة الموارد في نظام أمان الموحد',
+    financialVelocity: 'السيولة والتدفق المالي',
+    operationalPulse: 'نبض العمليات',
+    teamPresence: 'الفريق والإنتاجية',
+    activeProjects: 'المشاريع النشطة',
+    tasksByPriority: 'المهام حسب الأولوية',
+    systemIntegrity: 'سلامة النظام',
+    liveActivity: 'سجل النشاط المباشر',
+    attendance: 'الحضور اليومي',
+    viewAll: 'عرض الكل',
+    income: 'الإيرادات',
+    expenses: 'المصروفات',
+    netProfit: 'صافي الربح',
   },
   en: {
-    title: 'Command Center', sub: 'Integrated strategic intelligence dashboard',
-    revenue: 'Total Revenue', users: 'Team Members',
-    tasks: 'Active Tasks', projects: 'Active Projects',
-    revChart: 'Revenue Flow', activity: 'Live Activity Feed',
-    viewAll: 'View all logs', health: 'System Health',
+    title: 'Command & Control Center',
+    sub: 'AI-Driven Resource Intelligence - Aman Unified Node',
+    financialVelocity: 'Financial Velocity',
+    operationalPulse: 'Operational Pulse',
+    teamPresence: 'Team & Productivity',
+    activeProjects: 'Active Projects',
+    tasksByPriority: 'Tasks by Priority',
+    systemIntegrity: 'System Integrity',
+    liveActivity: 'Live Activity Feed',
+    attendance: 'Daily Presence',
+    viewAll: 'View All',
+    income: 'Income',
+    expenses: 'Expenses',
+    netProfit: 'Net Profit',
   }
 };
 
-const SAMPLE_REVENUE_DATA = [
-  { month: 'Jan', revenue: 4000 },
-  { month: 'Feb', revenue: 3000 },
-  { month: 'Mar', revenue: 5000 },
-  { month: 'Apr', revenue: 4500 },
-  { month: 'May', revenue: 6000 },
-  { month: 'Jun', revenue: 5500 },
-];
+const COLORS = ['#1C93B2', '#10b981', '#f59e0b', '#ef4444', '#6366f1'];
 
-const fadeIn = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } };
-const stagger = { show: { transition: { staggerChildren: 0.08 } } };
+const fadeIn = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } };
+const stagger = { show: { transition: { staggerChildren: 0.05 } } };
 
-function KpiCard({ label, value, delta, icon, trend }: any) {
-  return (
-    <motion.div variants={fadeIn} className="glass-card p-6 border-slate-100 bg-white shadow-sm">
-      <div className="flex items-start justify-between mb-4">
-        <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-brand/10 text-brand">
-          {icon}
-        </div>
-        {delta && (
-          <div className={clsx(
-            "flex items-center gap-1 text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest",
-            trend === 'up' ? 'text-emerald-600 bg-emerald-50' : trend === 'down' ? 'text-rose-600 bg-rose-50' : 'text-slate-500 bg-slate-50'
-          )}>
-            {trend === 'up' ? <TrendingUp size={11} /> : trend === 'down' ? <TrendingDown size={11} /> : null}
-            {delta}
-          </div>
-        )}
-      </div>
-      <p className="text-[10px] text-slate-400 mb-1 uppercase tracking-widest font-black">{label}</p>
-      <p className="text-2xl font-black text-slate-900 tracking-tight">{value}</p>
-    </motion.div>
-  );
-}
-
-export default function DashboardPage() {
+export default function CommandCenter() {
   const { language } = useUIStore();
   const t = T[language as keyof typeof T] || T.en;
   const isRtl = language === 'ar';
+  const [logSearch, setLogSearch] = useState('');
 
-  const { data: stats, isLoading: statsLoading } = useQuery({
+  const { data: stats, isLoading } = useQuery({
     queryKey: ['dashboard-stats'],
     queryFn: async () => {
       const res = await getDashboardStats();
       return res.data;
     },
-    refetchInterval: 10000 // Refresh every 10s for "Live" feel
+    refetchInterval: 15000
   });
 
-  const [extensions, setExtensions] = useState<any[]>([]);
-  const [attendance, setAttendance] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const currency = isRtl ? ' د.إ' : '$';
+  const fmt = (v: number) => `${v.toLocaleString()}${currency}`;
 
-  useEffect(() => {
-    const load = async () => {
-      const [extRes, attRes] = await Promise.all([getPendingExtensions(), getEmployeesForSecretary()]);
-      if (extRes.success) setExtensions(extRes.data || []);
-      if (attRes.success) setAttendance(attRes.data || []);
-      setLoading(false);
-    };
-    load();
-  }, []);
+  if (isLoading) return <div className="h-[80vh] flex items-center justify-center"><Activity className="animate-spin text-brand" size={40} /></div>;
 
-  const handleExtension = async (id: string, approve: boolean) => {
-    const res = await approveExtension(id, approve);
-    if (res.success) {
-      toast.success(approve ? 'Extension Approved' : 'Request Rejected');
-      setExtensions(extensions.filter(e => e.id !== id));
-    }
-  };
+  const filteredLogs = (stats?.recentLogs || []).filter((log: any) => 
+    log.user?.toLowerCase().includes(logSearch.toLowerCase()) ||
+    log.action?.toLowerCase().includes(logSearch.toLowerCase()) ||
+    log.entity?.toLowerCase().includes(logSearch.toLowerCase())
+  );
 
   return (
-    <motion.div
-      variants={stagger}
-      initial="hidden"
-      animate="show"
-      className="space-y-6"
-    >
-      {/* Header */}
-      <motion.div variants={fadeIn} className="flex items-center justify-between">
+    <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-8 pb-20">
+      
+      {/* Header & System Status */}
+      <motion.div variants={fadeIn} className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 mb-1 uppercase tracking-tight">{t.title}</h1>
-          <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">{t.sub}</p>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-2xl bg-brand/10 flex items-center justify-center text-brand border border-brand/20 shadow-inner">
+              <ShieldCheck size={22} />
+            </div>
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight uppercase">{t.title}</h1>
+          </div>
+          <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest leading-none flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            {t.sub}
+          </p>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-100 bg-slate-50">
-          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">{t.health}: 100% ONLINE</span>
+
+        <div className="flex items-center gap-4">
+          <div className="px-5 py-3 rounded-2xl border border-slate-100 bg-white shadow-sm flex items-center gap-4">
+            <div className="text-right">
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t.systemIntegrity}</p>
+              <p className="text-xs font-black text-emerald-500 uppercase">Secure / 99.9%</p>
+            </div>
+            <div className="w-px h-8 bg-slate-100" />
+            <Clock size={20} className="text-slate-400" />
+          </div>
         </div>
       </motion.div>
 
-      {/* KPI cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard label={t.revenue} value={`${Number(stats?.totalRevenue || 0).toLocaleString()} SAR`} delta="+5.2%" trend="up" icon={<DollarSign size={20} />} />
-        <KpiCard label={t.users} value={stats?.userCount || 0} delta="Staff" trend="up" icon={<Users size={20} />} />
-        <KpiCard label={t.tasks} value={stats?.taskCount || 0} delta="Active" trend="down" icon={<Zap size={20} />} />
-        <KpiCard label={t.projects} value={stats?.projectCount || 0} delta="Live" trend="up" icon={<BarChart2 size={20} />} />
+      {/* Main Stats Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        <StatCard label={t.income} value={fmt(stats?.income || 0)} icon={<ArrowUpRight size={22} />} trend="up" delta="+8.4%" />
+        <StatCard label={t.expenses} value={fmt(stats?.expenses || 0)} icon={<ArrowDownLeft size={22} />} trend="down" delta="-2.1%" />
+        <StatCard label={t.netProfit} value={fmt(stats?.profit || 0)} icon={<DollarSign size={22} />} trend="up" delta="+15%" />
+        <StatCard label={t.attendance} value={`${stats?.attendanceToday || 0} / ${stats?.userCount || 0}`} icon={<Users size={22} />} trend="up" delta="Online" />
       </div>
 
-      {/* Admin Quick View (Secretary & Extensions) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* Secretary Watchlist Summary */}
-        <motion.div variants={fadeIn} className="glass-card p-6 border-slate-100 bg-white">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              <Clock size={16} className="text-brand" />
-              <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">{isRtl ? 'ملخص الحضور (السكرتيرة)' : 'Attendance Sync'}</h3>
-            </div>
-          </div>
-          <div className="space-y-3">
-            {attendance.slice(0, 5).map(a => (
-              <div key={a.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-[10px] font-black text-slate-400 shadow-sm">
-                    {a.name?.[0]}
-                  </div>
-                  <div>
-                    <p className="text-xs font-black text-slate-900 uppercase tracking-tight">{a.name}</p>
-                    <p className={clsx(
-                      "text-[9px] font-black uppercase tracking-widest",
-                      a.attendance?.status === 'PRESENT' ? 'text-emerald-500' : 'text-slate-400'
-                    )}>{a.attendance?.status || 'ABSENT'}</p>
-                  </div>
-                </div>
-                {a.attendance?.checkIn && (
-                  <span className="text-[10px] font-mono text-slate-500">
-                    {new Date(a.attendance.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                )}
-              </div>
-            ))}
-            <Link href="/secretary" className="block text-center py-2 text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] hover:text-brand transition-colors mt-2">
-              {isRtl ? 'عرض القائمة الكاملة' : 'View Full Watchlist'}
-            </Link>
-          </div>
-        </motion.div>
-
-        {/* Extension Requests */}
-        <motion.div variants={fadeIn} className="glass-card p-6 border-slate-100 bg-white">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              <Zap size={16} className="text-amber-500" />
-              <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">{isRtl ? 'طلبات تمديد الموعد' : 'Extension Requests'}</h3>
-            </div>
-          </div>
-          <div className="space-y-3">
-            {extensions.length === 0 ? (
-              <p className="text-[10px] font-black text-slate-400 py-10 text-center uppercase tracking-widest">No pending requests</p>
-            ) : extensions.map(e => (
-              <div key={e.id} className="p-4 rounded-xl bg-slate-50 border border-slate-100 shadow-sm">
-                <div className="flex justify-between items-start mb-2">
-                  <p className="text-xs font-black text-slate-900 uppercase tracking-tight">{e.task?.title}</p>
-                  <span className="text-[9px] text-rose-500 font-black uppercase tracking-widest">{new Date(e.requestedDate).toLocaleDateString()}</span>
-                </div>
-                <p className="text-[10px] text-slate-400 mb-3 italic">"{e.reason}"</p>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleExtension(e.id, true)}
-                    className="flex-1 py-2 rounded-lg bg-brand text-white text-[9px] font-black uppercase tracking-widest hover:bg-brand/90 transition-all shadow-md shadow-brand/10"
-                  >
-                    Approve
-                  </button>
-                  <button
-                    onClick={() => handleExtension(e.id, false)}
-                    className="flex-1 py-2 rounded-lg bg-white text-rose-600 border border-rose-100 text-[9px] font-black uppercase tracking-widest hover:bg-rose-50 transition-all"
-                  >
-                    Reject
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-      </div>
-
-      {/* Charts Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
-        {/* Revenue Flow */}
-        <motion.div variants={fadeIn} className="xl:col-span-8 glass-card p-6 border-slate-100">
-          <div className="flex items-center justify-between mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        {/* Financial Area Chart */}
+        <motion.div variants={fadeIn} className="lg:col-span-8 glass-card border-slate-100 bg-white p-8">
+          <div className="flex items-center justify-between mb-10">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-brand/5 border border-brand/10 flex items-center justify-center">
-                <BarChart2 size={16} className="text-brand" />
+              <div className="w-10 h-10 rounded-2xl bg-brand/5 border border-brand/10 flex items-center justify-center text-brand">
+                <TrendingUp size={20} />
               </div>
               <div>
-                <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">{t.revChart}</h3>
-                <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Financial Pulse</p>
+                <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight leading-none">{t.financialVelocity}</h3>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Growth Index</p>
               </div>
             </div>
           </div>
-
-          <div className="h-64 w-full">
+          <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={SAMPLE_REVENUE_DATA} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <AreaChart data={[
+                { n: 'Jan', i: 4000, e: 2400 }, { n: 'Feb', i: 3000, e: 1398 }, { n: 'Mar', i: 2000, e: 9800 },
+                { n: 'Apr', i: 2780, e: 3908 }, { n: 'May', i: 1890, e: 4800 }, { n: 'Jun', i: 2390, e: 3800 }
+              ]} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#1C93B2" stopOpacity={0.1} />
+                  <linearGradient id="colorInc" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#1C93B2" stopOpacity={0.15} />
                     <stop offset="95%" stopColor="#1C93B2" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 9, fontWeight: 'bold' }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 9, fontWeight: 'bold' }} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
-                  itemStyle={{ fontSize: '11px', fontWeight: 'bold', color: '#1C93B2' }}
+                <XAxis dataKey="n" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b', fontWeight: 700 }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b' }} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #f1f5f9', borderRadius: '16px', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }}
                 />
-                <Area type="monotone" dataKey="revenue" stroke="#1C93B2" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
+                <Area type="monotone" dataKey="i" stroke="#1C93B2" strokeWidth={4} fillOpacity={1} fill="url(#colorInc)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </motion.div>
 
-        {/* Live Activity Feed */}
-        <motion.div variants={fadeIn} className="xl:col-span-4 glass-card p-6 border-slate-100 flex flex-col">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              <Activity size={15} className="text-brand" />
-              <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">{t.activity}</h3>
-            </div>
-            <div className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
-          </div>
-
-          <div className="flex-1 space-y-4">
-            {(stats?.recentLogs || []).map((a: any) => (
-              <div key={a.id} className="flex items-start gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-100 group hover:border-brand/20 transition-all shadow-sm">
-                <div className="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-[10px] font-black text-slate-400 group-hover:text-brand transition-colors">
-                  {a.user[0]}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[11px] text-slate-500 leading-tight">
-                    <span className="font-black text-slate-900 uppercase tracking-tight">{a.user}</span> {a.action} <span className="font-bold text-brand">{a.entity}</span>
-                  </p>
-                  <div className="flex items-center gap-1 mt-1">
-                    <Clock size={8} className="text-slate-600" />
-                    <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">{new Date(a.time).toLocaleTimeString()}</span>
-                  </div>
-                </div>
+        {/* Project Health Donut */}
+        <motion.div variants={fadeIn} className="lg:col-span-4 glass-card border-slate-100 bg-white p-8">
+           <div className="flex items-center gap-3 mb-10">
+              <div className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-500">
+                <PieChartIcon size={20} />
               </div>
-            ))}
-          </div>
-
-          <Link
-            href="/audit"
-            className="mt-6 flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-slate-50 text-[10px] font-black text-slate-400 hover:text-brand hover:bg-white transition-all uppercase tracking-widest border border-slate-100"
-          >
-            {t.viewAll}
-            <ChevronRight size={14} />
-          </Link>
+              <div>
+                <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight leading-none">{t.activeProjects}</h3>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Status Mix</p>
+              </div>
+            </div>
+            <div className="h-[250px] relative">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie 
+                    data={stats?.projectStatusCounts || [{ status: 'Empty', count: 1 }]} 
+                    innerRadius={75} outerRadius={100} 
+                    paddingAngle={8} 
+                    dataKey="count"
+                    stroke="none"
+                  >
+                    {(stats?.projectStatusCounts || []).map((entry: any, index: number) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={{ borderRadius: '12px' }} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                 <p className="text-3xl font-black text-slate-900 leading-none">{stats?.projectCount || 0}</p>
+                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Total</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2 mt-8">
+              {(stats?.projectStatusCounts || []).slice(0, 4).map((p: any, i: number) => (
+                <div key={p.status} className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-100">
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                  <span className="text-[9px] font-black text-slate-500 uppercase truncate">{p.status}</span>
+                </div>
+              ))}
+            </div>
         </motion.div>
       </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        {/* Task Priorities Bar Chart */}
+        <motion.div variants={fadeIn} className="lg:col-span-5 glass-card border-slate-100 bg-white p-8">
+            <div className="flex items-center gap-3 mb-10">
+              <div className="w-10 h-10 rounded-2xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-500">
+                <Target size={20} />
+              </div>
+              <div>
+                <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight leading-none">{t.tasksByPriority}</h3>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Workload Heat</p>
+              </div>
+            </div>
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={stats?.taskPriorityCounts || []} layout="vertical">
+                   <XAxis type="number" hide />
+                   <YAxis dataKey="priority" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 900, fill: '#64748b' }} width={80} />
+                   <Tooltip cursor={{ fill: 'rgba(28,147,178,0.05)' }} contentStyle={{ borderRadius: '12px' }} />
+                   <Bar dataKey="count" radius={[0, 10, 10, 0]} barSize={24} fill="#1C93B2" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+        </motion.div>
+
+        {/* Live Logs Widget */}
+        <motion.div variants={fadeIn} className="lg:col-span-7 glass-card border-slate-100 bg-white p-8">
+           <div className="flex flex-wrap items-center justify-between gap-4 mb-10">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500">
+                  <Activity size={20} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight leading-none">{t.liveActivity}</h3>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">System Audit</p>
+                </div>
+              </div>
+              <div className="flex-1 max-w-xs flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-xl px-4 py-2 focus-within:border-brand/40 transition-all">
+                <Search size={14} className="text-slate-400" />
+                <input 
+                    value={logSearch} 
+                    onChange={e => setLogSearch(e.target.value)} 
+                    placeholder={isRtl ? 'بحث في السجل...' : 'Search logs...'} 
+                    className="bg-transparent text-[10px] text-slate-900 outline-none w-full font-black uppercase tracking-widest placeholder:text-slate-300" 
+                />
+              </div>
+            </div>
+            <div className="space-y-4 max-h-[400px] overflow-y-auto no-scrollbar pr-2">
+              {filteredLogs.length === 0 ? (
+                  <div className="py-20 text-center text-slate-300 uppercase tracking-[0.3em] text-[9px] font-black">No matches found</div>
+              ) : filteredLogs.map((log: any) => (
+                <div key={log.id} className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100 group hover:border-brand/30 transition-all">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-[10px] font-black text-slate-400 shadow-sm group-hover:text-brand transition-colors">
+                      {log.user?.[0] || '?'}
+                    </div>
+                    <div>
+                      <p className="text-xs font-black text-slate-900 uppercase tracking-tight">
+                        {log.user} <span className="text-slate-400 font-normal">{log.action}</span> {log.entity}
+                      </p>
+                      <p className="text-[9px] font-bold text-slate-400 mt-0.5">{new Date(log.time).toLocaleString()}</p>
+                    </div>
+                  </div>
+                  <div className="w-2 h-2 rounded-full bg-slate-200 group-hover:bg-brand transition-colors" />
+                </div>
+              ))}
+            </div>
+        </motion.div>
+      </div>
+
     </motion.div>
   );
 }

@@ -104,13 +104,13 @@ export default function FilesPage() {
             </motion.div>
 
             <motion.div variants={fadeIn} className="flex flex-wrap items-center gap-4">
-                <div className="flex-1 min-w-[280px] flex items-center gap-4 bg-white/[0.03] border border-white/[0.08] rounded-2xl px-5 py-3.5 focus-within:border-brand/40 transition-all">
-                    <Search size={18} className="text-slate-600" />
+                <div className="flex-1 min-w-[280px] flex items-center gap-4 bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 focus-within:border-brand/40 transition-all shadow-sm">
+                    <Search size={18} className="text-slate-400" />
                     <input 
                         value={search} 
                         onChange={e => setSearch(e.target.value)} 
                         placeholder={t.search} 
-                        className="bg-transparent text-sm text-white outline-none w-full font-medium placeholder:text-slate-600" 
+                        className="bg-transparent text-sm text-slate-900 outline-none w-full font-medium placeholder:text-slate-400" 
                     />
                 </div>
             </motion.div>
@@ -118,50 +118,50 @@ export default function FilesPage() {
             <motion.div variants={stagger} initial="hidden" animate="show" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {isLoading ? (
                     Array(8).fill(0).map((_, i) => (
-                        <div key={i} className="glass-card h-40 animate-pulse bg-white/[0.02] border-white/5" />
+                        <div key={i} className="glass-card h-40 animate-pulse bg-slate-50 border-slate-100" />
                     ))
                 ) : filtered.length === 0 ? (
-                    <div className="col-span-full py-20 text-center">
-                        <FileIcon size={48} className="mx-auto text-slate-700 mb-4 opacity-20" />
-                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t.noFiles}</p>
+                    <div className="col-span-full py-20 text-center glass-card border-dashed border-slate-200 bg-white shadow-sm">
+                        <FileIcon size={48} className="mx-auto text-slate-200 mb-4" />
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t.noFiles}</p>
                     </div>
                 ) : filtered.map((file: any) => (
                     <motion.div 
                         key={file.id} 
                         variants={fadeIn} 
-                        className="glass-card group !p-5 border-white/5 bg-white/[0.02] hover:bg-white/[0.04] hover:border-white/10 transition-all relative overflow-hidden"
+                        className="glass-card group !p-5 border-slate-100 bg-white hover:bg-slate-50 hover:border-brand/20 transition-all relative overflow-hidden shadow-sm"
                     >
                         <div className="flex items-start justify-between mb-4">
-                            <div className="w-12 h-12 rounded-2xl bg-white/[0.03] flex items-center justify-center border border-white/5">
+                            <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center border border-slate-100 text-slate-600">
                                 {getFileIcon(file.mimeType)}
                             </div>
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
-                                <a href={file.publicUrl || '#'} target="_blank" className="p-2 rounded-lg bg-white/5 text-slate-400 hover:text-white hover:bg-white/10">
+                                <a href={file.publicUrl || '#'} target="_blank" className="p-2 rounded-lg bg-slate-100 text-slate-400 hover:text-brand hover:bg-brand/5 border border-slate-200">
                                     <Download size={14} />
                                 </a>
-                                <button onClick={() => handleDelete(file.id)} className="p-2 rounded-lg bg-white/5 text-slate-400 hover:text-rose-500 hover:bg-rose-500/10">
+                                <button onClick={() => handleDelete(file.id)} className="p-2 rounded-lg bg-slate-100 text-slate-400 hover:text-rose-500 hover:bg-rose-50 border border-slate-200">
                                     <Trash2 size={14} />
                                 </button>
                             </div>
                         </div>
                         
                         <div className="space-y-1">
-                            <p className="text-sm font-bold text-white truncate pr-6" title={file.name}>{file.name}</p>
-                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                            <p className="text-sm font-black text-slate-900 truncate pr-6 uppercase tracking-tight" title={file.name}>{file.name}</p>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                                 {formatSize(file.sizeBytes)} · {file.mimeType.split('/')[1]?.toUpperCase() || 'FILE'}
                             </p>
                         </div>
 
-                        <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between">
+                        <div className="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                                <div className="w-5 h-5 rounded-md bg-brand/10 text-brand flex items-center justify-center text-[8px] font-black">
+                                <div className="w-5 h-5 rounded-md bg-brand/10 text-brand border border-brand/20 flex items-center justify-center text-[8px] font-black">
                                     {file.uploadedBy?.firstName?.[0]}
                                 </div>
-                                <span className="text-[9px] font-black text-slate-500 uppercase tracking-tight truncate max-w-[100px]">
+                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-tight truncate max-w-[100px]">
                                     {file.uploadedBy?.firstName} {file.uploadedBy?.lastName}
                                 </span>
                             </div>
-                            <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest">
+                            <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest">
                                 {new Date(file.createdAt).toLocaleDateString()}
                             </span>
                         </div>
@@ -169,23 +169,25 @@ export default function FilesPage() {
                 ))}
             </motion.div>
 
-            {/* Upload Modal (Simplified for now, in a real app this would use a file input + S3/Cloudinary) */}
             <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)} title={t.upload}>
                 <div className="space-y-5 pt-2">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center py-10 border-2 border-dashed border-white/10 rounded-2xl bg-white/[0.02]">
-                        Drag and drop files or click to browse
-                    </p>
+                    <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed border-slate-100 rounded-3xl bg-slate-50/50 group hover:border-brand/30 hover:bg-brand/5 transition-all cursor-pointer">
+                        <Upload size={32} className="text-slate-300 group-hover:text-brand mb-4 transition-colors" />
+                        <p className="text-[10px] font-black text-slate-400 group-hover:text-brand uppercase tracking-widest text-center transition-colors">
+                            Click or drag to deploy assets
+                        </p>
+                    </div>
                     <Input label={t.name} placeholder="File name override" />
                     <Select 
                         label="Link to Project" 
-                        options={[]} // Would fetch projects
+                        options={[]} 
                         placeholder="Select project (Optional)"
                     />
-                    <div className="flex justify-end gap-3 pt-6 border-t border-white/5">
-                        <button className="px-6 py-3 rounded-xl bg-white/5 text-[10px] font-black text-slate-400 uppercase tracking-widest" onClick={() => setIsModalOpen(false)}>
+                    <div className="flex justify-end gap-3 pt-6 border-t border-slate-100">
+                        <button className="px-6 py-3 rounded-xl bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:bg-slate-100" onClick={() => setIsModalOpen(false)}>
                             Cancel
                         </button>
-                        <button className="px-10 py-3 rounded-xl bg-brand text-white text-[10px] font-black uppercase tracking-widest hover:bg-brand/90 transition-all shadow-lg shadow-brand/10">
+                        <button className="px-10 py-3 rounded-xl bg-brand text-white text-[10px] font-black uppercase tracking-widest hover:bg-brand/90 transition-all shadow-lg shadow-brand/20">
                             Confirm Upload
                         </button>
                     </div>

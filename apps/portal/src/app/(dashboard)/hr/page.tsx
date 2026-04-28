@@ -49,6 +49,7 @@ export default function HrPage() {
   const isRtl = language === 'ar';
   const { user } = useAuthStore();
   const t = T[language as keyof typeof T] || T.en;
+  const [search, setSearch] = useState('');
   const [tab, setTab] = useState<'attendance' | 'leaves' | 'payroll'>('attendance');
   const queryClient = useQueryClient();
 
@@ -89,7 +90,7 @@ export default function HrPage() {
         queryClient.invalidateQueries({ queryKey: ['attendance'] });
         toast.success(isRtl ? 'تم تسجيل حضورك' : 'Attendance recorded');
       } else {
-        toast.error(res.message || 'Operation failed');
+        toast.error(res.error || 'Operation failed');
       }
     }
   });
@@ -102,7 +103,7 @@ export default function HrPage() {
         setIsLeaveModalOpen(false);
         toast.success(isRtl ? 'تم إرسال طلب الإجازة' : 'Leave request submitted');
       } else {
-        toast.error(res.message || 'Request failed');
+        toast.error(res.error || 'Request failed');
       }
     }
   });
@@ -114,7 +115,7 @@ export default function HrPage() {
         queryClient.invalidateQueries({ queryKey: ['leaves'] });
         toast.success(isRtl ? 'تم تحديث حالة الطلب' : 'Status updated');
       } else {
-        toast.error(res.message || 'Update failed');
+        toast.error(res.error || 'Update failed');
       }
     }
   });
@@ -126,8 +127,15 @@ export default function HrPage() {
     leaveMutation.mutate({ ...leaveForm, daysCount: days });
   };
 
-  const SAMPLE_ATTENDANCE = attendanceData || [];
-  const SAMPLE_LEAVES = leavesData || [];
+  const SAMPLE_ATTENDANCE = (attendanceData || []).filter((a: any) => 
+    a.userName?.toLowerCase().includes(search.toLowerCase()) ||
+    a.department?.toLowerCase().includes(search.toLowerCase())
+  );
+  
+  const SAMPLE_LEAVES = (leavesData || []).filter((l: any) => 
+    l.userName?.toLowerCase().includes(search.toLowerCase()) ||
+    l.type?.toLowerCase().includes(search.toLowerCase())
+  );
 
   const tabs = [
     { key: 'attendance' as const, label: t.attendance, icon: Clock },
@@ -135,8 +143,8 @@ export default function HrPage() {
     { key: 'payroll' as const, label: t.payroll, icon: Briefcase },
   ];
 
-  const presentCount = SAMPLE_ATTENDANCE.filter(a => a.status === 'PRESENT' || a.status === 'REMOTE').length;
-  const lateCount = SAMPLE_ATTENDANCE.filter(a => a.status === 'LATE').length;
+  const presentCount = (attendanceData || []).filter((a: any) => a.status === 'PRESENT' || a.status === 'REMOTE').length;
+  const lateCount = (attendanceData || []).filter((a: any) => a.status === 'LATE').length;
 
   return (
     <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-8">
@@ -166,65 +174,81 @@ export default function HrPage() {
                 </button>
             </div>
         </div>
-        <StatCard label={t.onLeave} value={SAMPLE_LEAVES.filter((l: any) => l.status === 'APPROVED').length} icon={<Calendar size={18} />} />
+        <StatCard label={t.onLeave} value={(leavesData || []).filter((l: any) => l.status === 'APPROVED').length} icon={<Calendar size={18} />} />
         <StatCard label={t.late} value={lateCount} icon={<Clock size={18} />} trend="down" delta={String(lateCount)} />
         <StatCard label={t.totalPayroll} value={`₪${payrollData?.reduce((a: number, r: any) => a + Number(r.netSalary), 0).toLocaleString() || '0'}`} icon={<Briefcase size={18} />} />
       </motion.div>
 
-      {/* Tabs */}
-      <div className="flex items-center justify-between">
-        <div className="flex gap-3 overflow-x-auto pb-1">
+      {/* Tabs & Search */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex gap-3 overflow-x-auto pb-1 no-scrollbar">
             {tabs.map(tb => (
-            <button key={tb.key} onClick={() => setTab(tb.key)} className={clsx(
+            <button key={tb.key} onClick={() => { setTab(tb.key); setSearch(''); }} className={clsx(
                 'flex items-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border',
-                tab === tb.key ? 'bg-brand text-white border-brand' : 'bg-white text-slate-400 border-slate-100 hover:bg-slate-50 hover:text-slate-900'
+                tab === tb.key ? 'bg-brand text-white border-brand shadow-lg shadow-brand/20' : 'bg-white text-slate-400 border-slate-100 hover:bg-slate-50 hover:text-slate-900'
             )}>
                 <tb.icon size={13} /> {tb.label}
             </button>
             ))}
         </div>
-        {tab === 'leaves' && (
-            <button 
-                onClick={() => setIsLeaveModalOpen(true)}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-brand text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-brand/20 hover:scale-105 transition-all"
-            >
-                <Plus size={14} /> {isRtl ? 'طلب إجازة' : 'Request Leave'}
-            </button>
-        )}
+        
+        <div className="flex items-center gap-3 flex-1 min-w-[300px]">
+            <div className="flex-1 flex items-center gap-4 bg-white border border-slate-100 rounded-xl px-5 py-2.5 focus-within:border-brand/40 transition-all shadow-sm">
+                <Search size={16} className="text-slate-400" />
+                <input 
+                    value={search} 
+                    onChange={e => setSearch(e.target.value)} 
+                    placeholder={isRtl ? 'بحث في الموظفين...' : 'Search personnel...'} 
+                    className="bg-transparent text-xs text-slate-900 outline-none w-full font-medium placeholder:text-slate-300" 
+                />
+            </div>
+            {tab === 'leaves' && (
+                <button 
+                    onClick={() => setIsLeaveModalOpen(true)}
+                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-brand text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-brand/20 hover:scale-105 transition-all whitespace-nowrap"
+                >
+                    <Plus size={14} /> {isRtl ? 'طلب إجازة' : 'Request Leave'}
+                </button>
+            )}
+        </div>
       </div>
 
       {/* Attendance Tab */}
       {tab === 'attendance' && (
         <motion.div variants={fadeIn} className="glass-card !p-0 overflow-hidden border-slate-100 bg-white shadow-sm">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/50">
-                {[t.employee, t.dept, t.status, t.checkIn, 'Check-out'].map((h, i) => (
-                  <th key={i} className="px-5 py-4 text-left text-[9px] font-black text-slate-400 uppercase tracking-widest">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {SAMPLE_ATTENDANCE.map((a: any) => (
-                <tr key={a.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-5 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center font-bold text-xs text-slate-900">{a.userName?.[0] || '?'}</div>
-                      <span className="text-sm font-bold text-slate-900">{a.userName}</span>
-                    </div>
-                  </td>
-                  <td className="px-5 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">{a.department || a.dept}</td>
-                  <td className="px-5 py-4">
-                    <span className={clsx('text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest border', statusColor[a.status] || 'text-slate-400 bg-slate-50 border-slate-100')}>
-                      {a.status}
-                    </span>
-                  </td>
-                  <td className="px-5 py-4 text-xs font-mono text-slate-400">{a.checkIn ? new Date(a.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}</td>
-                  <td className="px-5 py-4 text-xs font-mono text-slate-400">{a.checkOut ? new Date(a.checkOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}</td>
+          <div className="overflow-x-auto no-scrollbar">
+            <table className="w-full">
+                <thead>
+                <tr className="border-b border-slate-100 bg-slate-50/50">
+                    {[t.employee, t.dept, t.status, t.checkIn, 'Check-out'].map((h, i) => (
+                    <th key={i} className="px-8 py-5 text-left text-[9px] font-black text-slate-400 uppercase tracking-widest">{h}</th>
+                    ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                {SAMPLE_ATTENDANCE.length === 0 ? (
+                    <tr><td colSpan={5} className="p-20 text-center text-slate-300 uppercase tracking-[0.3em] text-[9px] font-black">No Records Found</td></tr>
+                ) : SAMPLE_ATTENDANCE.map((a: any) => (
+                    <tr key={a.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-8 py-5">
+                        <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center font-bold text-xs text-slate-900">{a.userName?.[0] || '?'}</div>
+                        <span className="text-sm font-bold text-slate-900">{a.userName}</span>
+                        </div>
+                    </td>
+                    <td className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">{a.department || a.dept}</td>
+                    <td className="px-8 py-5">
+                        <span className={clsx('text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest border', statusColor[a.status] || 'text-slate-400 bg-slate-50 border-slate-100')}>
+                        {a.status}
+                        </span>
+                    </td>
+                    <td className="px-8 py-5 text-xs font-mono text-slate-400">{a.checkIn ? new Date(a.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}</td>
+                    <td className="px-8 py-5 text-xs font-mono text-slate-400">{a.checkOut ? new Date(a.checkOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}</td>
+                    </tr>
+                ))}
+                </tbody>
+            </table>
+          </div>
         </motion.div>
       )}
 

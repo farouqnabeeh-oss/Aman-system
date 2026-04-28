@@ -6,17 +6,21 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pi
 import { 
     Plus, TrendingUp, TrendingDown, DollarSign, Wallet, FileText, 
     PieChart as PieChartIcon, Edit2, Trash2, Target, Layers, 
-    Users, Calendar, Zap, ArrowUpRight, ArrowDownLeft, Activity 
+    Users, Calendar, Zap, ArrowUpRight, ArrowDownLeft, Activity, Search 
 } from 'lucide-react';
 import { useUIStore } from '@/store/ui.store';
 import { PageHeader, StatCard } from '@/components/ui/States';
 import { Modal } from '@/components/ui/Modal';
-import { Input, Select, Textarea } from '@/components/ui/Input';
+import { Input, Select } from '@/components/ui/Input';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 
-import { getFinanceSummary, getTransactions, getBudgets, createTransaction, deleteTransaction, updateTransaction } from '@/lib/actions/finance';
+import { 
+    getFinanceSummary, getTransactions, getBudgets, 
+    createTransaction, deleteTransaction, updateTransaction,
+    createBudget, updateBudget, deleteBudget
+} from '@/lib/actions/finance';
 
 const T = {
   ar: {
@@ -54,7 +58,7 @@ export default function FinancePage() {
   const t = T[language as keyof typeof T] || T.en;
   const [tab, setTab] = useState<'overview' | 'transactions' | 'budgets'>('overview');
 
-  const { data: summaryData, isLoading: summaryLoading } = useQuery({
+  const { data: summaryData } = useQuery({
     queryKey: ['financeSummary'],
     queryFn: async () => { const r = await getFinanceSummary(); return r.data; },
   });
@@ -69,12 +73,11 @@ export default function FinancePage() {
     <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-8">
       <PageHeader title={t.finance} description={t.financeSub} />
 
-      {/* Tabs */}
       <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
         {tabs.map(tb => (
           <button key={tb.key} onClick={() => setTab(tb.key)} className={clsx(
             'flex items-center gap-2 px-6 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap',
-            tab === tb.key ? 'bg-brand text-white shadow-lg shadow-brand/20' : 'text-slate-500 hover:text-white hover:bg-white/5'
+            tab === tb.key ? 'bg-brand text-white shadow-lg shadow-brand/20' : 'text-slate-500 hover:text-brand hover:bg-brand/5'
           )}>
             <tb.icon size={14} /> {tb.label}
           </button>
@@ -173,9 +176,12 @@ export default function FinancePage() {
 
 function TransactionsTab({ t, isRtl }: any) {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [search, setSearch] = useState('');
     const [form, setForm] = useState({ 
         description: '', amount: '', type: 'EXPENSE', 
-        category: 'OPERATIONS', department: 'ENGINEERING', transactionDate: new Date().toISOString().split('T')[0] 
+        category: 'OPERATIONS', department: 'ENGINEERING', customDept: '',
+        transactionDate: new Date().toISOString().split('T')[0] 
     });
     const queryClient = useQueryClient();
 
@@ -184,19 +190,53 @@ function TransactionsTab({ t, isRtl }: any) {
         queryFn: async () => { const r = await getTransactions(); return r.data || []; },
     });
 
-    const handleCreate = async () => {
+    const handleSave = async () => {
         if (!form.description || !form.amount) return toast.error('Required fields missing');
-        const res = await createTransaction({ ...form, amount: parseFloat(form.amount) });
+        
+        const finalDept = form.department === 'OTHER' ? form.customDept : form.department;
+        const payload = { 
+            ...form, 
+            department: finalDept,
+            amount: parseFloat(form.amount) 
+        };
+
+        const res = editingId 
+            ? await updateTransaction(editingId, payload)
+            : await createTransaction(payload);
+
         if (res.success) {
-            toast.success('Transaction logged');
+            toast.success(editingId ? 'Transaction updated' : 'Transaction logged');
             setIsModalOpen(false);
-            setForm({ description: '', amount: '', type: 'EXPENSE', category: 'OPERATIONS', department: 'ENGINEERING', transactionDate: new Date().toISOString().split('T')[0] });
+            resetForm();
             queryClient.invalidateQueries({ queryKey: ['transactions'] });
             queryClient.invalidateQueries({ queryKey: ['financeSummary'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
         } else {
-            console.error('Transaction creation error:', res.error || res.message);
-            toast.error(res.message || 'Failed to create transaction. Check all fields.');
+            toast.error(res.error || 'Operation failed');
         }
+    };
+
+    const resetForm = () => {
+        setEditingId(null);
+        setForm({ 
+            description: '', amount: '', type: 'EXPENSE', 
+            category: 'OPERATIONS', department: 'ENGINEERING', customDept: '',
+            transactionDate: new Date().toISOString().split('T')[0] 
+        });
+    };
+
+    const handleEdit = (tx: any) => {
+        setEditingId(tx.id);
+        setForm({
+            description: tx.description,
+            amount: String(tx.amount),
+            type: tx.type,
+            category: tx.category,
+            department: DEPARTMENTS.includes(tx.department) ? tx.department : 'OTHER',
+            customDept: DEPARTMENTS.includes(tx.department) ? '' : (tx.department || ''),
+            transactionDate: new Date(tx.transactionDate).toISOString().split('T')[0]
+        });
+        setIsModalOpen(true);
     };
 
     const handleDelete = async (id: string) => {
@@ -209,12 +249,26 @@ function TransactionsTab({ t, isRtl }: any) {
         }
     };
 
+    const filtered = transactions.filter((tx: any) => 
+        tx.description.toLowerCase().includes(search.toLowerCase()) ||
+        tx.category.toLowerCase().includes(search.toLowerCase()) ||
+        tx.department.toLowerCase().includes(search.toLowerCase())
+    );
+
     return (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-            <div className="flex justify-between items-center px-2">
-                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">{t.transactions}</h3>
+            <div className="flex flex-wrap justify-between items-center gap-4 px-2">
+                <div className="flex-1 min-w-[280px] flex items-center gap-4 bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 focus-within:border-brand/40 transition-all shadow-sm">
+                    <Search size={18} className="text-slate-400" />
+                    <input 
+                        value={search} 
+                        onChange={e => setSearch(e.target.value)} 
+                        placeholder={t.search || 'Search ledger...'} 
+                        className="bg-transparent text-sm text-slate-900 outline-none w-full font-medium placeholder:text-slate-400" 
+                    />
+                </div>
                 <button 
-                    onClick={() => setIsModalOpen(true)}
+                    onClick={() => { resetForm(); setIsModalOpen(true); }}
                     className="flex items-center gap-2 px-6 py-3 rounded-xl bg-brand text-white text-[10px] font-black uppercase tracking-widest hover:bg-brand/90 transition-all shadow-lg shadow-brand/20"
                 >
                     <Plus size={14} /> {t.newTransaction}
@@ -236,13 +290,17 @@ function TransactionsTab({ t, isRtl }: any) {
                         <tbody className="divide-y divide-slate-50">
                             {isLoading ? (
                                 Array(5).fill(0).map((_, i) => <tr key={i}><td colSpan={5} className="px-8 py-6"><div className="h-4 bg-slate-100 rounded-lg animate-pulse" /></td></tr>)
-                            ) : transactions.length === 0 ? (
+                            ) : filtered.length === 0 ? (
                                 <tr><td colSpan={5} className="p-32 text-center text-slate-400 uppercase tracking-[0.3em] text-[10px] font-black">No Records Logged</td></tr>
-                            ) : transactions.map((tx: any) => (
+                            ) : filtered.map((tx: any) => (
                                 <tr key={tx.id} className="hover:bg-slate-50 transition-all group">
                                     <td className="px-8 py-5">
                                         <p className="text-xs font-black text-slate-900 uppercase tracking-tight">{tx.description}</p>
-                                        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mt-1">{tx.category} · {tx.department}</p>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{tx.category}</span>
+                                            <span className="w-1 h-1 rounded-full bg-slate-200" />
+                                            <span className="text-[9px] font-black text-brand uppercase tracking-widest">{tx.department}</span>
+                                        </div>
                                     </td>
                                     <td className="px-8 py-5">
                                         <span className={clsx(
@@ -260,8 +318,8 @@ function TransactionsTab({ t, isRtl }: any) {
                                     </td>
                                     <td className="px-8 py-5 text-right">
                                         <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                                            <button className="p-2 rounded-lg bg-slate-100 text-slate-500 hover:text-brand transition-all"><Edit2 size={14} /></button>
-                                            <button onClick={() => handleDelete(tx.id)} className="p-2 rounded-lg bg-slate-100 text-slate-500 hover:text-rose-500 transition-all"><Trash2 size={14} /></button>
+                                            <button onClick={() => handleEdit(tx)} className="p-2 rounded-lg bg-slate-100 text-slate-500 hover:text-brand transition-all shadow-sm"><Edit2 size={14} /></button>
+                                            <button onClick={() => handleDelete(tx.id)} className="p-2 rounded-lg bg-slate-100 text-slate-500 hover:text-rose-500 transition-all shadow-sm"><Trash2 size={14} /></button>
                                         </div>
                                     </td>
                                 </tr>
@@ -271,7 +329,7 @@ function TransactionsTab({ t, isRtl }: any) {
                 </div>
             </div>
 
-            <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)} title={t.newTransaction}>
+            <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? 'Edit Transaction' : t.newTransaction}>
                 <div className="space-y-6 pt-2">
                     <Input label={t.description} value={form.description} onChange={(e: any) => setForm({...form, description: e.target.value})} placeholder="What is this for?" />
                     <div className="grid grid-cols-2 gap-4">
@@ -288,14 +346,17 @@ function TransactionsTab({ t, isRtl }: any) {
                          <Select 
                             label={t.department} 
                             value={form.department} 
-                            options={DEPARTMENTS.map(d => ({ value: d, label: d }))}
+                            options={[...DEPARTMENTS.map(d => ({ value: d, label: d })), { value: 'OTHER', label: 'Other Dept' }]}
                             onChange={(e: any) => setForm({...form, department: e.target.value})}
                         />
-                        <Input label={isRtl ? 'تاريخ العملية' : 'Transaction Date'} type="date" value={form.transactionDate} onChange={(e: any) => setForm({...form, transactionDate: e.target.value})} />
                     </div>
+                    {form.department === 'OTHER' && (
+                        <Input label="Dept Name" value={form.customDept} onChange={(e: any) => setForm({...form, customDept: e.target.value})} />
+                    )}
+                    <Input label={isRtl ? 'تاريخ العملية' : 'Transaction Date'} type="date" value={form.transactionDate} onChange={(e: any) => setForm({...form, transactionDate: e.target.value})} />
                     <div className="flex justify-end gap-3 pt-8 border-t border-slate-100">
-                        <button className="px-8 py-3 rounded-xl bg-slate-50 text-[10px] font-black text-slate-500 uppercase tracking-widest hover:bg-slate-100" onClick={() => setIsModalOpen(false)}>{t.cancel}</button>
-                        <button className="px-10 py-3 rounded-xl bg-brand text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-brand/20 hover:bg-brand/90" onClick={handleCreate}>{t.save}</button>
+                        <button className="px-8 py-3 rounded-xl bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:bg-slate-100" onClick={() => setIsModalOpen(false)}>{t.cancel}</button>
+                        <button className="px-10 py-3 rounded-xl bg-brand text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-brand/20 hover:bg-brand/90" onClick={handleSave}>{editingId ? 'Save Changes' : t.save}</button>
                     </div>
                 </div>
             </Modal>
@@ -304,54 +365,128 @@ function TransactionsTab({ t, isRtl }: any) {
 }
 
 function BudgetsTab({ t, isRtl }: any) {
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [form, setForm] = useState({ department: '', allocated: '', year: new Date().getFullYear() });
+    const queryClient = useQueryClient();
+
     const { data: budgets = [], isLoading } = useQuery({
         queryKey: ['budgets'],
         queryFn: async () => { const r = await getBudgets(); return r.data || []; },
     });
 
+    const handleSave = async () => {
+        if (!form.department || !form.allocated) return toast.error('Required fields missing');
+        const payload = { ...form, allocated: parseFloat(form.allocated) };
+        
+        const res = editingId 
+            ? await updateBudget(editingId, payload)
+            : await createBudget(payload);
+
+        if (res.success) {
+            toast.success(editingId ? 'Budget recalibrated' : 'Budget pool created');
+            setIsModalOpen(false);
+            setEditingId(null);
+            setForm({ department: '', allocated: '', year: new Date().getFullYear() });
+            queryClient.invalidateQueries({ queryKey: ['budgets'] });
+        } else {
+            toast.error(res.error || 'Operation failed');
+        }
+    };
+
+    const handleEdit = (b: any) => {
+        setEditingId(b.id);
+        setForm({ department: b.department, allocated: String(b.allocated), year: b.year });
+        setIsModalOpen(true);
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!confirm('Are you sure you want to delete this budget allocation?')) return;
+        const res = await deleteBudget(id);
+        if (res.success) {
+            toast.success('Budget removed');
+            queryClient.invalidateQueries({ queryKey: ['budgets'] });
+        }
+    };
+
     return (
-        <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {isLoading ? (
-                Array(3).fill(0).map((_, i) => <div key={i} className="glass-card h-64 animate-pulse bg-slate-50 border-slate-100" />)
-            ) : budgets.length === 0 ? (
-                <div className="col-span-full py-32 text-center glass-card border-dashed border-slate-200 bg-white shadow-sm">
-                    <Target size={48} className="mx-auto text-slate-300 mb-4 opacity-50" />
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">No Budget Allocations Found</p>
-                </div>
-            ) : budgets.map((b: any) => {
-                const allocated = Number(b.allocated || 0);
-                const spent = Number(b.spent || 0);
-                const pct = Math.min(allocated > 0 ? (spent / allocated) * 100 : 0, 100);
-                return (
-                    <div key={b.department} className="glass-card !p-10 border-slate-100 bg-white shadow-sm hover:bg-slate-50 transition-all group relative overflow-hidden">
-                        <div className="flex justify-between items-start mb-10">
-                            <div>
-                                <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight mb-1">{b.department}</h4>
-                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Active Pool Cycle</p>
-                            </div>
-                            <div className={clsx(
-                                "w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xs border transition-all group-hover:scale-110",
-                                pct > 90 ? 'bg-rose-500/10 text-rose-500 border-rose-500/20' : 'bg-brand/10 text-brand border-brand/20'
-                            )}>
-                                {pct.toFixed(0)}%
-                            </div>
-                        </div>
-                        <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden mb-10">
-                            <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }} className={clsx('h-full rounded-full', pct > 90 ? 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.3)]' : 'bg-brand shadow-[0_0_10px_rgba(28,147,178,0.3)]')} />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4 pt-8 border-t border-slate-100">
-                            <div>
-                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">{t.spent}</p>
-                                <p className="text-lg font-black text-slate-900">{fmt(spent, isRtl)}</p>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">{t.budget}</p>
-                                <p className="text-lg font-black text-slate-500">{fmt(allocated, isRtl)}</p>
-                            </div>
-                        </div>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+            <div className="flex justify-end px-2">
+                <button 
+                    onClick={() => { setEditingId(null); setForm({ department: '', allocated: '', year: new Date().getFullYear() }); setIsModalOpen(true); }}
+                    className="flex items-center gap-2 px-6 py-3 rounded-xl bg-brand text-white text-[10px] font-black uppercase tracking-widest hover:bg-brand/90 transition-all shadow-lg shadow-brand/20"
+                >
+                    <Plus size={14} /> New Budget
+                </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {isLoading ? (
+                    Array(3).fill(0).map((_, i) => <div key={i} className="glass-card h-64 animate-pulse bg-slate-50 border-slate-100" />)
+                ) : budgets.length === 0 ? (
+                    <div className="col-span-full py-32 text-center glass-card border-dashed border-slate-200 bg-white shadow-sm">
+                        <Target size={48} className="mx-auto text-slate-300 mb-4 opacity-50" />
+                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">No Budget Allocations Found</p>
                     </div>
-                );
-            })}
+                ) : budgets.map((b: any) => {
+                    const allocated = Number(b.allocated || 0);
+                    const spent = Number(b.spent || 0);
+                    const pct = Math.min(allocated > 0 ? (spent / allocated) * 100 : 0, 100);
+                    return (
+                        <div key={b.department} className="glass-card !p-10 border-slate-100 bg-white shadow-sm hover:bg-slate-50 transition-all group relative overflow-hidden">
+                            <div className="flex justify-between items-start mb-10">
+                                <div>
+                                    <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight mb-1">{b.department}</h4>
+                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Active Pool Cycle</p>
+                                </div>
+                                <div className="flex flex-col items-end gap-2">
+                                    <div className={clsx(
+                                        "w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xs border transition-all",
+                                        pct > 90 ? 'bg-rose-500/10 text-rose-500 border-rose-500/20' : 'bg-brand/10 text-brand border-brand/20'
+                                    )}>
+                                        {pct.toFixed(0)}%
+                                    </div>
+                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                                        <button onClick={() => handleEdit(b)} className="p-2 rounded-lg bg-white border border-slate-100 text-slate-400 hover:text-brand shadow-sm"><Edit2 size={12} /></button>
+                                        <button onClick={() => handleDelete(b.id)} className="p-2 rounded-lg bg-white border border-slate-100 text-slate-400 hover:text-rose-500 shadow-sm"><Trash2 size={12} /></button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden mb-10">
+                                <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }} className={clsx('h-full rounded-full', pct > 90 ? 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.3)]' : 'bg-brand shadow-[0_0_10px_rgba(28,147,178,0.3)]')} />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4 pt-8 border-t border-slate-100">
+                                <div>
+                                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">{t.spent}</p>
+                                    <p className="text-lg font-black text-slate-900">{fmt(spent, isRtl)}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">{t.budget}</p>
+                                    <p className="text-lg font-black text-slate-500">{fmt(allocated, isRtl)}</p>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+
+            <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? 'Recalibrate Budget' : 'New Allocation'}>
+                <div className="space-y-6 pt-2">
+                    <Select 
+                        label="Department"
+                        value={form.department}
+                        options={DEPARTMENTS.map(d => ({ value: d, label: d }))}
+                        onChange={(e: any) => setForm({...form, department: e.target.value})}
+                    />
+                    <Input label="Allocated Amount" type="number" value={form.allocated} onChange={(e: any) => setForm({...form, allocated: e.target.value})} placeholder="0.00" />
+                    <Input label="Fiscal Year" type="number" value={form.year} onChange={(e: any) => setForm({...form, year: parseInt(e.target.value)})} />
+                    
+                    <div className="flex justify-end gap-3 pt-8 border-t border-slate-100">
+                        <button className="px-8 py-3 rounded-xl bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:bg-slate-100" onClick={() => setIsModalOpen(false)}>{t.cancel}</button>
+                        <button className="px-10 py-3 rounded-xl bg-brand text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-brand/20 hover:bg-brand/90" onClick={handleSave}>{editingId ? 'Recalibrate' : 'Allocate'}</button>
+                    </div>
+                </div>
+            </Modal>
         </motion.div>
     );
 }

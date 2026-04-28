@@ -18,7 +18,7 @@ async function createNotification(userId: string, type: string, title: string, m
 
 export async function getAttendanceToday() {
   const session = await getSession();
-  if (!session) return { success: false, message: 'Unauthorized' };
+  if (!session) return { success: false, error: 'Unauthorized' };
 
   try {
     const startOfDay = new Date();
@@ -39,13 +39,13 @@ export async function getAttendanceToday() {
 
     return { success: true, data: mapped };
   } catch (err) {
-    return { success: false, message: 'Failed to fetch attendance' };
+    return { success: false, error: 'Failed to fetch attendance' };
   }
 }
 
 export async function getLeaveRequests() {
   const session = await getSession();
-  if (!session) return { success: false, message: 'Unauthorized' };
+  if (!session) return { success: false, error: 'Unauthorized' };
 
   try {
     // If EMPLOYEE - show only their own; managers see all
@@ -71,14 +71,14 @@ export async function getLeaveRequests() {
 
     return { success: true, data: mapped };
   } catch (err) {
-    return { success: false, message: 'Failed to fetch leave requests' };
+    return { success: false, error: 'Failed to fetch leave requests' };
   }
 }
 
 export async function getEmployeesForSecretary() {
   const session = await getSession();
   if (!session || !['SECRETARY', 'ADMIN', 'SUPER_ADMIN', 'MANAGER'].includes(session.role)) {
-    return { success: false, message: 'Unauthorized' };
+    return { success: false, error: 'Unauthorized' };
   }
 
   try {
@@ -113,14 +113,14 @@ export async function getEmployeesForSecretary() {
 
     return { success: true, data: mapped };
   } catch (err) {
-    return { success: false, message: 'Failed to fetch employees' };
+    return { success: false, error: 'Failed to fetch employees' };
   }
 }
 
 export async function markAttendance(userId: string, data: { status: string; checkIn?: string; checkOut?: string; notes?: string }) {
   const session = await getSession();
   if (!session || !['SECRETARY', 'ADMIN', 'SUPER_ADMIN', 'MANAGER'].includes(session.role)) {
-    return { success: false, message: 'Unauthorized' };
+    return { success: false, error: 'Unauthorized' };
   }
 
   try {
@@ -162,23 +162,23 @@ export async function markAttendance(userId: string, data: { status: string; che
     return { success: true, data: record };
   } catch (err) {
     console.error('Mark attendance error:', err);
-    return { success: false, message: 'Failed to mark attendance' };
+    return { success: false, error: 'Failed to mark attendance' };
   }
 }
 
 export async function requestLeave(data: { type: string; startDate: string; endDate: string; reason?: string; daysCount: number }) {
   const session = await getSession();
-  if (!session) return { success: false, message: 'Unauthorized' };
+  if (!session) return { success: false, error: 'Unauthorized' };
 
   try {
     // Validate dates
     const start = new Date(data.startDate);
     const end = new Date(data.endDate);
     if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-      return { success: false, message: 'Invalid dates provided' };
+      return { success: false, error: 'Invalid dates provided' };
     }
     if (end < start) {
-      return { success: false, message: 'End date must be after start date' };
+      return { success: false, error: 'End date must be after start date' };
     }
 
     const leave = await prisma.leaveRequest.create({
@@ -225,17 +225,18 @@ export async function requestLeave(data: { type: string; startDate: string; endD
     });
 
     revalidatePath('/hr');
+    revalidatePath('/dashboard');
     return { success: true, data: leave };
   } catch (err) {
     console.error('Leave request error:', err);
-    return { success: false, message: 'Failed to request leave' };
+    return { success: false, error: 'Failed to request leave' };
   }
 }
 
 export async function updateLeaveStatus(id: string, status: string, reason?: string) {
   const session = await getSession();
   if (!session || !['ADMIN', 'SUPER_ADMIN', 'MANAGER'].includes(session.role)) {
-    return { success: false, message: 'Unauthorized' };
+    return { success: false, error: 'Unauthorized' };
   }
 
   try {
@@ -271,15 +272,16 @@ export async function updateLeaveStatus(id: string, status: string, reason?: str
     });
 
     revalidatePath('/hr');
+    revalidatePath('/dashboard');
     return { success: true, data: leave };
   } catch (err) {
-    return { success: false, message: 'Failed to update leave status' };
+    return { success: false, error: 'Failed to update leave status' };
   }
 }
 
 export async function selfAttendance(action: 'IN' | 'OUT') {
   const session = await getSession();
-  if (!session) return { success: false, message: 'Unauthorized' };
+  if (!session) return { success: false, error: 'Unauthorized' };
 
   try {
     const today = new Date();
@@ -297,7 +299,7 @@ export async function selfAttendance(action: 'IN' | 'OUT') {
         where: { userId_date: { userId: session.userId, date: today } },
       });
       if (!existing) {
-        return { success: false, message: 'No check-in record found for today. Please check in first.' };
+        return { success: false, error: 'No check-in record found for today. Please check in first.' };
       }
       await prisma.attendanceRecord.update({
         where: { userId_date: { userId: session.userId, date: today } },
@@ -313,9 +315,11 @@ export async function selfAttendance(action: 'IN' | 'OUT') {
     });
 
     revalidatePath('/hr');
+    revalidatePath('/dashboard');
+    revalidatePath('/secretary');
     return { success: true };
   } catch (err) {
     console.error('Self attendance error:', err);
-    return { success: false, message: 'Attendance operation failed' };
+    return { success: false, error: 'Attendance operation failed' };
   }
 }

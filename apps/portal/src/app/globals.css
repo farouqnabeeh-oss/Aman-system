@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+Arabic:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Vazirmatn:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -6,7 +6,7 @@
   --color-brand-light: rgb(40, 160, 195);
   --color-bg-base: #f8fafc;
   --color-bg-surface: #ffffff;
-  --font-sans: 'Inter', 'Noto Sans Arabic', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Plus Jakarta Sans', 'Vazirmatn', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
   --radius-2xl: 1rem;
@@ -25,17 +25,19 @@
   --border-hover: #1C93B2;
 
   --text-1: #0f172a;
-  --text-2: #475569;
+  --text-2: #334155;
   --text-3: #64748b;
   --text-4: #94a3b8;
 }
 
 * {
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
 html {
   scroll-behavior: smooth;
+  height: 100%;
 }
 
 body {
@@ -43,9 +45,11 @@ body {
   color: var(--text-1);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
-  letter-spacing: -0.011em;
-  min-height: 100dvh;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.01em;
+  min-height: 100%;
   margin: 0;
+  pointer-events: auto !important;
 }
 
 .glass-card {
@@ -54,32 +58,33 @@ body {
   border-radius: var(--radius-2xl);
   border: 1px solid var(--border);
   background: var(--bg-card);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
 .glass-card:hover {
-  border-color: #1C93B2;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
-  transform: translateY(-1px);
+  border-color: rgba(28, 147, 178, 0.3);
+  box-shadow: 0 12px 24px -8px rgba(28, 147, 178, 0.08);
+  transform: translateY(-2px);
 }
 
 .text-gradient-brand {
   color: #1C93B2;
 }
 
-/* Custom Scrollbar for Light Mode */
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 99px;
+  background: #e2e8f0;
+  border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -98,7 +103,8 @@ body {
 }
 
 .nav-link {
-  color: #475569 !important;
+  color: #64748b !important;
+  font-weight: 600 !important;
 }
 
 .nav-link:hover {
@@ -109,4 +115,14 @@ body {
 .nav-link.active {
   background: #1C93B2 !important;
   color: #ffffff !important;
+  box-shadow: 0 8px 16px -4px rgba(28, 147, 178, 0.25);
+}
+
+/* Utilities */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

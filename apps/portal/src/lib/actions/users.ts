@@ -23,7 +23,7 @@ const UserFiltersSchema = z.object({
 
 const CreateUserSchema = z.object({
   email: z.string().email(),
-  employeeNumber: z.string().min(1),
+  employeeNumber: z.string().optional(),
   nationalId: z.string().optional(),
   password: z.string().min(6).optional(), // Can be empty if using default password
   firstName: z.string().min(1).max(50),
@@ -111,13 +111,33 @@ export async function createUser(data: z.infer<typeof CreateUserSchema>) {
       throw new Error('Unauthorized');
     }
 
-    const val = CreateUserSchema.parse(data);
-    
+    const validated = CreateUserSchema.safeParse(data);
+    if (!validated.success) {
+      return { success: false, error: validated.error.errors.map(e => e.message).join(', ') };
+    }
+    const val = validated.data;
+    // --- Auto-generate Employee Number ---
+    let finalEmployeeNumber = val.employeeNumber;
+    if (!finalEmployeeNumber) {
+        const lastUser = await prisma.user.findFirst({
+            where: { deletedAt: null },
+            orderBy: { createdAt: 'desc' },
+            select: { employeeNumber: true }
+        });
+        
+        let lastNum = 1000;
+        if (lastUser?.employeeNumber) {
+            const parsed = parseInt(lastUser.employeeNumber.replace(/\D/g, ''));
+            if (!isNaN(parsed)) lastNum = parsed;
+        }
+        finalEmployeeNumber = `AMAN-${lastNum + 1}`;
+    }
+
     const existing = await prisma.user.findFirst({ 
       where: { 
         OR: [
           { email: val.email.toLowerCase() },
-          { employeeNumber: val.employeeNumber }
+          { employeeNumber: finalEmployeeNumber }
         ]
       } 
     });
@@ -129,6 +149,7 @@ export async function createUser(data: z.infer<typeof CreateUserSchema>) {
     const user = await prisma.user.create({
       data: {
         ...val,
+        employeeNumber: finalEmployeeNumber,
         email: val.email.toLowerCase(),
         passwordHash,
         emailVerified: true,
@@ -146,16 +167,23 @@ export async function createUser(data: z.infer<typeof CreateUserSchema>) {
     });
 
     revalidatePath('/users');
+    revalidatePath('/dashboard');
     return { success: true, data: user };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return { success: false, error: error.message || 'An unexpected error occurred' };
   }
 }
 
-export async function updateUser(id: string, data: z.infer<typeof UpdateUserSchema>) {
+export async function updateUser(id: string, data: any) {
   try {
     const session = await getSession();
     if (!session) throw new Error('Unauthorized');
+
+    const validated = UpdateUserSchema.safeParse(data);
+    if (!validated.success) {
+      return { success: false, error: validated.error.errors.map(e => e.message).join(', ') };
+    }
+    const val = validated.data;
 
     const user = await prisma.user.findUnique({ where: { id, deletedAt: null } });
     if (!user) throw new Error('User not found');
@@ -166,12 +194,12 @@ export async function updateUser(id: string, data: z.infer<typeof UpdateUserSche
     }
 
     if (!['ADMIN', 'SUPER_ADMIN'].includes(session.role)) {
-      if (data.role && data.role !== user.role) throw new Error('Only admins can change roles');
-      if (data.status && data.status !== user.status) throw new Error('Only admins can change status');
-      if (data.department && data.department !== user.department) throw new Error('Only admins can change department');
+      if (val.role && val.role !== user.role) throw new Error('Only admins can change roles');
+      if (val.status && val.status !== user.status) throw new Error('Only admins can change status');
+      if (val.department && val.department !== user.department) throw new Error('Only admins can change department');
     }
 
-    const { password, ...updateData } = data;
+    const { password, ...updateData } = val;
     const finalData: any = { ...updateData };
 
     if (password) {
@@ -188,13 +216,14 @@ export async function updateUser(id: string, data: z.infer<typeof UpdateUserSche
       action: 'UPDATE',
       entity: 'users',
       entityId: id,
-      newValues: data as any,
+      newValues: val as any,
     });
 
     revalidatePath('/users');
+    revalidatePath('/dashboard');
     return { success: true, data: updated };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return { success: false, error: error.message || 'An unexpected error occurred' };
   }
 }
 

@@ -5,29 +5,52 @@ import { getSession } from './auth';
 
 export async function getDashboardStats() {
   const session = await getSession();
-  if (!session) return { success: false, message: 'Unauthorized' };
+  if (!session) return { success: false, error: 'Unauthorized' };
 
   try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     const [
       userCount,
       projectCount,
       taskCount,
-      revenueStats,
-      recentLogs
+      financeStats,
+      recentLogs,
+      attendanceToday,
+      projectStatusCounts,
+      taskPriorityCounts
     ] = await Promise.all([
       prisma.user.count({ where: { deletedAt: null } }),
       prisma.project.count({ where: { deletedAt: null } }),
       prisma.task.count({ where: { status: { not: 'DONE' }, deletedAt: null } }),
-      prisma.transaction.aggregate({
-        where: { type: 'INCOME', status: 'COMPLETED' },
+      prisma.transaction.groupBy({
+        by: ['type'],
+        where: { status: 'COMPLETED' },
         _sum: { amount: true }
       }),
       prisma.auditLog.findMany({
         orderBy: { createdAt: 'desc' },
-        take: 10,
+        take: 8,
         include: { user: { select: { firstName: true, lastName: true } } }
+      }),
+      prisma.attendanceRecord.count({
+        where: { date: { gte: today }, status: 'PRESENT' }
+      }),
+      prisma.project.groupBy({
+        by: ['status'],
+        where: { deletedAt: null },
+        _count: true
+      }),
+      prisma.task.groupBy({
+        by: ['priority'],
+        where: { deletedAt: null, status: { not: 'DONE' } },
+        _count: true
       })
     ]);
+
+    const income = Number(financeStats.find(f => f.type === 'INCOME')?._sum.amount || 0);
+    const expenses = Number(financeStats.find(f => f.type === 'EXPENSE')?._sum.amount || 0);
 
     return {
       success: true,
@@ -35,7 +58,12 @@ export async function getDashboardStats() {
         userCount,
         projectCount,
         taskCount,
-        totalRevenue: revenueStats._sum.amount || 0,
+        income,
+        expenses,
+        profit: income - expenses,
+        attendanceToday,
+        projectStatusCounts: projectStatusCounts.map(p => ({ status: p.status, count: p._count })),
+        taskPriorityCounts: taskPriorityCounts.map(t => ({ priority: t.priority, count: t._count })),
         recentLogs: recentLogs.map(log => ({
           id: log.id,
           user: log.user ? `${log.user.firstName} ${log.user.lastName}` : 'System',
@@ -46,6 +74,6 @@ export async function getDashboardStats() {
       }
     };
   } catch (err) {
-    return { success: false, message: 'Failed to fetch dashboard stats' };
+    return { success: false, error: 'Failed to fetch dashboard stats' };
   }
 }

@@ -1,4 +1,10 @@
 import { NestFactory } from '@nestjs/core';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+
+// Load root .env before anything else
+dotenv.config({ path: path.resolve(process.cwd(), '../../.env') });
+
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';

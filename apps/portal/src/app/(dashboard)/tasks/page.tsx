@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { CheckCircle, Clock, AlertCircle, Search, Plus, Filter, Zap, Trash2 } from 'lucide-react';
+import { CheckCircle, Clock, AlertCircle, Search, Plus, Filter, Zap, Trash2, Edit2, ExternalLink } from 'lucide-react';
 import { useUIStore } from '@/store/ui.store';
 import { PageHeader, StatCard } from '@/components/ui/States';
 import { Modal } from '@/components/ui/Modal';
@@ -13,6 +13,7 @@ import { getTasks, createTask, updateTask, deleteTask } from '@/lib/actions/task
 import { getUsers } from '@/lib/actions/users';
 import { getProjects } from '@/lib/actions/projects';
 import { requestExtension } from '@/lib/actions/extensions';
+import { getEntityLogs } from '@/lib/actions/audit';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 
@@ -59,15 +60,20 @@ const stagger = { show: { transition: { staggerChildren: 0.04 } } };
 export default function TasksPage() {
   const { language } = useUIStore();
   const t = T[language as keyof typeof T] || T.en;
+  const isRtl = language === 'ar';
   const [search, setSearch] = useState('');
   const [priorityFilter, setPriorityFilter] = useState('');
   const queryClient = useQueryClient();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<any>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  
   const [form, setForm] = useState({
     title: '', description: '', priority: 'MEDIUM',
-    projectId: '', assigneeId: '', dueDate: ''
+    projectId: '', assigneeId: '', dueDate: '', status: 'TODO'
   });
 
   const [extModal, setExtModal] = useState<any>(null);
@@ -83,9 +89,9 @@ export default function TasksPage() {
   });
 
   const { data: usersData = [] } = useQuery({
-    queryKey: ['users'],
+    queryKey: ['users-list'],
     queryFn: async () => {
-      const res = await getUsers({});
+      const res = await getUsers({ limit: 100 });
       return res.data?.items || [];
     },
   });
@@ -98,28 +104,51 @@ export default function TasksPage() {
     },
   });
 
-  const handleCreate = async () => {
+  const handleSave = async () => {
     if (!form.title || !form.projectId) {
       toast.error('Title and Project are required');
       return;
     }
     setSaving(true);
     
-    // Ensure dates are ISO strings for the schema
-    const res = await createTask({
+    const payload = {
         ...form,
         dueDate: form.dueDate ? new Date(form.dueDate).toISOString() : undefined
-    });
+    };
+
+    const res = editingId 
+        ? await updateTask(editingId, payload)
+        : await createTask(payload);
 
     if (res.success) {
-      toast.success('Task deployed');
+      toast.success(editingId ? 'Task updated' : 'Task deployed');
       setIsModalOpen(false);
-      setForm({ title: '', description: '', priority: 'MEDIUM', projectId: '', assigneeId: '', dueDate: '' });
+      resetForm();
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
     } else {
-      toast.error(res.message || 'Operation failed');
+      toast.error(res.error || 'Operation failed');
     }
     setSaving(false);
+  };
+
+  const resetForm = () => {
+    setEditingId(null);
+    setForm({ title: '', description: '', priority: 'MEDIUM', projectId: '', assigneeId: '', dueDate: '', status: 'TODO' });
+  };
+
+  const handleEdit = (task: any) => {
+    setEditingId(task.id);
+    setForm({
+      title: task.title,
+      description: task.description || '',
+      priority: task.priority,
+      projectId: task.projectId,
+      assigneeId: task.assigneeId || '',
+      dueDate: task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '',
+      status: task.status
+    });
+    setIsModalOpen(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -128,6 +157,7 @@ export default function TasksPage() {
     if (res.success) {
       toast.success('Task removed');
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
     }
   };
 
@@ -136,6 +166,7 @@ export default function TasksPage() {
       if (res.success) {
           toast.success('Status synced');
           queryClient.invalidateQueries({ queryKey: ['tasks'] });
+          queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
       }
   };
 
@@ -154,7 +185,7 @@ export default function TasksPage() {
         description={t.tasksSub}
         action={
           <button 
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => { resetForm(); setIsModalOpen(true); }}
             className="flex items-center gap-2 px-6 py-3 rounded-xl bg-brand text-white text-[10px] font-black uppercase tracking-widest hover:bg-brand/90 transition-all shadow-lg shadow-brand/10"
           >
             <Plus size={14} /> {t.newTask}
@@ -197,8 +228,8 @@ export default function TasksPage() {
                     <Status.icon size={18} />
                   </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-black text-slate-900 uppercase tracking-tight mb-1">{task.title}</p>
+              <div className="flex-1 min-w-0" onClick={() => { setSelectedTask(task); setDetailModalOpen(true); }}>
+                <p className="text-sm font-black text-slate-900 uppercase tracking-tight mb-1 truncate cursor-pointer hover:text-brand transition-colors">{task.title}</p>
                 <div className="flex items-center gap-3">
                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{task.projectName}</span>
                     <span className="w-1 h-1 rounded-full bg-slate-200" />
@@ -228,27 +259,17 @@ export default function TasksPage() {
                 >
                     {Object.keys(statusMap).map(s => <option key={s} value={s} className="bg-white text-slate-900">{s}</option>)}
                 </select>
-                <button 
-                    onClick={() => setExtModal(task)}
-                    className="p-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-amber-500 hover:bg-amber-50 transition-all"
-                    title="Request Extension"
-                >
-                    <Clock size={16} />
-                </button>
-                <button 
-                    onClick={() => handleDelete(task.id)}
-                    className="p-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-all"
-                >
-                    <Trash2 size={16} />
-                </button>
+                <button onClick={() => handleEdit(task)} className="p-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-brand transition-all"><Edit2 size={16} /></button>
+                <button onClick={() => { setSelectedTask(task); setDetailModalOpen(true); }} className="p-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-brand transition-all"><ExternalLink size={16} /></button>
+                <button onClick={() => handleDelete(task.id)} className="p-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-rose-500 transition-all"><Trash2 size={16} /></button>
               </div>
             </motion.div>
           );
         })}
       </motion.div>
 
-      {/* New Task Modal */}
-      <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)} title={t.newTask}>
+      {/* Task Modal (Create/Edit) */}
+      <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? 'Edit Task' : t.newTask}>
         <div className="space-y-6 pt-2">
           <Input label={t.title} value={form.title} onChange={(e: any) => setForm({...form, title: e.target.value})} placeholder="What needs to be done?" />
           <Input label={t.desc} value={form.description} onChange={(e: any) => setForm({...form, description: e.target.value})} placeholder="Provide context..." />
@@ -286,45 +307,99 @@ export default function TasksPage() {
             </button>
             <button 
               className="px-10 py-3 rounded-xl bg-brand text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-brand/20 disabled:opacity-50"
-              onClick={handleCreate}
+              onClick={handleSave}
               disabled={saving}
             >
-              {saving ? 'Deploying...' : t.save}
+              {saving ? 'Syncing...' : (editingId ? 'Save Changes' : t.save)}
             </button>
           </div>
         </div>
       </Modal>
 
-      {/* Extension Modal */}
-      <Modal open={!!extModal} onClose={() => setExtModal(null)} title="Request Extension">
-          <div className="space-y-6 pt-2">
-              <div className="p-4 rounded-xl bg-amber-50 border border-amber-100 mb-2 shadow-sm">
-                <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1">Target Task</p>
-                <p className="text-sm font-bold text-slate-900">{extModal?.title}</p>
-              </div>
-              <Input label="Requested New Date" type="date" value={extForm.date} onChange={(e: any) => setExtForm({...extForm, date: e.target.value})} />
-              <Input label="Reason for Extension" value={extForm.reason} onChange={(e: any) => setExtForm({...extForm, reason: e.target.value})} placeholder="Why is more time needed?" />
-              <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-slate-100">
-                  <button className="px-6 py-3 rounded-xl bg-slate-100 text-[10px] font-black text-slate-500 uppercase tracking-widest hover:bg-slate-200" onClick={() => setExtModal(null)}>Cancel</button>
-                  <button 
-                    disabled={requesting}
-                    className="px-10 py-3 rounded-xl bg-amber-500 text-black text-[10px] font-black uppercase tracking-widest hover:bg-amber-600 disabled:opacity-50 shadow-lg shadow-amber-500/20"
-                    onClick={async () => {
-                        if (!extModal) return;
-                        setRequesting(true);
-                        const res = await requestExtension(extModal.id, extForm.date, extForm.reason);
-                        if (res.success) {
-                            toast.success('Request sent to manager');
-                            setExtModal(null);
-                        }
-                        setRequesting(false);
-                    }}
-                  >
-                      {requesting ? 'Sending...' : 'Send Request'}
-                  </button>
-              </div>
-          </div>
+      <Modal open={detailModalOpen} onClose={() => setDetailModalOpen(false)} title="Task Intelligence & Audit">
+        <TaskDetailView task={selectedTask} isRtl={isRtl} t={t} onClose={() => setDetailModalOpen(false)} />
       </Modal>
     </motion.div>
   );
+}
+
+function TaskDetailView({ task, isRtl, t, onClose }: any) {
+    const [tab, setTab] = useState<'info' | 'activity'>('info');
+    const { data: logs = [], isLoading } = useQuery({
+        queryKey: ['entity-logs', 'Task', task?.id],
+        queryFn: async () => { const res = await getEntityLogs('Task', task.id); return res.data || []; },
+        enabled: !!task && tab === 'activity'
+    });
+
+    if (!task) return null;
+
+    return (
+        <div className="space-y-8 pt-4">
+            <div className="flex gap-2 p-1 bg-slate-50 rounded-xl border border-slate-100">
+                <button onClick={() => setTab('info')} className={clsx('flex-1 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all', tab === 'info' ? 'bg-white text-slate-900 shadow-sm border border-slate-100' : 'text-slate-400 hover:text-slate-600')}>Information</button>
+                <button onClick={() => setTab('activity')} className={clsx('flex-1 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all', tab === 'activity' ? 'bg-white text-slate-900 shadow-sm border border-slate-100' : 'text-slate-400 hover:text-slate-600')}>Audit Log</button>
+            </div>
+
+            <AnimatePresence mode="wait">
+                {tab === 'info' ? (
+                    <motion.div key="info" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} className="space-y-6">
+                        <div>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t.title}</p>
+                            <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">{task.title}</h3>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t.project}</p>
+                                <p className="text-sm font-black text-slate-900 uppercase tracking-tight">{task.projectName}</p>
+                            </div>
+                            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t.assignee}</p>
+                                <p className="text-sm font-black text-slate-900 uppercase tracking-tight">{task.assigneeName || 'Unassigned'}</p>
+                            </div>
+                            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t.priority}</p>
+                                <p className={clsx("text-sm font-black uppercase tracking-tight", priorityColor[task.priority]?.split(' ')[0])}>{task.priority}</p>
+                            </div>
+                            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Status</p>
+                                <p className="text-sm font-black text-slate-900 uppercase tracking-tight">{task.status}</p>
+                            </div>
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t.desc}</p>
+                            <p className="text-sm font-medium text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-100">{task.description || 'No context provided'}</p>
+                        </div>
+                    </motion.div>
+                ) : (
+                    <motion.div key="activity" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="space-y-4">
+                        {isLoading ? (
+                            Array(3).fill(0).map((_, i) => <div key={i} className="h-16 bg-slate-50 rounded-xl animate-pulse" />)
+                        ) : logs.length === 0 ? (
+                            <div className="py-20 text-center text-slate-300 uppercase tracking-[0.3em] text-[10px] font-black">No Audit Data Found</div>
+                        ) : (
+                            <div className="space-y-3 max-h-[400px] overflow-y-auto no-scrollbar pr-2">
+                                {logs.map((log: any) => (
+                                    <div key={log.id} className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex justify-between items-center group">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-[10px] font-black text-slate-400 group-hover:text-brand transition-colors">{log.user?.[0]}</div>
+                                            <div>
+                                                <p className="text-[10px] font-black text-slate-900 uppercase tracking-tight">{log.user} <span className="text-slate-400 font-normal">{log.action.toLowerCase()}</span></p>
+                                                <p className="text-[9px] font-bold text-slate-400">{new Date(log.time).toLocaleString()}</p>
+                                            </div>
+                                        </div>
+                                        <div className="w-1.5 h-1.5 rounded-full bg-slate-200 group-hover:bg-brand transition-colors" />
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+            <div className="flex justify-end pt-4 border-t border-slate-100">
+                <button className="px-8 py-3 rounded-xl bg-slate-100 text-[10px] font-black text-slate-500 uppercase tracking-widest hover:bg-slate-200 transition-all" onClick={onClose}>
+                    {isRtl ? 'إغلاق' : 'Dismiss'}
+                </button>
+            </div>
+        </div>
+    );
 }

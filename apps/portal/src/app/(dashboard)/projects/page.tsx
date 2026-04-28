@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { 
     FolderKanban, Search, Plus, Target, Users, 
     Calendar, Zap, Trash2, ExternalLink, Layers, 
-    MoreVertical, Edit2 
+    Edit2 
 } from 'lucide-react';
 import { useUIStore } from '@/store/ui.store';
 import { PageHeader, StatCard } from '@/components/ui/States';
@@ -17,6 +17,7 @@ import toast from 'react-hot-toast';
 
 import { getProjects, createProject, updateProject, deleteProject } from '@/lib/actions/projects';
 import { getUsers } from '@/lib/actions/users';
+import { getEntityLogs } from '@/lib/actions/audit';
 
 const T = {
   ar: {
@@ -63,13 +64,16 @@ export default function ProjectsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<any>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  
   const [form, setForm] = useState({ 
     name: '', 
     description: '', 
     managerId: '', 
     status: 'PLANNING', 
     department: 'MANAGEMENT',
+    customDept: '',
     budget: '',
     startDate: new Date().toISOString().split('T')[0],
     endDate: ''
@@ -91,30 +95,61 @@ export default function ProjectsPage() {
     }
   });
 
-  const handleCreate = async () => {
+  const handleSave = async () => {
     if (!form.name || !form.managerId) {
       toast.error('Name and Manager are required');
       return;
     }
     setSaving(true);
     
-    // Ensure dates are ISO strings for the schema
-    const res = await createProject({
+    const finalDept = form.department === 'OTHER' ? form.customDept : form.department;
+    const payload = {
         ...form,
+        department: finalDept,
         budget: Number(form.budget),
         startDate: new Date(form.startDate).toISOString(),
         endDate: form.endDate ? new Date(form.endDate).toISOString() : undefined
-    });
+    };
+
+    const res = editingId 
+        ? await updateProject(editingId, payload)
+        : await createProject(payload);
 
     if (res.success) {
-      toast.success(isRtl ? 'تم إنشاء المشروع' : 'Project initiated');
+      toast.success(editingId ? (isRtl ? 'تم تحديث المشروع' : 'Project updated') : (isRtl ? 'تم إنشاء المشروع' : 'Project initiated'));
       setIsModalOpen(false);
-      setForm({ name: '', description: '', managerId: '', status: 'PLANNING', department: 'MANAGEMENT', budget: '', startDate: new Date().toISOString().split('T')[0], endDate: '' });
+      resetForm();
       queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
     } else {
-      toast.error(res.message || 'Operation failed');
+      toast.error(res.error || 'Operation failed');
     }
     setSaving(false);
+  };
+
+  const resetForm = () => {
+    setEditingId(null);
+    setForm({ 
+        name: '', description: '', managerId: '', status: 'PLANNING', 
+        department: 'MANAGEMENT', customDept: '', budget: '', 
+        startDate: new Date().toISOString().split('T')[0], endDate: '' 
+    });
+  };
+
+  const handleEdit = (p: any) => {
+    setEditingId(p.id);
+    setForm({
+      name: p.name,
+      description: p.description || '',
+      managerId: p.managerId || '',
+      status: p.status,
+      department: ['MANAGEMENT', 'MARKETING', 'ENGINEERING', 'SOCIAL_MEDIA', 'HR', 'FINANCE'].includes(p.department) ? p.department : 'OTHER',
+      customDept: ['MANAGEMENT', 'MARKETING', 'ENGINEERING', 'SOCIAL_MEDIA', 'HR', 'FINANCE'].includes(p.department) ? '' : (p.department || ''),
+      budget: String(p.budget || ''),
+      startDate: p.startDate ? new Date(p.startDate).toISOString().split('T')[0] : '',
+      endDate: p.endDate ? new Date(p.endDate).toISOString().split('T')[0] : ''
+    });
+    setIsModalOpen(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -123,12 +158,14 @@ export default function ProjectsPage() {
     if (res.success) {
       toast.success('Project archived');
       queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
     }
   };
 
   const filtered = projects.filter((p: any) => 
     p.name.toLowerCase().includes(search.toLowerCase()) || 
-    p.manager?.firstName?.toLowerCase().includes(search.toLowerCase())
+    p.manager?.firstName?.toLowerCase().includes(search.toLowerCase()) ||
+    p.department?.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -138,7 +175,7 @@ export default function ProjectsPage() {
         description={t.projectsSub}
         action={
           <button 
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => { resetForm(); setIsModalOpen(true); }}
             className="flex items-center gap-2 px-6 py-3 rounded-xl bg-brand text-white text-[10px] font-black uppercase tracking-widest hover:bg-brand/90 transition-all shadow-lg shadow-brand/20"
           >
             <Plus size={14} /> {t.newProject}
@@ -183,7 +220,8 @@ export default function ProjectsPage() {
                   <span className={clsx('text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest border', statusColors[p.status] || 'text-slate-500 bg-slate-50 border-slate-100')}>
                     {p.status}
                   </span>
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                      <button onClick={() => handleEdit(p)} className="p-2 rounded-lg bg-slate-100 text-slate-400 hover:text-brand transition-all shadow-sm"><Edit2 size={14} /></button>
                       <button onClick={() => handleDelete(p.id)} className="p-2 rounded-lg bg-slate-100 text-slate-400 hover:text-rose-500 transition-all shadow-sm"><Trash2 size={14} /></button>
                   </div>
               </div>
@@ -208,7 +246,7 @@ export default function ProjectsPage() {
                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Active Tasks</span>
                 </div>
                 <button onClick={() => { setSelectedProject(p); setDetailModalOpen(true); }} className="text-[9px] font-black text-slate-900 uppercase tracking-widest hover:text-brand transition-all flex items-center gap-1">
-                    {isRtl ? 'التفاصيل' : 'Details'} <ExternalLink size={10} />
+                    {isRtl ? 'التفاصيل والسجل' : 'Details & Log'} <ExternalLink size={10} />
                 </button>
               </div>
             </div>
@@ -216,8 +254,8 @@ export default function ProjectsPage() {
         ))}
       </motion.div>
 
-      {/* New Project Modal */}
-      <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)} title={t.newProject}>
+      {/* Project Modal (Create/Edit) */}
+      <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? (isRtl ? 'تعديل المشروع' : 'Edit Project') : t.newProject}>
         <div className="space-y-6 pt-2">
           <Input label={t.name} value={form.name} onChange={(e: any) => setForm({...form, name: e.target.value})} placeholder="Project title..." />
           <Input label={t.desc} value={form.description} onChange={(e: any) => setForm({...form, description: e.target.value})} placeholder="Project description..." />
@@ -233,10 +271,22 @@ export default function ProjectsPage() {
             <Select 
               label={t.department} 
               value={form.department} 
-              options={['MANAGEMENT', 'MARKETING', 'ENGINEERING', 'SOCIAL_MEDIA', 'HR', 'FINANCE'].map(s => ({ value: s, label: s }))}
+              options={[
+                  { value: 'MANAGEMENT', label: 'MANAGEMENT' },
+                  { value: 'MARKETING', label: 'MARKETING' },
+                  { value: 'ENGINEERING', label: 'ENGINEERING' },
+                  { value: 'SOCIAL_MEDIA', label: 'SOCIAL_MEDIA' },
+                  { value: 'HR', label: 'HR' },
+                  { value: 'FINANCE', label: 'FINANCE' },
+                  { value: 'OTHER', label: isRtl ? 'قسم آخر' : 'Other Dept' }
+              ]}
               onChange={(e: any) => setForm({...form, department: e.target.value})}
             />
           </div>
+
+          {form.department === 'OTHER' && (
+              <Input label={isRtl ? 'اسم القسم' : 'Dept Name'} value={form.customDept} onChange={(e: any) => setForm({...form, customDept: e.target.value})} />
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <Input label={t.budget} type="number" value={form.budget} onChange={(e: any) => setForm({...form, budget: e.target.value})} placeholder="Allocated budget..." />
@@ -259,59 +309,99 @@ export default function ProjectsPage() {
             </button>
             <button 
               className="px-10 py-3 rounded-xl bg-brand text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-brand/20 disabled:opacity-50"
-              onClick={handleCreate}
+              onClick={handleSave}
               disabled={saving}
             >
-              {saving ? 'Creating...' : t.save}
+              {saving ? 'Syncing...' : (editingId ? (isRtl ? 'حفظ التغييرات' : 'Save Changes') : t.save)}
             </button>
           </div>
         </div>
       </Modal>
-      <Modal open={detailModalOpen} onClose={() => setDetailModalOpen(false)} title={isRtl ? 'تفاصيل المشروع' : 'Project Details'}>
-        {selectedProject && (
-          <div className="space-y-6 pt-4">
-            <div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t.name}</p>
-              <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">{selectedProject.name}</h3>
-            </div>
-            <div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t.desc}</p>
-              <p className="text-sm font-medium text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-100">{selectedProject.description || (isRtl ? 'لا يوجد وصف' : 'No description provided')}</p>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t.manager}</p>
-                <p className="text-sm font-black text-slate-900 uppercase tracking-tight">{selectedProject.manager?.firstName} {selectedProject.manager?.lastName}</p>
-              </div>
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t.department}</p>
-                <p className="text-sm font-black text-slate-900 uppercase tracking-tight">{selectedProject.department}</p>
-              </div>
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t.budget}</p>
-                <p className="text-sm font-black text-slate-900 uppercase tracking-tight">${Number(selectedProject.budget || 0).toLocaleString()}</p>
-              </div>
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t.status}</p>
-                <p className="text-sm font-black text-slate-900 uppercase tracking-tight">{selectedProject.status}</p>
-              </div>
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t.startDate}</p>
-                <p className="text-sm font-black text-slate-900 uppercase tracking-tight">{new Date(selectedProject.startDate).toLocaleDateString()}</p>
-              </div>
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t.endDate}</p>
-                <p className="text-sm font-black text-slate-900 uppercase tracking-tight">{selectedProject.endDate ? new Date(selectedProject.endDate).toLocaleDateString() : '-'}</p>
-              </div>
-            </div>
-            <div className="flex justify-end pt-4">
-              <button className="px-8 py-3 rounded-xl bg-slate-100 text-[10px] font-black text-slate-500 uppercase tracking-widest hover:bg-slate-200 transition-all" onClick={() => setDetailModalOpen(false)}>
-                {isRtl ? 'إغلاق' : 'Close'}
-              </button>
-            </div>
-          </div>
-        )}
+
+      <Modal open={detailModalOpen} onClose={() => setDetailModalOpen(false)} title={isRtl ? 'تفاصيل المشروع والسجل' : 'Project Intelligence & Audit'}>
+        <ProjectDetailView project={selectedProject} isRtl={isRtl} t={t} onClose={() => setDetailModalOpen(false)} />
       </Modal>
     </motion.div>
   );
+}
+
+function ProjectDetailView({ project, isRtl, t, onClose }: any) {
+    const [tab, setTab] = useState<'info' | 'activity'>('info');
+    const { data: logs = [], isLoading } = useQuery({
+        queryKey: ['entity-logs', 'Project', project?.id],
+        queryFn: async () => { const res = await getEntityLogs('Project', project.id); return res.data || []; },
+        enabled: !!project && tab === 'activity'
+    });
+
+    if (!project) return null;
+
+    return (
+        <div className="space-y-8 pt-4">
+            <div className="flex gap-2 p-1 bg-slate-50 rounded-xl border border-slate-100">
+                <button onClick={() => setTab('info')} className={clsx('flex-1 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all', tab === 'info' ? 'bg-white text-slate-900 shadow-sm border border-slate-100' : 'text-slate-400 hover:text-slate-600')}>Information</button>
+                <button onClick={() => setTab('activity')} className={clsx('flex-1 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all', tab === 'activity' ? 'bg-white text-slate-900 shadow-sm border border-slate-100' : 'text-slate-400 hover:text-slate-600')}>Audit Log</button>
+            </div>
+
+            <AnimatePresence mode="wait">
+                {tab === 'info' ? (
+                    <motion.div key="info" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} className="space-y-6">
+                        <div>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t.name}</p>
+                            <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">{project.name}</h3>
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t.desc}</p>
+                            <p className="text-sm font-medium text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-100">{project.description || (isRtl ? 'لا يوجد وصف' : 'No description provided')}</p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t.manager}</p>
+                                <p className="text-sm font-black text-slate-900 uppercase tracking-tight">{project.manager?.firstName} {project.manager?.lastName}</p>
+                            </div>
+                            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t.department}</p>
+                                <p className="text-sm font-black text-slate-900 uppercase tracking-tight">{project.department}</p>
+                            </div>
+                            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t.budget}</p>
+                                <p className="text-sm font-black text-slate-900 uppercase tracking-tight">${Number(project.budget || 0).toLocaleString()}</p>
+                            </div>
+                            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t.status}</p>
+                                <p className="text-sm font-black text-slate-900 uppercase tracking-tight">{project.status}</p>
+                            </div>
+                        </div>
+                    </motion.div>
+                ) : (
+                    <motion.div key="activity" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="space-y-4">
+                        {isLoading ? (
+                            Array(3).fill(0).map((_, i) => <div key={i} className="h-16 bg-slate-50 rounded-xl animate-pulse" />)
+                        ) : logs.length === 0 ? (
+                            <div className="py-20 text-center text-slate-300 uppercase tracking-[0.3em] text-[10px] font-black">No Audit Data Found</div>
+                        ) : (
+                            <div className="space-y-3 max-h-[400px] overflow-y-auto no-scrollbar pr-2">
+                                {logs.map((log: any) => (
+                                    <div key={log.id} className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex justify-between items-center group">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-[10px] font-black text-slate-400 group-hover:text-brand transition-colors">{log.user?.[0]}</div>
+                                            <div>
+                                                <p className="text-[10px] font-black text-slate-900 uppercase tracking-tight">{log.user} <span className="text-slate-400 font-normal">{log.action.toLowerCase()}</span></p>
+                                                <p className="text-[9px] font-bold text-slate-400">{new Date(log.time).toLocaleString()}</p>
+                                            </div>
+                                        </div>
+                                        <div className="w-1.5 h-1.5 rounded-full bg-slate-200 group-hover:bg-brand transition-colors" />
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+            <div className="flex justify-end pt-4 border-t border-slate-100">
+                <button className="px-8 py-3 rounded-xl bg-slate-100 text-[10px] font-black text-slate-500 uppercase tracking-widest hover:bg-slate-200 transition-all" onClick={onClose}>
+                    {isRtl ? 'إغلاق' : 'Dismiss'}
+                </button>
+            </div>
+        </div>
+    );
 }

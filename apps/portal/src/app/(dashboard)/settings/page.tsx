@@ -16,20 +16,25 @@ export default function SettingsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="md:col-span-1 space-y-2">
-          <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white/10 text-white font-medium text-sm">
+          <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-brand text-white font-black text-[10px] uppercase tracking-widest shadow-lg shadow-brand/10">
             <User size={16} /> Profile
           </button>
-          <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5 text-slate-400 hover:text-white font-medium text-sm transition-all">
+          <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-50 text-slate-500 hover:text-brand font-black text-[10px] uppercase tracking-widest transition-all">
             <Shield size={16} /> Security
           </button>
-          <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5 text-slate-400 hover:text-white font-medium text-sm transition-all">
+          <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-50 text-slate-500 hover:text-brand font-black text-[10px] uppercase tracking-widest transition-all">
             <Settings size={16} /> Preferences
           </button>
         </div>
 
         <div className="md:col-span-2 space-y-6">
-          <div className="glass-card p-8">
-            <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2"><User size={18} /> Personal Info</h3>
+          <div className="glass-card p-8 bg-white border-slate-100 shadow-sm">
+            <h3 className="text-sm font-black text-slate-900 mb-8 flex items-center gap-3 uppercase tracking-tight">
+                <div className="w-8 h-8 rounded-lg bg-brand/10 text-brand flex items-center justify-center">
+                    <User size={18} />
+                </div>
+                Personal Identity
+            </h3>
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <Input label="First Name" value={user?.firstName || ''} readOnly />
@@ -40,14 +45,19 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          <div className="glass-card p-8">
-            <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2"><Settings size={18} /> Interface Defaults</h3>
+          <div className="glass-card p-8 bg-white border-slate-100 shadow-sm">
+            <h3 className="text-sm font-black text-slate-900 mb-8 flex items-center gap-3 uppercase tracking-tight">
+                <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center">
+                    <Settings size={18} />
+                </div>
+                Interface Preferences
+            </h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Language</label>
+                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Display Language</label>
                 <div className="flex gap-4">
-                  <button onClick={() => setLanguage('en')} className={`px-4 py-2 rounded-lg text-sm font-bold ${language === 'en' ? 'bg-white text-black' : 'bg-white/5 text-slate-400 hover:text-white'}`}>English</button>
-                  <button onClick={() => setLanguage('ar')} className={`px-4 py-2 rounded-lg text-sm font-bold ${language === 'ar' ? 'bg-white text-black' : 'bg-white/5 text-slate-400 hover:text-white'}`}>العربية</button>
+                  <button onClick={() => setLanguage('en')} className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${language === 'en' ? 'bg-brand text-white shadow-lg shadow-brand/10' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}>English</button>
+                  <button onClick={() => setLanguage('ar')} className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${language === 'ar' ? 'bg-brand text-white shadow-lg shadow-brand/10' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}>العربية</button>
                 </div>
               </div>
             </div>

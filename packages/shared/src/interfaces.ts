@@ -33,7 +33,7 @@ export interface IUser {
   lastName: string;
   avatarUrl: string | null;
   phone: string | null;
-  department: Department | null;
+  department: string | null;
   position: string | null;
   employeeNumber: string | null;
   emailVerified: boolean;
@@ -75,7 +75,7 @@ export interface IJwtPayload {
 // ─────────────────────────────────────────────────────────────────────────────
 export interface IDepartment {
   id: string;
-  name: Department;
+  name: string;
   description: string | null;
   headId: string | null;
   budget: number;
@@ -88,7 +88,7 @@ export interface IDepartment {
 // ─────────────────────────────────────────────────────────────────────────────
 export interface IBudgetAllocation {
   id: string;
-  department: Department;
+  department: string;
   period: BudgetPeriod;
   year: number;
   month: number | null;
@@ -164,7 +164,7 @@ export interface ITransaction {
   currency: string;
   description: string;
   category: string;
-  department: Department | null;
+  department: string | null;
   reference: string | null;
   paymentMethod: PaymentMethod | null;
   invoiceId: string | null;
@@ -187,7 +187,7 @@ export interface IProject {
   manager?: IUserPublic;
   clientId: string | null;
   client?: IClient;
-  department: Department | null;
+  department: string | null;
   startDate: string;
   endDate: string | null;
   budget: number | null;
@@ -370,7 +370,7 @@ export interface IRevenueDataPoint {
 }
 
 export interface IDepartmentPerformance {
-  department: Department;
+  department: string;
   budgetAllocated: number;
   budgetSpent: number;
   utilizationPercent: number;

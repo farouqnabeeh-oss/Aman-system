@@ -46,7 +46,7 @@ const nonNegativeDecimal = z.number().min(0, 'Cannot be negative');
 // ─────────────────────────────────────────────────────────────────────────────
 export const UserRoleSchema = z.nativeEnum(UserRole);
 export const UserStatusSchema = z.nativeEnum(UserStatus);
-export const DepartmentSchema = z.nativeEnum(Department);
+export const DepartmentSchema = z.string();
 export const TransactionTypeSchema = z.nativeEnum(TransactionType);
 export const TransactionStatusSchema = z.nativeEnum(TransactionStatus);
 export const InvoiceStatusSchema = z.nativeEnum(InvoiceStatus);

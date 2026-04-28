@@ -29,16 +29,18 @@ export async function getTasks() {
 
     return { success: true, data: mapped };
   } catch (err) {
-    return { success: false, message: 'Failed to fetch tasks' };
+    return { success: false, error: 'Failed to fetch tasks' };
   }
 }
 
 export async function createTask(formData: any) {
   const session = await getSession();
-  if (!session) return { success: false, message: 'Unauthorized' };
+  if (!session) return { success: false, error: 'Unauthorized' };
 
   const validated = CreateTaskSchema.safeParse(formData);
-  if (!validated.success) return { success: false, error: validated.error.flatten().fieldErrors };
+  if (!validated.success) {
+    return { success: false, error: validated.error.errors.map(e => e.message).join(', ') };
+  }
 
   try {
     const task = await prisma.task.create({
@@ -56,16 +58,17 @@ export async function createTask(formData: any) {
       newValues: task,
     });
     revalidatePath('/tasks');
-    return { success: true, task };
+    revalidatePath('/dashboard');
+    return { success: true, data: task };
   } catch (error) {
-    return { success: false, message: 'Failed to create task' };
+    return { success: false, error: 'Failed to create task' };
   }
 }
 
 export async function deleteTask(id: string) {
   const session = await getSession();
   if (!session || !['ADMIN', 'SUPER_ADMIN', 'MANAGER'].includes(session.role)) {
-    return { success: false, message: 'Unauthorized' };
+    return { success: false, error: 'Unauthorized' };
   }
 
   try {
@@ -74,15 +77,16 @@ export async function deleteTask(id: string) {
       data: { deletedAt: new Date() },
     });
     revalidatePath('/tasks');
+    revalidatePath('/dashboard');
     return { success: true };
   } catch (err) {
-    return { success: false, message: 'Failed to delete task' };
+    return { success: false, error: 'Failed to delete task' };
   }
 }
 
 export async function updateTask(id: string, data: any) {
   const session = await getSession();
-  if (!session) return { success: false, message: 'Unauthorized' };
+  if (!session) return { success: false, error: 'Unauthorized' };
 
   try {
     const updated = await prisma.task.update({
@@ -92,9 +96,17 @@ export async function updateTask(id: string, data: any) {
         tags: data.tags?.join(',') || data.tags,
       },
     });
+    await logAction({
+      userId: session.userId,
+      action: 'UPDATE',
+      entity: 'Task',
+      entityId: id,
+      newValues: updated,
+    });
     revalidatePath('/tasks');
+    revalidatePath('/dashboard');
     return { success: true, data: updated };
   } catch (err) {
-    return { success: false, message: 'Failed to update task' };
+    return { success: false, error: 'Failed to update task' };
   }
 }
