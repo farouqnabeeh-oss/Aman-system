@@ -25,7 +25,9 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 const cuid = z.string().min(1, 'ID is required');
 const isoDate = z.preprocess((arg) => {
-  if (typeof arg === "string" || arg instanceof Date) return new Date(arg);
+  if (!arg || arg === "") return undefined;
+  const d = new Date(arg as string | number | Date);
+  return isNaN(d.getTime()) ? undefined : d;
 }, z.date());
 const email = z.string().email('Invalid email address').toLowerCase().trim();
 const password = z

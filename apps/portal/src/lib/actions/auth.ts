@@ -73,12 +73,18 @@ export async function login(formData: any) {
   const isRtl = true; // Defaulting for message purposes or fetch from context if possible
 
   try {
-    const user = await prisma.user.findUnique({
-      where: { employeeNumber, deletedAt: null },
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { employeeNumber: employeeNumber },
+          { email: employeeNumber.toLowerCase() }
+        ],
+        deletedAt: null 
+      },
     });
 
     if (!user) {
-      return { success: false, message: 'Invalid employee number or password' };
+      return { success: false, message: 'Invalid credentials' };
     }
 
     // Check if password matches passwordHash OR matches nationalId (default password)

@@ -69,6 +69,50 @@ export default function FilesPage() {
         }
     });
 
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [uploading, setUploading] = useState(false);
+    const [overrideName, setOverrideName] = useState('');
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files?.[0]) {
+            setSelectedFile(e.target.files[0]);
+            setOverrideName(e.target.files[0].name);
+        }
+    };
+
+    const handleUpload = async () => {
+        if (!selectedFile) return;
+        setUploading(true);
+        
+        try {
+            // Simulate storage path (In a real app, this would be the S3/Blob key)
+            const storagePath = `uploads/${Date.now()}-${selectedFile.name}`;
+            
+            const res = await uploadFileMetadata({
+                name: overrideName || selectedFile.name,
+                originalName: selectedFile.name,
+                mimeType: selectedFile.type,
+                sizeBytes: selectedFile.size,
+                storagePath: storagePath,
+                publicUrl: URL.createObjectURL(selectedFile), // Temporary URL for demo
+            });
+
+            if (res.success) {
+                toast.success('File uploaded successfully');
+                setIsModalOpen(false);
+                setSelectedFile(null);
+                setOverrideName('');
+                queryClient.invalidateQueries({ queryKey: ['files'] });
+            } else {
+                toast.error(res.message || 'Upload failed');
+            }
+        } catch (err) {
+            toast.error('An unexpected error occurred');
+        } finally {
+            setUploading(false);
+        }
+    };
+
     const handleDelete = async (id: string) => {
         if (!confirm(t.deleteConfirm)) return;
         const res = await deleteFile(id);
@@ -171,24 +215,31 @@ export default function FilesPage() {
 
             <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)} title={t.upload}>
                 <div className="space-y-5 pt-2">
-                    <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed border-slate-100 rounded-3xl bg-slate-50/50 group hover:border-brand/30 hover:bg-brand/5 transition-all cursor-pointer">
-                        <Upload size={32} className="text-slate-300 group-hover:text-brand mb-4 transition-colors" />
+                    <label className="flex flex-col items-center justify-center py-12 border-2 border-dashed border-slate-100 rounded-3xl bg-slate-50/50 group hover:border-brand/30 hover:bg-brand/5 transition-all cursor-pointer">
+                        <input type="file" className="hidden" onChange={handleFileChange} />
+                        <Upload size={32} className={clsx("mb-4 transition-colors", selectedFile ? 'text-brand' : 'text-slate-300 group-hover:text-brand')} />
                         <p className="text-[10px] font-black text-slate-400 group-hover:text-brand uppercase tracking-widest text-center transition-colors">
-                            Click or drag to deploy assets
+                            {selectedFile ? selectedFile.name : 'Click or drag to deploy assets'}
                         </p>
-                    </div>
-                    <Input label={t.name} placeholder="File name override" />
-                    <Select 
-                        label="Link to Project" 
-                        options={[]} 
-                        placeholder="Select project (Optional)"
+                    </label>
+                    
+                    <Input 
+                        label={t.name} 
+                        value={overrideName} 
+                        onChange={(e: any) => setOverrideName(e.target.value)} 
+                        placeholder="File name override" 
                     />
+                    
                     <div className="flex justify-end gap-3 pt-6 border-t border-slate-100">
                         <button className="px-6 py-3 rounded-xl bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:bg-slate-100" onClick={() => setIsModalOpen(false)}>
                             Cancel
                         </button>
-                        <button className="px-10 py-3 rounded-xl bg-brand text-white text-[10px] font-black uppercase tracking-widest hover:bg-brand/90 transition-all shadow-lg shadow-brand/20">
-                            Confirm Upload
+                        <button 
+                            onClick={handleUpload}
+                            disabled={uploading || !selectedFile}
+                            className="px-10 py-3 rounded-xl bg-brand text-white text-[10px] font-black uppercase tracking-widest hover:bg-brand/90 transition-all shadow-lg shadow-brand/20 disabled:opacity-50"
+                        >
+                            {uploading ? 'Uploading...' : 'Confirm Upload'}
                         </button>
                     </div>
                 </div>

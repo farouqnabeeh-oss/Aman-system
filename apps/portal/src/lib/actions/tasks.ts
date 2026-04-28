@@ -37,7 +37,11 @@ export async function createTask(formData: any) {
   const session = await getSession();
   if (!session) return { success: false, error: 'Unauthorized' };
 
-  const validated = CreateTaskSchema.safeParse(formData);
+  const data = { ...formData };
+  if (!data.assigneeId) delete data.assigneeId;
+  if (!data.dueDate) delete data.dueDate;
+
+  const validated = CreateTaskSchema.safeParse(data);
   if (!validated.success) {
     return { success: false, error: validated.error.errors.map(e => e.message).join(', ') };
   }

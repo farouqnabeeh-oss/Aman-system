@@ -188,8 +188,14 @@ export async function createBudget(data: any) {
   try {
     const budget = await prisma.budgetAllocation.create({
       data: {
-        ...data,
-        year: data.year || new Date().getFullYear(),
+        department: data.department,
+        period: data.period || 'MONTHLY',
+        year: parseInt(data.year) || new Date().getFullYear(),
+        month: data.month ? parseInt(data.month) : null,
+        quarter: data.quarter ? parseInt(data.quarter) : null,
+        allocated: parseFloat(data.allocated) || 0,
+        spent: parseFloat(data.spent) || 0,
+        createdById: session.userId,
       },
     });
     await logAction({

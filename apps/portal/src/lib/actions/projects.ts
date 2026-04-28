@@ -38,7 +38,12 @@ export async function createProject(formData: any) {
     return { success: false, error: 'Unauthorized' };
   }
 
-  const validated = CreateProjectSchema.safeParse(formData);
+  const data = { ...formData };
+  if (!data.clientId) delete data.clientId;
+  if (!data.endDate) delete data.endDate;
+  if (!data.budget) delete data.budget;
+
+  const validated = CreateProjectSchema.safeParse(data);
   if (!validated.success) {
     return { success: false, error: validated.error.errors.map(e => e.message).join(', ') };
   }

@@ -21,6 +21,7 @@ export type UserStatus = (typeof UserStatus)[keyof typeof UserStatus];
 
 export const Department = {
   SOCIAL_MEDIA: 'SOCIAL_MEDIA',
+  MARKETING: 'MARKETING',
   PROGRAMMING: 'PROGRAMMING',
   PROJECTS: 'PROJECTS',
   HR: 'HR',
