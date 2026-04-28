@@ -18,7 +18,18 @@ export async function getSMClients() {
   try {
     const clients = await prisma.client.findMany({
       where: { status: 'AGREED', deletedAt: null } as any,
-      include: { smDetails: true },
+      include: { 
+        smDetails: true,
+        projects: {
+          include: {
+            tasks: {
+              where: { deletedAt: null },
+              orderBy: { createdAt: 'desc' },
+              take: 10
+            }
+          }
+        }
+      },
       orderBy: { createdAt: 'desc' },
     });
     return { success: true, data: clients };
@@ -192,19 +203,59 @@ export async function getSMStats() {
       _sum: { targetDesigns: true, doneDesigns: true, targetVideos: true, doneVideos: true },
     });
 
-    return {
-      success: true,
-      data: {
-        totalClients,
-        pendingContent,
-        approvedContent,
-        totalDesigns: designStats._sum.targetDesigns || 0,
-        doneDesigns: designStats._sum.doneDesigns || 0,
-        totalVideos: designStats._sum.targetVideos || 0,
-        doneVideos: designStats._sum.doneVideos || 0,
-      }
-    };
+    return { success: true, data: { totalClients, pendingContent, approvedContent, totalDesigns: designStats._sum.targetDesigns || 0, doneDesigns: designStats._sum.doneDesigns || 0, totalVideos: designStats._sum.targetVideos || 0, doneVideos: designStats._sum.doneVideos || 0 } };
   } catch (err) {
     return { success: false, message: 'Failed to fetch stats' };
+  }
+}
+
+export async function createSMTask(clientId: string, data: { title: string; description?: string; priority: string; type: 'DESIGN' | 'VIDEO' | 'CONTENT' }) {
+  const session = await getSession();
+  if (!session) return { success: false, error: 'Unauthorized' };
+
+  try {
+    // Find or create a project for this client if not exists
+    let project = await prisma.project.findFirst({
+      where: { clientId, department: 'SOCIAL_MEDIA', deletedAt: null }
+    });
+
+    if (!project) {
+      project = await prisma.project.create({
+        data: {
+          name: `Social Media - ${clientId}`,
+          clientId,
+          department: 'SOCIAL_MEDIA',
+          managerId: session.userId,
+          createdById: session.userId,
+          startDate: new Date(),
+          status: 'ACTIVE'
+        }
+      });
+    }
+
+    const task = await prisma.task.create({
+      data: {
+        title: `[${data.type}] ${data.title}`,
+        description: data.description,
+        priority: data.priority,
+        projectId: project.id,
+        reporterId: session.userId,
+        status: 'TODO',
+        tags: data.type
+      }
+    });
+
+    await logAction({
+      userId: session.userId,
+      action: 'CREATE',
+      entity: 'Task',
+      entityId: task.id,
+      newValues: { title: data.title, type: data.type }
+    });
+
+    revalidatePath('/social-media');
+    return { success: true, data: task };
+  } catch (error) {
+    return { success: false, error: 'Failed to create task' };
   }
 }

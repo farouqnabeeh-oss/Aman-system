@@ -16,7 +16,11 @@ export async function getPayrollRecords() {
   if (!session) return { success: false, message: 'Unauthorized' };
 
   try {
+    const isManager = ['ADMIN', 'SUPER_ADMIN', 'MANAGER'].includes(session.role);
+    const where = isManager ? {} : { userId: session.userId };
+
     const records = await prisma.payrollRecord.findMany({
+      where,
       include: {
         user: { select: { firstName: true, lastName: true, employeeNumber: true, position: true, department: true } },
       },

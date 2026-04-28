@@ -78,9 +78,19 @@ export async function createTransaction(formData: any) {
   }
 
   try {
+    const data = validated.data;
     const transaction = await prisma.transaction.create({
       data: {
-        ...validated.data,
+        type: data.type,
+        amount: data.amount,
+        currency: data.currency || 'USD',
+        description: data.description,
+        category: data.category,
+        department: data.department as any,
+        reference: data.reference,
+        paymentMethod: data.paymentMethod as any,
+        invoiceId: data.invoiceId,
+        transactionDate: data.transactionDate ? new Date(data.transactionDate) : new Date(),
         createdById: session.userId,
       },
     });
@@ -129,9 +139,16 @@ export async function updateTransaction(id: string, data: any) {
   if (!session) return { success: false, error: 'Unauthorized' };
 
   try {
+    const { id: _id, createdAt: _c, updatedAt: _u, createdById: _cb, ...updateData } = data;
+    
+    // Ensure numeric amount
+    if (updateData.amount) updateData.amount = Number(updateData.amount);
+    // Ensure valid date
+    if (updateData.transactionDate) updateData.transactionDate = new Date(updateData.transactionDate);
+
     const updated = await prisma.transaction.update({
       where: { id },
-      data,
+      data: updateData,
     });
     await logAction({
       userId: session.userId,

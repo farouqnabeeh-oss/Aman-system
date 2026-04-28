@@ -9,8 +9,9 @@ import { useAuthStore } from '@/store/auth.store';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Search, LayoutDashboard, FolderKanban, CheckSquare, 
-  DollarSign, Zap, HeartPulse, BarChart2, Users 
+  DollarSign, Zap, HeartPulse, BarChart2, Users, FileText, Activity
 } from 'lucide-react';
+import { globalSearch } from '@/lib/actions/system';
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const { sidebarOpen, setSidebarOpen, sidebarCollapsed, language } = useUIStore();
@@ -28,7 +29,23 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   // Placeholder for command palette state
   const [cmdOpen, setCmdOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searching, setSearching] = useState(false);
+
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(async () => {
+      if (searchQuery.length >= 2) {
+        setSearching(true);
+        const res = await globalSearch(searchQuery);
+        if (res.success) setSearchResults(res.data || []);
+        setSearching(false);
+      } else {
+        setSearchResults([]);
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery]);
 
   const navigationItems = [
     { label: isRtl ? 'لوحة التحكم' : 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
@@ -37,6 +54,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     { label: isRtl ? 'الرواتب' : 'Payroll', path: '/payroll', icon: DollarSign },
     { label: isRtl ? 'الموارد البشرية' : 'HR', path: '/hr', icon: Users },
     { label: isRtl ? 'التقارير' : 'Reports', path: '/reports', icon: BarChart2 },
+    { label: isRtl ? 'السجل العام' : 'Audit Logs', path: '/audit', icon: Activity },
   ];
 
   const filteredNav = navigationItems.filter(item => 
@@ -121,8 +139,42 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               </div>
 
               {/* Search Results / Suggestions */}
-              <div className="max-h-[60vh] overflow-y-auto p-4 custom-scrollbar">
+              <div className="max-h-[60vh] overflow-y-auto p-4 custom-scrollbar bg-white">
                 <div className="space-y-6">
+                  {/* Real Search Results */}
+                  {searchResults.length > 0 && (
+                    <div>
+                      <h3 className="text-[10px] font-black text-brand uppercase tracking-[0.2em] mb-3 px-2">
+                        {isRtl ? 'نتائج البحث' : 'Search Results'}
+                      </h3>
+                      <div className="space-y-1">
+                        {searchResults.map((result) => (
+                          <button
+                            key={`${result.type}-${result.id}`}
+                            onClick={() => { router.push(result.url); setCmdOpen(false); setSearchQuery(''); }}
+                            className="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 border border-transparent hover:border-slate-200 transition-all text-left group"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-brand/10 group-hover:text-brand transition-all">
+                                {result.type === 'USER' && <Users size={18} />}
+                                {result.type === 'PROJECT' && <FolderKanban size={18} />}
+                                {result.type === 'TASK' && <CheckSquare size={18} />}
+                                {result.type === 'TRANSACTION' && <DollarSign size={18} />}
+                              </div>
+                              <div>
+                                <p className="text-sm font-black text-slate-900 group-hover:text-brand transition-colors">{result.title}</p>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{result.subtitle}</p>
+                              </div>
+                            </div>
+                            <span className="px-2 py-1 rounded-lg bg-slate-100 text-[9px] font-black text-slate-500 uppercase tracking-tighter group-hover:bg-brand group-hover:text-white transition-all">
+                              {result.type}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Navigation Section */}
                   <div>
                     <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 px-2">
@@ -133,9 +185,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                         <button
                           key={item.path}
                           onClick={() => { router.push(item.path); setCmdOpen(false); setSearchQuery(''); }}
-                          className="flex items-center gap-3 p-3 rounded-2xl hover:bg-slate-50 border border-transparent hover:border-slate-200 transition-all text-left"
+                          className="flex items-center gap-3 p-3 rounded-2xl hover:bg-slate-50 border border-transparent hover:border-slate-200 transition-all text-left group"
                         >
-                          <div className="w-8 h-8 rounded-lg bg-brand/10 flex items-center justify-center text-brand">
+                          <div className="w-8 h-8 rounded-lg bg-brand/5 flex items-center justify-center text-brand group-hover:bg-brand group-hover:text-white transition-all">
                             <item.icon size={16} />
                           </div>
                           <span className="text-xs font-bold text-slate-700">{item.label}</span>
@@ -151,12 +203,14 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                     </h3>
                     <div className="space-y-1">
                       {[
-                        { label: isRtl ? 'إضافة مهمة جديدة' : 'Add New Task', icon: Zap },
-                        { label: isRtl ? 'طلب إجازة' : 'Request Leave', icon: HeartPulse },
-                        { label: isRtl ? 'عرض التقارير' : 'View Reports', icon: BarChart2 },
+                        { label: isRtl ? 'إضافة مهمة جديدة' : 'Add New Task', icon: Zap, path: '/tasks' },
+                        { label: isRtl ? 'طلب إجازة جديدة' : 'New Leave Request', icon: HeartPulse, path: '/hr' },
+                        { label: isRtl ? 'إضافة موظف' : 'Add Employee', icon: Users, path: '/users' },
+                        { label: isRtl ? 'إنشاء فاتورة' : 'Create Invoice', icon: FileText, path: '/finance' },
                       ].map((item, idx) => (
                         <button
                           key={idx}
+                          onClick={() => { router.push(item.path); setCmdOpen(false); }}
                           className="w-full flex items-center gap-3 p-3 rounded-2xl hover:bg-brand/5 border border-transparent hover:border-brand/10 transition-all text-left group"
                         >
                           <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 group-hover:text-brand transition-colors">

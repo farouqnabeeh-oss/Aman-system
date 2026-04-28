@@ -146,9 +146,10 @@ export async function createUser(data: z.infer<typeof CreateUserSchema>) {
     const passwordToHash = val.password || val.nationalId || 'Aman2026!';
     const passwordHash = await bcrypt.hash(passwordToHash, 12);
     
+    const { password: rawPassword, ...userData } = val;
     const user = await prisma.user.create({
       data: {
-        ...val,
+        ...userData,
         employeeNumber: finalEmployeeNumber,
         email: val.email.toLowerCase(),
         passwordHash,

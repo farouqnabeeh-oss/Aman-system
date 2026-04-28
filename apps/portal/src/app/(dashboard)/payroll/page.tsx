@@ -11,6 +11,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Input, Select } from '@/components/ui/Input';
 import { getUsers } from '@/lib/actions/users';
 import toast from 'react-hot-toast';
+import { useAuthStore } from '@/store/auth.store';
 
 const T = {
   ar: {
@@ -49,7 +50,9 @@ const T = {
 
 export default function PayrollPage() {
   const { language } = useUIStore();
+  const { user } = useAuthStore();
   const isRtl = language === 'ar';
+  const isManager = ['ADMIN', 'SUPER_ADMIN', 'MANAGER'].includes(user?.role || '');
   const t = T[language as keyof typeof T] || T.en;
   const queryClient = useQueryClient();
 
@@ -122,14 +125,14 @@ export default function PayrollPage() {
       <PageHeader 
         title={t.title} 
         description={t.sub} 
-        action={
+        action={isManager && (
             <button 
                 onClick={() => setIsModalOpen(true)}
                 className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-brand text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-brand/20 hover:scale-105 transition-all"
             >
                 <Plus size={14} /> {isRtl ? 'إضافة راتب' : 'Add Payroll'}
             </button>
-        }
+        )}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -195,15 +198,17 @@ export default function PayrollPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <button
-                      onClick={() => mutation.mutate({ id: r.id, isPaid: !r.isPaid })}
-                      className={clsx(
-                        'px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all border',
-                        r.isPaid ? 'bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/20' : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/20'
-                      )}
-                    >
-                      {r.isPaid ? t.markAsPending : t.markAsPaid}
-                    </button>
+                    {isManager && (
+                      <button
+                        onClick={() => mutation.mutate({ id: r.id, isPaid: !r.isPaid })}
+                        className={clsx(
+                          'px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all border',
+                          r.isPaid ? 'bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/20' : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/20'
+                        )}
+                      >
+                        {r.isPaid ? t.markAsPending : t.markAsPaid}
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}

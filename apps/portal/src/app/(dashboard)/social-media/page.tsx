@@ -13,7 +13,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Input, Select } from '@/components/ui/Input';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
-import { getSMClients, updateSMDetails, rateEmployee, getPeerRatings, getDeptMembers, getSMStats } from '@/lib/actions/social-media';
+import { getSMClients, updateSMDetails, rateEmployee, getPeerRatings, getDeptMembers, getSMStats, createSMTask } from '@/lib/actions/social-media';
 import toast from 'react-hot-toast';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -214,12 +214,42 @@ function ClientsTab({ clients, t, isRtl, user }: any) {
                         </p>
                     </div>
 
+                    {/* Tasks Section */}
+                    <div className="space-y-3 mb-8">
+                        <div className="flex justify-between items-center px-1">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{isRtl ? 'المهام الحالية' : 'Current Tasks'}</p>
+                            {user?.role !== 'EMPLOYEE' && (
+                                <button 
+                                    onClick={() => setEditing({ ...c, mode: 'TASK' })}
+                                    className="text-[9px] font-black text-brand uppercase tracking-widest hover:underline"
+                                >
+                                    + {isRtl ? 'مهمة جديدة' : 'New Task'}
+                                </button>
+                            )}
+                        </div>
+                        <div className="space-y-2">
+                            {c.projects?.[0]?.tasks?.length === 0 && <p className="text-[10px] text-slate-300 italic px-1">No tasks assigned.</p>}
+                            {c.projects?.[0]?.tasks?.map((t: any) => (
+                                <div key={t.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 group/task hover:border-brand/20 transition-all">
+                                    <div className="flex items-center gap-3">
+                                        <div className={clsx(
+                                            "w-2 h-2 rounded-full",
+                                            t.status === 'DONE' ? 'bg-emerald-500' : t.status === 'IN_PROGRESS' ? 'bg-brand' : 'bg-slate-300'
+                                        )} />
+                                        <span className="text-[11px] font-bold text-slate-700">{t.title}</span>
+                                    </div>
+                                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest opacity-0 group-hover/task:opacity-100 transition-opacity">{t.status}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
                     {/* Actions for Manager */}
                     {user?.role !== 'EMPLOYEE' && (
                         <div className="flex gap-2">
                             <button
                                 onClick={() => handleApprove(c.id, 'APPROVED')}
-                                className="flex-1 py-3.5 rounded-xl bg-brand text-white text-[10px] font-black uppercase tracking-widest hover:bg-brand/90 transition-all shadow-lg"
+                                className="flex-1 py-3.5 rounded-xl bg-brand text-white text-[10px] font-black uppercase tracking-widest hover:bg-brand/90 transition-all shadow-lg shadow-brand/20"
                             >
                                 <CheckCircle size={14} className="inline mb-0.5 mr-2" /> {t.approve}
                             </button>
@@ -230,7 +260,7 @@ function ClientsTab({ clients, t, isRtl, user }: any) {
                                 <AlertCircle size={14} className="inline mb-0.5 mr-2" /> {t.rewrite}
                             </button>
                             <button
-                                onClick={() => setEditing(c)}
+                                onClick={() => setEditing({ ...c, mode: 'TARGETS' })}
                                 className="p-3.5 rounded-xl bg-slate-50 text-slate-400 border border-slate-100 hover:text-brand hover:border-brand/30 transition-all shadow-sm"
                             >
                                 <Target size={16} />
@@ -240,39 +270,90 @@ function ClientsTab({ clients, t, isRtl, user }: any) {
                 </div>
             ))}
 
-            {/* Target Modal */}
-            <Modal open={!!editing} onClose={() => setEditing(null)} title="Update Targets & Stats">
-                <div className="space-y-6 pt-2">
-                    <div className="grid grid-cols-2 gap-4">
-                        <Input label="Target Designs" type="number" value={editing?.smDetails?.targetDesigns || 0} onChange={(e: any) => setEditing({ ...editing, smDetails: { ...editing.smDetails, targetDesigns: parseInt(e.target.value) } })} />
-                        <Input label="Target Videos" type="number" value={editing?.smDetails?.targetVideos || 0} onChange={(e: any) => setEditing({ ...editing, smDetails: { ...editing.smDetails, targetVideos: parseInt(e.target.value) } })} />
+            {/* Modal for Targets or Tasks */}
+            <Modal 
+                open={!!editing} 
+                onClose={() => setEditing(null)} 
+                title={editing?.mode === 'TASK' ? (isRtl ? 'إسناد مهمة جديدة' : 'Assign New Task') : (isRtl ? 'تحديث الأهداف' : 'Update Targets')}
+            >
+                {editing?.mode === 'TASK' ? (
+                    <div className="space-y-6 pt-2">
+                        <Input label="Task Title" placeholder="e.g. Design for Eid..." value={editing?.taskTitle || ''} onChange={(e: any) => setEditing({ ...editing, taskTitle: e.target.value })} />
+                        <Select 
+                            label="Type"
+                            value={editing?.taskType || 'DESIGN'}
+                            onChange={(e: any) => setEditing({ ...editing, taskType: e.target.value })}
+                            options={[
+                                { value: 'DESIGN', label: 'Design' },
+                                { value: 'VIDEO', label: 'Video' },
+                                { value: 'CONTENT', label: 'Content' },
+                            ]}
+                        />
+                        <Select 
+                            label="Priority"
+                            value={editing?.taskPriority || 'MEDIUM'}
+                            onChange={(e: any) => setEditing({ ...editing, taskPriority: e.target.value })}
+                            options={[
+                                { value: 'LOW', label: 'Low' },
+                                { value: 'MEDIUM', label: 'Medium' },
+                                { value: 'HIGH', label: 'High' },
+                                { value: 'CRITICAL', label: 'Critical' },
+                            ]}
+                        />
+                        <div className="flex justify-end gap-3 pt-6 border-t border-slate-100">
+                            <button className="px-6 py-3 rounded-xl bg-slate-50 text-[10px] font-black text-slate-500 uppercase tracking-widest hover:bg-slate-100" onClick={() => setEditing(null)}>Cancel</button>
+                            <button
+                                className="px-10 py-3 rounded-xl bg-brand text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-brand/20"
+                                onClick={async () => {
+                                    const res = await createSMTask(editing.id, {
+                                        title: editing.taskTitle,
+                                        priority: editing.taskPriority || 'MEDIUM',
+                                        type: editing.taskType || 'DESIGN'
+                                    });
+                                    if (res.success) {
+                                        toast.success('Task Assigned');
+                                        setEditing(null);
+                                        queryClient.invalidateQueries({ queryKey: ['sm-clients'] });
+                                    }
+                                }}
+                            >
+                                Assign Task
+                            </button>
+                        </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <Input label="Done Designs" type="number" value={editing?.smDetails?.doneDesigns || 0} onChange={(e: any) => setEditing({ ...editing, smDetails: { ...editing.smDetails, doneDesigns: parseInt(e.target.value) } })} />
-                        <Input label="Done Videos" type="number" value={editing?.smDetails?.doneVideos || 0} onChange={(e: any) => setEditing({ ...editing, smDetails: { ...editing.smDetails, doneVideos: parseInt(e.target.value) } })} />
+                ) : (
+                    <div className="space-y-6 pt-2">
+                        <div className="grid grid-cols-2 gap-4">
+                            <Input label="Target Designs" type="number" value={editing?.smDetails?.targetDesigns || 0} onChange={(e: any) => setEditing({ ...editing, smDetails: { ...editing.smDetails, targetDesigns: parseInt(e.target.value) } })} />
+                            <Input label="Target Videos" type="number" value={editing?.smDetails?.targetVideos || 0} onChange={(e: any) => setEditing({ ...editing, smDetails: { ...editing.smDetails, targetVideos: parseInt(e.target.value) } })} />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <Input label="Done Designs" type="number" value={editing?.smDetails?.doneDesigns || 0} onChange={(e: any) => setEditing({ ...editing, smDetails: { ...editing.smDetails, doneDesigns: parseInt(e.target.value) } })} />
+                            <Input label="Done Videos" type="number" value={editing?.smDetails?.doneVideos || 0} onChange={(e: any) => setEditing({ ...editing, smDetails: { ...editing.smDetails, doneVideos: parseInt(e.target.value) } })} />
+                        </div>
+                        <div className="flex justify-end gap-3 pt-6 border-t border-slate-100">
+                            <button className="px-6 py-3 rounded-xl bg-slate-50 text-[10px] font-black text-slate-500 uppercase tracking-widest hover:bg-slate-100" onClick={() => setEditing(null)}>Cancel</button>
+                            <button
+                                className="px-10 py-3 rounded-xl bg-brand text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-brand/20"
+                                onClick={async () => {
+                                    const res = await updateSMDetails(editing.id, {
+                                        targetDesigns: editing.smDetails.targetDesigns,
+                                        targetVideos: editing.smDetails.targetVideos,
+                                        doneDesigns: editing.smDetails.doneDesigns,
+                                        doneVideos: editing.smDetails.doneVideos,
+                                    });
+                                    if (res.success) {
+                                        toast.success('Updated');
+                                        setEditing(null);
+                                        queryClient.invalidateQueries({ queryKey: ['sm-clients'] });
+                                    }
+                                }}
+                            >
+                                Save Targets
+                            </button>
+                        </div>
                     </div>
-                    <div className="flex justify-end gap-3 pt-6 border-t border-slate-100">
-                        <button className="px-6 py-3 rounded-xl bg-slate-50 text-[10px] font-black text-slate-500 uppercase tracking-widest hover:bg-slate-100" onClick={() => setEditing(null)}>Cancel</button>
-                        <button
-                            className="px-10 py-3 rounded-xl bg-brand text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-brand/20"
-                            onClick={async () => {
-                                const res = await updateSMDetails(editing.id, {
-                                    targetDesigns: editing.smDetails.targetDesigns,
-                                    targetVideos: editing.smDetails.targetVideos,
-                                    doneDesigns: editing.smDetails.doneDesigns,
-                                    doneVideos: editing.smDetails.doneVideos,
-                                });
-                                if (res.success) {
-                                    toast.success('Updated');
-                                    setEditing(null);
-                                    queryClient.invalidateQueries({ queryKey: ['sm-clients'] });
-                                }
-                            }}
-                        >
-                            Save Targets
-                        </button>
-                    </div>
-                </div>
+                )}
             </Modal>
         </motion.div>
     );
