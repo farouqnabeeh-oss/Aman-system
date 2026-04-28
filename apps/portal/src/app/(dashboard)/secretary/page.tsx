@@ -70,7 +70,7 @@ export default function SecretaryPage() {
     if (res.success) {
       setEmployees(res.data || []);
     } else {
-      toast.error(res.message || 'Error loading data');
+      toast.error(res.error || 'Error loading data');
     }
     setLoading(false);
   }, []);
@@ -84,7 +84,7 @@ export default function SecretaryPage() {
       toast.success(isRtl ? 'تم التحديث بنجاح' : 'Updated successfully');
       loadData();
     } else {
-      toast.error(res.message || 'Update failed');
+      toast.error(res.error || 'Update failed');
     }
     setSavingId(null);
   };
