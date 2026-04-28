@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "pnpm --filter portal run build",
+  "buildCommand": "pnpm run build",
   "outputDirectory": "apps/portal/.next",
   "framework": "nextjs"
 }

@@ -276,8 +276,11 @@ export default function ProjectsPage() {
                   { value: 'MARKETING', label: 'MARKETING' },
                   { value: 'ENGINEERING', label: 'ENGINEERING' },
                   { value: 'SOCIAL_MEDIA', label: 'SOCIAL_MEDIA' },
+                  { value: 'PROGRAMMING', label: 'PROGRAMMING' },
+                  { value: 'PROJECTS', label: 'PROJECTS' },
                   { value: 'HR', label: 'HR' },
                   { value: 'FINANCE', label: 'FINANCE' },
+                  { value: 'OPERATIONS', label: 'OPERATIONS' },
                   { value: 'OTHER', label: isRtl ? 'قسم آخر' : 'Other Dept' }
               ]}
               onChange={(e: any) => setForm({...form, department: e.target.value})}

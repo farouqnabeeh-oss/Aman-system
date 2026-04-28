@@ -77,7 +77,7 @@ const T = {
 };
 
 const ROLES = ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'];
-const DEPARTMENTS = ['SOCIAL_MEDIA', 'PROGRAMMING', 'PROJECTS', 'HR', 'FINANCE', 'OPERATIONS'];
+const DEPARTMENTS = ['MANAGEMENT', 'MARKETING', 'ENGINEERING', 'SOCIAL_MEDIA', 'PROGRAMMING', 'PROJECTS', 'HR', 'FINANCE', 'OPERATIONS'];
 
 const fadeIn = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } };
 const stagger = { show: { transition: { staggerChildren: 0.05 } } };
@@ -125,7 +125,10 @@ export default function UsersPage() {
     },
     onSuccess: (res) => {
       if (res.success) {
-        toast.success(editingId ? 'System updated' : 'Personnel deployed');
+        const msg = editingId 
+          ? 'Personnel updated successfully' 
+          : `Personnel deployed. Employee ID: ${res.data?.employeeNumber || 'Unknown'}`;
+        toast.success(msg, { duration: 6000 });
         setEditOpen(false);
         queryClient.invalidateQueries({ queryKey: ['users'] });
         queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });

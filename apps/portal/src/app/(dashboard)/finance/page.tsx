@@ -43,7 +43,7 @@ const T = {
   }
 };
 
-const DEPARTMENTS = ['ENGINEERING', 'FINANCE', 'HR', 'MARKETING', 'OPERATIONS'];
+const DEPARTMENTS = ['MANAGEMENT', 'MARKETING', 'ENGINEERING', 'SOCIAL_MEDIA', 'PROGRAMMING', 'PROJECTS', 'HR', 'FINANCE', 'OPERATIONS'];
 
 function fmt(n: number, rtl: boolean) {
   return `${n.toLocaleString('en-US', { minimumFractionDigits: 0 })}${rtl ? ' د.إ' : '$'}`;
