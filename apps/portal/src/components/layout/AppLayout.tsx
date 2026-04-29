@@ -49,6 +49,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   }, [notifyData?.unreadCount]);
 
   const [isHydrated, setIsHydrated] = useState(false);
+  const [cmdOpen, setCmdOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searching, setSearching] = useState(false);
 
   useEffect(() => {
     setIsHydrated(true);
@@ -60,18 +64,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       router.push('/login');
     }
   }, [user, logout, router, isHydrated]);
-
-  if (!isHydrated) {
-    return <div className="h-screen w-full flex items-center justify-center bg-white">
-      <Activity className="animate-spin text-brand" size={40} />
-    </div>;
-  }
-
-  // Placeholder for command palette state
-  const [cmdOpen, setCmdOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [searching, setSearching] = useState(false);
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(async () => {
@@ -87,6 +79,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
     return () => clearTimeout(delayDebounceFn);
   }, [searchQuery]);
+
+  if (!isHydrated) {
+    return <div className="h-screen w-full flex items-center justify-center bg-white">
+      <Activity className="animate-spin text-brand" size={40} />
+    </div>;
+  }
 
   const navigationItems = [
     { label: isRtl ? 'لوحة التحكم' : 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
