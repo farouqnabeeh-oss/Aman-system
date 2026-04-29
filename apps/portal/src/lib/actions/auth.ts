@@ -133,9 +133,9 @@ export async function login(formData: any) {
         status: user.status,
       }
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Login error:', error);
-    return { success: false, message: 'An unexpected error occurred' };
+    return { success: false, message: `Debug Error: ${error.message || 'Unknown'}` };
   }
 }
 

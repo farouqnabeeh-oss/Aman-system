@@ -12,7 +12,7 @@ if (!fs.existsSync(envPath)) {
 const envContent = fs.readFileSync(envPath, 'utf-8');
 const lines = envContent.split('\n');
 
-const projectNames = ['sahab-dijital'];
+const projectNames = ['portal'];
 
 lines.forEach(line => {
   const match = line.match(/^([^#=]+)=(.*)$/);
