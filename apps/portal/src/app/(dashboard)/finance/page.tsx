@@ -250,9 +250,9 @@ function TransactionsTab({ t, isRtl }: any) {
     };
 
     const filtered = transactions.filter((tx: any) => 
-        tx.description.toLowerCase().includes(search.toLowerCase()) ||
-        tx.category.toLowerCase().includes(search.toLowerCase()) ||
-        tx.department.toLowerCase().includes(search.toLowerCase())
+        tx.description?.toLowerCase()?.includes(search.toLowerCase()) ||
+        tx.category?.toLowerCase()?.includes(search.toLowerCase()) ||
+        tx.department?.toLowerCase()?.includes(search.toLowerCase())
     );
 
     return (

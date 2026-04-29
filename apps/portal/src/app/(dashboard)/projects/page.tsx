@@ -163,9 +163,9 @@ export default function ProjectsPage() {
   };
 
   const filtered = projects.filter((p: any) => 
-    p.name.toLowerCase().includes(search.toLowerCase()) || 
-    p.manager?.firstName?.toLowerCase().includes(search.toLowerCase()) ||
-    p.department?.toLowerCase().includes(search.toLowerCase())
+    p.name?.toLowerCase()?.includes(search.toLowerCase()) || 
+    p.manager?.firstName?.toLowerCase()?.includes(search.toLowerCase()) ||
+    p.department?.toLowerCase()?.includes(search.toLowerCase())
   );
 
   return (

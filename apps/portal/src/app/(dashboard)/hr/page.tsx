@@ -128,13 +128,13 @@ export default function HrPage() {
   };
 
   const SAMPLE_ATTENDANCE = (attendanceData || []).filter((a: any) => 
-    a.userName?.toLowerCase().includes(search.toLowerCase()) ||
-    a.department?.toLowerCase().includes(search.toLowerCase())
+    a.userName?.toLowerCase()?.includes(search.toLowerCase()) ||
+    a.department?.toLowerCase()?.includes(search.toLowerCase())
   );
   
   const SAMPLE_LEAVES = (leavesData || []).filter((l: any) => 
-    l.userName?.toLowerCase().includes(search.toLowerCase()) ||
-    l.type?.toLowerCase().includes(search.toLowerCase())
+    l.userName?.toLowerCase()?.includes(search.toLowerCase()) ||
+    l.type?.toLowerCase()?.includes(search.toLowerCase())
   );
 
   const tabs = [

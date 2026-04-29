@@ -171,9 +171,9 @@ export default function TasksPage() {
   };
 
   const filtered = tasksData.filter((task: any) => {
-    const matchesSearch = task.title.toLowerCase().includes(search.toLowerCase()) || 
-                         task.projectName?.toLowerCase().includes(search.toLowerCase()) ||
-                         task.assigneeName?.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = task.title?.toLowerCase()?.includes(search.toLowerCase()) || 
+                         task.projectName?.toLowerCase()?.includes(search.toLowerCase()) ||
+                         task.assigneeName?.toLowerCase()?.includes(search.toLowerCase());
     const matchesPriority = priorityFilter ? task.priority === priorityFilter : true;
     return matchesSearch && matchesPriority;
   });

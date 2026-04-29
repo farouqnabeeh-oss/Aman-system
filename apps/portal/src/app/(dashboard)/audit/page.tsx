@@ -32,9 +32,9 @@ export default function AuditPage() {
   });
 
   const filtered = logs.filter((log: any) =>
-    (log.userName?.toLowerCase().includes(search.toLowerCase()) ||
-    log.action?.toLowerCase().includes(search.toLowerCase()) ||
-    log.entity?.toLowerCase().includes(search.toLowerCase())) &&
+    (log.userName?.toLowerCase()?.includes(search.toLowerCase()) ||
+    log.action?.toLowerCase()?.includes(search.toLowerCase()) ||
+    log.entity?.toLowerCase()?.includes(search.toLowerCase())) &&
     (actionFilter ? log.action === actionFilter : true)
   );
 
