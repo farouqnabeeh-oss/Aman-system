@@ -9,6 +9,7 @@ import {
   LayoutDashboard, CheckCircle2, AlertTriangle, Layers
 } from 'lucide-react';
 import { useUIStore } from '@/store/ui.store';
+import { useRef, useEffect } from 'react';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
   BarChart, Bar, PieChart, Pie, Cell
@@ -18,6 +19,7 @@ import { clsx } from 'clsx';
 import { getDashboardStats } from '@/lib/actions/dashboard';
 import { StatCard } from '@/components/ui/States';
 import Link from 'next/link';
+import { AnnouncementModal } from '@/components/dashboard/AnnouncementModal';
 
 const T = {
   ar: {
@@ -64,6 +66,7 @@ export default function CommandCenter() {
   const t = T[language as keyof typeof T] || T.en;
   const isRtl = language === 'ar';
   const [logSearch, setLogSearch] = useState('');
+  const [isAnnouncementOpen, setIsAnnouncementOpen] = useState(false);
 
   const { data: stats, isLoading } = useQuery({
     queryKey: ['dashboard-stats'],
@@ -88,6 +91,52 @@ export default function CommandCenter() {
   return (
     <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-8 pb-20">
       
+      {/* Announcement Banner */}
+      <AnimatePresence>
+        {stats?.latestAnnouncement && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <div className={clsx(
+              "p-6 rounded-[2rem] flex flex-col md:flex-row items-center justify-between gap-6 border shadow-lg shadow-brand/5",
+              stats.latestAnnouncement.priority === 'URGENT' 
+                ? "bg-rose-50 border-rose-100 text-rose-900" 
+                : "bg-brand/5 border-brand/10 text-brand-900"
+            )}>
+              <div className="flex items-center gap-5">
+                <div className={clsx(
+                  "w-14 h-14 rounded-2xl flex items-center justify-center shadow-inner",
+                  stats.latestAnnouncement.priority === 'URGENT' ? "bg-rose-500 text-white" : "bg-brand text-white"
+                )}>
+                  <Bell size={24} className={stats.latestAnnouncement.priority === 'URGENT' ? "animate-bounce" : ""} />
+                </div>
+                <div>
+                  <h4 className="text-sm font-black uppercase tracking-tight leading-none mb-2">
+                    {stats.latestAnnouncement.title}
+                  </h4>
+                  <p className="text-xs font-medium opacity-80 max-w-2xl">
+                    {stats.latestAnnouncement.content}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                 <span className="text-[10px] font-black uppercase tracking-widest opacity-40">
+                   {new Date(stats.latestAnnouncement.createdAt).toLocaleDateString()}
+                 </span>
+                 {stats.latestAnnouncement.priority === 'URGENT' && (
+                    <span className="px-3 py-1 rounded-full bg-rose-500 text-white text-[9px] font-black uppercase tracking-widest animate-pulse">
+                      {isRtl ? 'عاجل جداً' : 'Urgent'}
+                    </span>
+                 )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header & System Status */}
       <motion.div variants={fadeIn} className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
@@ -104,6 +153,14 @@ export default function CommandCenter() {
         </div>
 
         <div className="flex items-center gap-4">
+          <button 
+            onClick={() => setIsAnnouncementOpen(true)}
+            className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-brand text-white font-black text-xs uppercase tracking-widest hover:bg-brand/90 transition-all shadow-lg shadow-brand/20 active:scale-95"
+          >
+            <Zap size={16} />
+            {isRtl ? 'إرسال إعلان' : 'Send Announcement'}
+          </button>
+          
           <div className="px-5 py-3 rounded-2xl border border-slate-100 bg-white shadow-sm flex items-center gap-4">
             <div className="text-right">
               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t.systemIntegrity}</p>
@@ -210,23 +267,44 @@ export default function CommandCenter() {
         {/* Task Priorities Bar Chart */}
         <motion.div variants={fadeIn} className="lg:col-span-5 glass-card border-slate-100 bg-white p-8">
             <div className="flex items-center gap-3 mb-10">
-              <div className="w-10 h-10 rounded-2xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-500">
-                <Target size={20} />
+              <div className="w-10 h-10 rounded-2xl bg-brand/5 border border-brand/10 flex items-center justify-center text-brand">
+                <Layers size={20} />
               </div>
               <div>
                 <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight leading-none">{t.tasksByPriority}</h3>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Workload Heat</p>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Priority Distribution</p>
               </div>
             </div>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={stats?.taskPriorityCounts || []} layout="vertical">
-                   <XAxis type="number" hide />
-                   <YAxis dataKey="priority" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 900, fill: '#64748b' }} width={80} />
-                   <Tooltip cursor={{ fill: 'rgba(28,147,178,0.05)' }} contentStyle={{ borderRadius: '12px' }} />
-                   <Bar dataKey="count" radius={[0, 10, 10, 0]} barSize={24} fill="#1C93B2" />
-                </BarChart>
-              </ResponsiveContainer>
+            <div className="space-y-6">
+              {(stats?.taskPriorityCounts || []).map((p: any, i: number) => {
+                const colors = ['#ef4444', '#f59e0b', '#1C93B2', '#10b981'];
+                const color = colors[i % colors.length];
+                const percentage = (p.count / (stats?.taskCount || 1)) * 100;
+                
+                return (
+                  <div key={p.priority} className="group">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-3">
+                        <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
+                        <span className="text-[10px] font-black text-slate-700 uppercase tracking-widest">{p.priority}</span>
+                      </div>
+                      <span className="text-xs font-black text-slate-900">{p.count}</span>
+                    </div>
+                    <div className="h-3 w-full bg-slate-50 rounded-full overflow-hidden border border-slate-100">
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${percentage}%` }}
+                        transition={{ duration: 1, ease: "easeOut" }}
+                        className="h-full rounded-full"
+                        style={{ 
+                          backgroundColor: color,
+                          boxShadow: `0 0 10px ${color}40`
+                        }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
         </motion.div>
 
@@ -275,6 +353,11 @@ export default function CommandCenter() {
         </motion.div>
       </div>
 
+      <AnnouncementModal 
+        isOpen={isAnnouncementOpen}
+        onClose={() => setIsAnnouncementOpen(false)}
+        language={language}
+      />
     </motion.div>
   );
 }

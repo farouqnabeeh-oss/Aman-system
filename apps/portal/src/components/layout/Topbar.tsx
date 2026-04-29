@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useUIStore } from '@/store/ui.store';
 import { useAuthStore } from '@/store/auth.store';
 import { logout as logoutAction } from '@/lib/actions/auth';
+import { getNotifications } from '@/lib/actions/notifications';
 import { clsx } from 'clsx';
 import toast from 'react-hot-toast';
 
@@ -28,8 +29,17 @@ export function Topbar({ onOpenCommand }: { onOpenCommand?: () => void }) {
   const isRtl = language === 'ar';
   const t = TRANSLATIONS[language as keyof typeof TRANSLATIONS] || TRANSLATIONS.en;
 
-  // Placeholder for unread count
-  const unread = 0;
+  const { data: notifyData } = useQuery({
+    queryKey: ['notifications-count'],
+    queryFn: async () => {
+      const res = await getNotifications();
+      return res.data;
+    },
+    refetchInterval: 10000,
+    enabled: !!user
+  });
+
+  const unread = notifyData?.unreadCount || 0;
 
   const handleLogout = async () => {
     try {

@@ -462,3 +462,18 @@ model AttendanceRecord {
   @@index([date])
   @@map("attendance_records")
 }
+
+model Announcement {
+  id              String   @id @default(cuid())
+  title           String
+  content         String
+  targetType      String   @default("ALL") // ALL, INDIVIDUAL
+  targetId        String?  // user id if targetType is INDIVIDUAL
+  priority        String   @default("NORMAL") // NORMAL, URGENT
+  authorId        String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  expiresAt       DateTime?
+
+  @@map("announcements")
+}

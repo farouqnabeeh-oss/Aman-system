@@ -12,6 +12,9 @@ import {
   DollarSign, Zap, HeartPulse, BarChart2, Users, FileText, Activity
 } from 'lucide-react';
 import { globalSearch } from '@/lib/actions/system';
+import { getNotifications } from '@/lib/actions/notifications';
+import { useQuery } from '@tanstack/react-query';
+import { useRef } from 'react';
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const { sidebarOpen, setSidebarOpen, sidebarCollapsed, language } = useUIStore();
@@ -19,13 +22,50 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const isRtl = language === 'ar';
+  const lastUnreadCount = useRef<number>(0);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const { data: notifyData } = useQuery({
+    queryKey: ['global-notifications-check'],
+    queryFn: async () => {
+      const res = await getNotifications();
+      return res.data;
+    },
+    refetchInterval: 10000,
+    enabled: !!user
+  });
 
   useEffect(() => {
-    if (!user) {
+    audioRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+  }, []);
+
+  useEffect(() => {
+    if (notifyData?.unreadCount !== undefined && notifyData.unreadCount > lastUnreadCount.current) {
+      audioRef.current?.play().catch(() => {});
+    }
+    if (notifyData?.unreadCount !== undefined) {
+      lastUnreadCount.current = notifyData.unreadCount;
+    }
+  }, [notifyData?.unreadCount]);
+
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (isHydrated && !user) {
       logout();
       router.push('/login');
     }
-  }, [user, logout, router]);
+  }, [user, logout, router, isHydrated]);
+
+  if (!isHydrated) {
+    return <div className="h-screen w-full flex items-center justify-center bg-white">
+      <Activity className="animate-spin text-brand" size={40} />
+    </div>;
+  }
 
   // Placeholder for command palette state
   const [cmdOpen, setCmdOpen] = useState(false);
