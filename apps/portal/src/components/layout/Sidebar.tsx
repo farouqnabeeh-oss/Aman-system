@@ -108,7 +108,7 @@ export function Sidebar() {
       {/* Navigation */}
       <nav className="relative flex-1 px-3 py-4 space-y-1 overflow-y-auto no-scrollbar">
         {items.map((item, idx) => {
-          const active = pathname.startsWith(item.path);
+          const active = (pathname || '').startsWith(item.path);
           const Icon = item.icon;
           const isNotif = item.path === '/notifications';
 

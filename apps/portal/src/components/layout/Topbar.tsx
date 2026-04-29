@@ -84,7 +84,7 @@ export function Topbar({ onOpenCommand }: { onOpenCommand?: () => void }) {
         <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-100 text-xs text-slate-500">
           <Zap size={12} className="text-brand" />
           <span className="capitalize font-black tracking-tight uppercase text-slate-700">
-            {pathname.split('/').filter(Boolean).join(' / ') || 'dashboard'}
+            {(pathname || '').split('/').filter(Boolean).join(' / ') || 'dashboard'}
           </span>
         </div>
       </div>
