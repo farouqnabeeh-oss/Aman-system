@@ -83,9 +83,9 @@ export default function CommandCenter() {
   if (isLoading) return <div className="h-[80vh] flex items-center justify-center"><Activity className="animate-spin text-brand" size={40} /></div>;
 
   const filteredLogs = (stats?.recentLogs || []).filter((log: any) => 
-    log.user?.toLowerCase().includes(logSearch.toLowerCase()) ||
-    log.action?.toLowerCase().includes(logSearch.toLowerCase()) ||
-    log.entity?.toLowerCase().includes(logSearch.toLowerCase())
+    log.user?.toLowerCase()?.includes(logSearch.toLowerCase()) ||
+    log.action?.toLowerCase()?.includes(logSearch.toLowerCase()) ||
+    log.entity?.toLowerCase()?.includes(logSearch.toLowerCase())
   );
 
   return (
