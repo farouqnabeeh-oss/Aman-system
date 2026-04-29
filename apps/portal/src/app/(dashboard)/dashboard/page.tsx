@@ -6,7 +6,7 @@ import {
   Users, Activity, ArrowUpRight, ArrowDownLeft, Zap,
   TrendingUp, Clock, DollarSign, BarChart2, Search,
   PieChart as PieChartIcon, ShieldCheck, Target,
-  LayoutDashboard, CheckCircle2, AlertTriangle, Layers
+  LayoutDashboard, CheckCircle2, AlertTriangle, Layers, Bell
 } from 'lucide-react';
 import { useUIStore } from '@/store/ui.store';
 import { useRef, useEffect } from 'react';
