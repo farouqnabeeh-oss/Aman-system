@@ -78,9 +78,10 @@ export async function login(formData: any) {
       where: {
         OR: [
           { employeeNumber: { equals: employeeNumber, mode: 'insensitive' } },
-          { email: employeeNumber.toLowerCase() }
+          { email: employeeNumber.toLowerCase() },
+          { nationalId: employeeNumber }
         ],
-        deletedAt: null 
+        deletedAt: null
       },
     });
 
@@ -122,8 +123,8 @@ export async function login(formData: any) {
       path: '/',
     });
 
-    return { 
-      success: true, 
+    return {
+      success: true,
       accessToken,
       user: {
         id: user.id,

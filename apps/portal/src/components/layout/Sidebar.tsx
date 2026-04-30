@@ -12,13 +12,14 @@ import { useUIStore } from '@/store/ui.store';
 import { useAuthStore } from '@/store/auth.store';
 import { clsx } from 'clsx';
 import { useQuery } from '@tanstack/react-query';
+import Image from 'next/image';
 
 const TRANSLATIONS = {
   ar: {
     dashboard: 'لوحة التحكم', users: 'الفريق', finance: 'المالية',
     projects: 'المشاريع', tasks: 'المهام', files: 'الملفات',
     hr: 'الموارد البشرية', payroll: 'الرواتب',
-    notifications: 'التنبيهات', auditLogs: 'السجلات', brand: 'سحاب ديجيتال',
+    notifications: 'التنبيهات', auditLogs: 'السجلات', brand: 'sahab digital',
     secretary: 'المتابعة', socialMedia: 'السوشيال ميديا', acquisition: 'الاستقطاب',
     reports: 'التقارير', ratings: 'التقييمات',
   },
@@ -56,14 +57,14 @@ export function Sidebar() {
   const pathname = usePathname();
   const isRtl = language === 'ar';
   const t = TRANSLATIONS[language as keyof typeof TRANSLATIONS] || TRANSLATIONS.en;
-  
+
   const items = NAV_ITEMS(t).filter(item => {
     if (!user) return false;
     return item.roles.includes(user.role);
   });
 
   // Placeholder for unread count, we can integrate the API once routes are ported
-  const unreadByQuery = 0; 
+  const unreadByQuery = 0;
   const unread = unreadByQuery;
 
   return (
@@ -88,7 +89,7 @@ export function Sidebar() {
       )}>
         <div className="relative flex-shrink-0">
           <div className="w-10 h-10 flex items-center justify-center p-1">
-            <img src="/logo.png" alt="Logo" className="max-w-full max-h-full object-contain" />
+            <Image src="/logo.png" alt="Logo" width={40} height={40} className="max-w-full max-h-full object-contain" priority />
           </div>
         </div>
         <AnimatePresence>

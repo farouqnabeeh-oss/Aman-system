@@ -8,10 +8,11 @@ import { useUIStore } from '@/store/ui.store';
 import { useAuthStore } from '@/store/auth.store';
 import { login as loginAction } from '@/lib/actions/auth';
 import toast from 'react-hot-toast';
+import Image from 'next/image';
 
 const translations = {
   ar: {
-    title: 'سحاب ديجيتال',
+    title: 'sahab digital',
     subtitle: 'بوابة الإدارة الرقمية المتكاملة 2026',
     welcome: 'مركز المصادقة المركزية',
     login: 'أدخل بيانات الاعتماد الوظيفية للوصول إلى المنصة الآمنة',
@@ -70,7 +71,7 @@ export default function LoginPage() {
 
   return (
     <div className={`min-h-screen flex items-center justify-center bg-white px-6 relative overflow-hidden font-sans`} dir={isRtl ? 'rtl' : 'ltr'}>
-      
+
       {/* Subtle Pattern Background */}
       <div className="absolute inset-0 z-0 opacity-[0.03] pointer-events-none overflow-hidden">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#1C93B2_1px,transparent_1px),linear-gradient(to_bottom,#1C93B2_1px,transparent_1px)] bg-[size:60px_60px]" />
@@ -87,8 +88,8 @@ export default function LoginPage() {
             <p className="text-[11px] font-black text-slate-900 tracking-wider uppercase">Secure Access Layer</p>
           </div>
         </div>
-        
-        <button 
+
+        <button
           onClick={() => setLanguage(language === 'ar' ? 'en' : 'ar')}
           className="group relative px-6 py-2.5 rounded-xl bg-slate-50 border border-slate-100 overflow-hidden transition-all hover:border-brand/30 active:scale-95"
         >
@@ -107,7 +108,7 @@ export default function LoginPage() {
       >
         {/* Logo & Intro Section */}
         <div className="text-center mb-10">
-          <motion.div 
+          <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.2, duration: 0.8 }}
@@ -115,28 +116,28 @@ export default function LoginPage() {
           >
             <div className="absolute inset-0 bg-brand/10 blur-[60px] rounded-full" />
             <div className="relative p-2 flex items-center justify-center group">
-               <img src="/logo.png" alt="Sahab Digital" className="relative max-w-[12rem] max-h-[12rem] object-contain transition-transform duration-500 group-hover:scale-105" />
-               <div className="absolute top-0 left-0 w-full h-[2px] bg-brand/50 shadow-[0_0_15px_rgba(28,147,178,0.5)] animate-scan" />
+              <Image src="/logo.png" alt="Sahab Digital" width={192} height={192} priority className="relative max-w-[12rem] max-h-[12rem] object-contain transition-transform duration-500 group-hover:scale-105" />
+              <div className="absolute top-0 left-0 w-full h-[2px] bg-brand/50 shadow-[0_0_15px_rgba(28,147,178,0.5)] animate-scan" />
             </div>
           </motion.div>
           <h1 className="text-4xl font-black text-slate-900 mb-4 tracking-tighter uppercase">
             {t.title}
           </h1>
           <p className="text-[11px] font-black text-brand uppercase tracking-[0.5em] flex items-center justify-center gap-3">
-             <Zap size={12} /> {t.subtitle} <Zap size={12} />
+            <Zap size={12} /> {t.subtitle} <Zap size={12} />
           </p>
         </div>
 
         {/* Main Auth Card */}
         <div className="relative">
           <div className="relative bg-white border border-slate-100 rounded-[3rem] p-10 lg:p-14 shadow-[0_40px_80px_-20px_rgba(28,147,178,0.1)] overflow-hidden">
-            
+
             <div className="mb-10 relative">
-               <div className="flex items-center gap-3 mb-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-brand animate-ping" />
-                  <h2 className="text-lg font-black text-slate-900 uppercase tracking-tight">{t.welcome}</h2>
-               </div>
-               <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest leading-relaxed max-w-[280px]">{t.login}</p>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-1.5 h-1.5 rounded-full bg-brand animate-ping" />
+                <h2 className="text-lg font-black text-slate-900 uppercase tracking-tight">{t.welcome}</h2>
+              </div>
+              <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest leading-relaxed max-w-[280px]">{t.login}</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -147,8 +148,8 @@ export default function LoginPage() {
                   <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none text-slate-300 group-focus-within/field:text-brand transition-colors">
                     <LogIn size={18} />
                   </div>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     required
                     placeholder="EMP-XXX"
                     className={`w-full bg-slate-50 border border-slate-100 rounded-2xl ${isRtl ? 'pr-6 pl-14' : 'pl-14 pr-6'} py-5 text-sm text-slate-900 placeholder:text-slate-300 focus:bg-white focus:border-brand/30 focus:shadow-[0_0_0_4px_rgba(28,147,178,0.05)] outline-none transition-all`}
@@ -165,15 +166,15 @@ export default function LoginPage() {
                   <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none text-slate-300 group-focus-within/field:text-brand transition-colors">
                     <Lock size={18} />
                   </div>
-                  <input 
-                    type={showPass ? 'text' : 'password'} 
+                  <input
+                    type={showPass ? 'text' : 'password'}
                     required
                     placeholder="••••••••"
                     className={`w-full bg-slate-50 border border-slate-100 rounded-2xl ${isRtl ? 'pr-6 pl-14' : 'pl-14 pr-6'} py-5 text-sm text-slate-900 placeholder:text-slate-300 focus:bg-white focus:border-brand/30 focus:shadow-[0_0_0_4px_rgba(28,147,178,0.05)] outline-none transition-all`}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                   />
-                  <button 
+                  <button
                     type="button"
                     onClick={() => setShowPass(!showPass)}
                     className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-300 hover:text-brand transition-colors"
@@ -184,13 +185,13 @@ export default function LoginPage() {
               </div>
 
               {/* Submit Button */}
-              <button 
+              <button
                 type="submit"
                 disabled={loading}
                 className="group relative w-full h-16 overflow-hidden rounded-2xl mt-8 active:scale-[0.98] transition-all disabled:opacity-50"
               >
                 <div className="absolute inset-0 bg-brand group-hover:bg-brand/90 transition-colors" />
-                
+
                 <span className="relative flex items-center justify-center gap-4 text-white font-black text-[12px] uppercase tracking-[0.4em]">
                   {loading ? (
                     <div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin" />
@@ -208,14 +209,14 @@ export default function LoginPage() {
 
         {/* Footer */}
         <div className="mt-16 text-center">
-           <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.8em] mb-4">
-             Authorized Personnel Only
-           </p>
-           <div className="flex justify-center gap-8">
-              {['Encryption', 'Security', 'Privacy'].map(item => (
-                <span key={item} className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{item}</span>
-              ))}
-           </div>
+          <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.8em] mb-4">
+            Authorized Personnel Only
+          </p>
+          <div className="flex justify-center gap-8">
+            {['Encryption', 'Security', 'Privacy'].map(item => (
+              <span key={item} className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{item}</span>
+            ))}
+          </div>
         </div>
       </motion.div>
 

@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 
 const translations = {
   ar: {
-    title: 'سحاب ديجيتال',
+    title: 'sahab digital',
     subtitle: 'نظام الإدارة المؤسسي المتكامل',
     welcome: 'بوابة الدخول',
     login: 'الرجاء إدخال بيانات الاعتماد للوصول إلى النظام',

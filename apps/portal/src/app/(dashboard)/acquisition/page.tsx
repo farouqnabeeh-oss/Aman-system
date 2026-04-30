@@ -73,9 +73,9 @@ export default function AcquisitionPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
-    const [form, setForm] = useState({ 
-        name: '', 
-        phone: '', 
+    const [form, setForm] = useState({
+        name: '',
+        phone: '',
         status: 'POTENTIAL',
         packagePrice: '',
         packageDesc: '',
@@ -106,16 +106,16 @@ export default function AcquisitionPage() {
         }
     });
 
-    const filteredLeads = leads.filter((l: any) => 
-        (l.name && l.name.toLowerCase().includes(searchQuery.toLowerCase())) || 
+    const filteredLeads = leads.filter((l: any) =>
+        (l.name && l.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (l.phone && l.phone.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (l.status && l.status.toLowerCase().includes(searchQuery.toLowerCase()))
     );
 
     const handleSave = async () => {
         if (!form.name) return toast.error('Name is required');
-        
-        const res = editingId 
+
+        const res = editingId
             ? await updateClient(editingId, form)
             : await createClientLead(form);
 
@@ -143,9 +143,9 @@ export default function AcquisitionPage() {
 
     const handleEdit = (l: any) => {
         setEditingId(l.id);
-        setForm({ 
-            name: l.name, 
-            phone: l.phone || '', 
+        setForm({
+            name: l.name,
+            phone: l.phone || '',
             status: l.status,
             packagePrice: l.smDetails?.packagePrice?.toString() || '',
             packageDesc: l.smDetails?.packageDesc || '',
@@ -237,9 +237,9 @@ export default function AcquisitionPage() {
                     <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.3em]">{t.allLeads}</h4>
                     <div className="flex items-center gap-4 bg-white rounded-xl px-4 py-2 border border-slate-200">
                         <Search size={14} className="text-slate-400" />
-                        <input 
-                            className="bg-transparent text-[10px] font-black uppercase text-slate-900 outline-none placeholder:text-slate-300" 
-                            placeholder="Filter List..." 
+                        <input
+                            className="bg-transparent text-[10px] font-black uppercase text-slate-900 outline-none placeholder:text-slate-300"
+                            placeholder="Filter List..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
@@ -271,7 +271,7 @@ export default function AcquisitionPage() {
                                         <span className={clsx(
                                             'text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest border transition-all',
                                             l.status === 'AGREED' ? 'text-emerald-600 bg-emerald-50 border-emerald-100' :
-                                            l.status === 'NEGOTIATING' ? 'text-amber-600 bg-amber-50 border-amber-100' : 'text-brand bg-brand/10 border border-brand/20'
+                                                l.status === 'NEGOTIATING' ? 'text-amber-600 bg-amber-50 border-amber-100' : 'text-brand bg-brand/10 border border-brand/20'
                                         )}>
                                             {l.status}
                                         </span>
