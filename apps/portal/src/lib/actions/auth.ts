@@ -69,14 +69,15 @@ export async function login(formData: any) {
     return { success: false, error: validated.error.flatten().fieldErrors };
   }
 
-  const { employeeNumber, password } = validated.data;
+  const employeeNumber = validated.data.employeeNumber.trim();
+  const password = validated.data.password.trim();
   const isRtl = true; // Defaulting for message purposes or fetch from context if possible
 
   try {
     const user = await prisma.user.findFirst({
       where: {
         OR: [
-          { employeeNumber: employeeNumber },
+          { employeeNumber: { equals: employeeNumber, mode: 'insensitive' } },
           { email: employeeNumber.toLowerCase() }
         ],
         deletedAt: null 
