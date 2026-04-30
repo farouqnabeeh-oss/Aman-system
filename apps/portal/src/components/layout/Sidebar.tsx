@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Users, DollarSign, FolderKanban,
   CheckSquare, FileText, Bell, HeartPulse, CreditCard,
-  ScrollText, ChevronLeft, ChevronRight, BarChart2, Star
+  ScrollText, ChevronLeft, ChevronRight, BarChart2, ClipboardList
 } from 'lucide-react';
 import { useUIStore } from '@/store/ui.store';
 import { useAuthStore } from '@/store/auth.store';
@@ -21,7 +21,7 @@ const TRANSLATIONS = {
     hr: 'الموارد البشرية', payroll: 'الرواتب',
     notifications: 'التنبيهات', auditLogs: 'السجلات', brand: 'Sahab Digital',
     secretary: 'المتابعة', socialMedia: 'السوشيال ميديا', acquisition: 'الاستقطاب',
-    reports: 'التقارير', ratings: 'التقييمات',
+    reports: 'التقارير', dailyReport: 'تقرير اليوم', teamReports: 'تقارير الفريق',
   },
   en: {
     dashboard: 'Dashboard', users: 'Team', finance: 'Finance',
@@ -29,7 +29,7 @@ const TRANSLATIONS = {
     hr: 'Human Resources', payroll: 'Payroll',
     notifications: 'Notifications', auditLogs: 'Audit Logs', brand: 'Sahab Digital',
     secretary: 'Tracking', socialMedia: 'Social Media', acquisition: 'Acquisition',
-    reports: 'Reports', ratings: 'Ratings',
+    reports: 'Reports', dailyReport: 'Daily Report', teamReports: 'Team Reports',
   }
 };
 
@@ -41,10 +41,11 @@ const NAV_ITEMS = (t: any) => [
   { path: '/tasks', label: t.tasks, icon: CheckSquare, color: 'text-sky-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'] },
   { path: '/files', label: t.files, icon: FileText, color: 'text-teal-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'] },
   { path: '/hr', label: t.hr, icon: HeartPulse, color: 'text-rose-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'], depts: ['HR'] },
-  { path: '/ratings', label: t.ratings, icon: Star, color: 'text-amber-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'] },
   { path: '/secretary', label: t.secretary, icon: CheckSquare, color: 'text-violet-500', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'SECRETARY'] },
   { path: '/social-media', label: t.socialMedia, icon: LayoutDashboard, color: 'text-pink-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'], depts: ['SOCIAL_MEDIA'] },
   { path: '/acquisition', label: t.acquisition, icon: FolderKanban, color: 'text-emerald-500', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'], depts: ['MARKETING', 'SOCIAL_MEDIA'] },
+  { path: '/daily-report', label: t.dailyReport, icon: ClipboardList, color: 'text-teal-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'] },
+  { path: '/team-reports', label: t.teamReports, icon: ClipboardList, color: 'text-cyan-500', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
   { path: '/reports', label: t.reports, icon: BarChart2, color: 'text-indigo-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
   { path: '/payroll', label: t.payroll, icon: CreditCard, color: 'text-indigo-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
   { path: '/notifications', label: t.notifications, icon: Bell, color: 'text-orange-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'] },

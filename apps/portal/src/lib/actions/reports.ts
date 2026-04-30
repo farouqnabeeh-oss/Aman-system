@@ -20,13 +20,6 @@ export async function getPerformanceReport(period: 'weekly' | 'monthly') {
       _count: { _all: true }
     });
 
-    // 2. Average Ratings
-    const ratings = await prisma.rating.aggregate({
-      where: { createdAt: { gte: startDate } },
-      _avg: { stars: true },
-      _count: { _all: true }
-    });
-
     // 3. Top Employees
     const topEmployees = await prisma.user.findMany({
         take: 5,
@@ -34,10 +27,6 @@ export async function getPerformanceReport(period: 'weekly' | 'monthly') {
         include: {
             _count: {
                 select: { assignedTasks: { where: { status: 'DONE', updatedAt: { gte: startDate } } } }
-            },
-            receivedRatings: {
-                where: { createdAt: { gte: startDate } },
-                select: { stars: true }
             }
         }
     });
@@ -47,11 +36,11 @@ export async function getPerformanceReport(period: 'weekly' | 'monthly') {
         name: `${u.firstName} ${u.lastName}`,
         department: u.department,
         tasksDone: u._count.assignedTasks,
-        avgRating: u.receivedRatings.reduce((acc, curr) => acc + curr.stars, 0) / (u.receivedRatings.length || 1)
+        avgRating: 5 // Defaulted since ratings are removed
     })).sort((a, b) => b.tasksDone - a.tasksDone);
 
     // 4. Departmental Load
-    const departments = ['CONTENT', 'DESIGN', 'DEVELOPMENT', 'SALES'];
+    const departments = ['SOCIAL_MEDIA', 'DESIGN', 'DEVELOPMENT', 'SALES'];
     const deptLoad = await Promise.all(departments.map(async (d) => {
         const count = await prisma.task.count({ where: { project: { department: d as any }, status: { not: 'DONE' } } });
         return { department: d, count };
@@ -66,8 +55,8 @@ export async function getPerformanceReport(period: 'weekly' | 'monthly') {
         data: {
             period,
             tasks,
-            avgRating: ratings._avg.stars || 0,
-            totalRatings: ratings._count._all,
+            avgRating: 5,
+            totalRatings: 0,
             topEmployees: employeeStats,
             deptLoad,
             fidelity: totalDone > 0 ? (onTime / totalDone) * 100 : 100

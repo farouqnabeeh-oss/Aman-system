@@ -34,8 +34,7 @@ model User {
   createdAt           DateTime           @default(now())
   updatedAt           DateTime           @updatedAt
   deletedAt           DateTime?
-  receivedRatings     Rating[]           @relation("RatingReceiver")
-  givenRatings        Rating[]           @relation("RatingGiver")
+  dailyReports        DailyReport[]      @relation("UserDailyReports")
   attendanceRecords   AttendanceRecord[]
   auditLogs           AuditLog[]
   createdBudgets      BudgetAllocation[]
@@ -68,19 +67,20 @@ model User {
   @@map("users")
 }
 
-model Rating {
+model DailyReport {
   id          String   @id @default(cuid())
-  giverId     String
-  receiverId  String
-  stars       Int      @default(5)
-  comment     String?
+  userId      String
+  date        DateTime @default(now())
+  done        String   @db.Text
+  plan        String   @db.Text
+  blocks      String?  @db.Text
   createdAt   DateTime @default(now())
-  giver       User     @relation("RatingGiver", fields: [giverId], references: [id])
-  receiver    User     @relation("RatingReceiver", fields: [receiverId], references: [id])
+  updatedAt   DateTime @updatedAt
+  user        User     @relation("UserDailyReports", fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([receiverId])
-  @@index([giverId])
-  @@map("ratings")
+  @@index([userId])
+  @@index([date])
+  @@map("daily_reports")
 }
 
 model Department {

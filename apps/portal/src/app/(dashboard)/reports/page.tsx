@@ -63,8 +63,7 @@ export default function ReportsPage() {
             />
 
             {/* Overview Stats */}
-            <motion.div variants={fadeIn} className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <StatCard label={isRtl ? 'متوسط تقييم الفريق' : 'Team Rating'} value={data?.avgRating?.toFixed(1) || '0.0'} icon={<Star size={18} />} delta={`${data?.totalRatings || 0} feeds`} trend="up" />
+            <motion.div variants={fadeIn} className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <StatCard label={isRtl ? 'إنجاز المهام' : 'Tasks Done'} value={data?.tasks?.find((t: any) => t.status === 'DONE')?._count?._all || 0} icon={<CheckCircle size={18} />} />
                 <StatCard label={isRtl ? 'كفاءة المشاريع' : 'Mission Velocity'} value="98.2%" icon={<TrendingUp size={18} />} delta="Optimal" trend="up" />
                 <StatCard label={isRtl ? 'الالتزام بالمواعيد' : 'Deadline Sync'} value="92%" icon={<Calendar size={18} />} delta="-2%" trend="down" />
@@ -132,9 +131,6 @@ export default function ReportsPage() {
                                 </div>
                                 <div className="text-end">
                                     <p className="text-xs font-black text-brand">{u.tasksDone} {isRtl ? 'مهمة' : 'Tasks'}</p>
-                                    <div className="flex gap-0.5 mt-1 justify-end">
-                                        {[1, 2, 3, 4, 5].map(s => <Star key={s} size={9} fill={u.avgRating >= s ? '#1C93B2' : 'none'} className={u.avgRating >= s ? 'text-brand' : 'text-slate-200'} />)}
-                                    </div>
                                 </div>
                             </div>
                         ))}
@@ -222,7 +218,6 @@ export default function ReportsPage() {
                                 <th className="px-8 py-5 text-start text-[9px] font-black text-slate-400 uppercase tracking-widest">{isRtl ? 'الموظف' : 'Employee'}</th>
                                 <th className="px-8 py-5 text-start text-[9px] font-black text-slate-400 uppercase tracking-widest">{isRtl ? 'القسم' : 'Dept'}</th>
                                 <th className="px-8 py-5 text-start text-[9px] font-black text-slate-400 uppercase tracking-widest">{isRtl ? 'المهام المنجزة' : 'Tasks Done'}</th>
-                                <th className="px-8 py-5 text-start text-[9px] font-black text-slate-400 uppercase tracking-widest">{isRtl ? 'متوسط التقييم' : 'Avg Rating'}</th>
                                 <th className="px-8 py-5 text-start text-[9px] font-black text-slate-400 uppercase tracking-widest">{isRtl ? 'الالتزام' : 'Fidelity'}</th>
                             </tr>
                         </thead>
@@ -240,11 +235,6 @@ export default function ReportsPage() {
                                     <td className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">{u.department}</td>
                                     <td className="px-8 py-5">
                                         <span className="text-xs font-black text-slate-900">{u.tasksDone}</span>
-                                    </td>
-                                    <td className="px-8 py-5">
-                                        <div className="flex gap-0.5 text-amber-500">
-                                            {[1, 2, 3, 4, 5].map(s => <Star key={s} size={10} fill={u.avgRating >= s ? 'currentColor' : 'none'} className={u.avgRating >= s ? '' : 'text-slate-200'} />)}
-                                        </div>
                                     </td>
                                     <td className="px-8 py-5">
                                         <div className="flex items-center gap-2">
