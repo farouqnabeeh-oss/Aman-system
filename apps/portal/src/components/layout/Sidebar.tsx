@@ -19,7 +19,7 @@ const TRANSLATIONS = {
     dashboard: 'لوحة التحكم', users: 'الفريق', finance: 'المالية',
     projects: 'المشاريع', tasks: 'المهام', files: 'الملفات',
     hr: 'الموارد البشرية', payroll: 'الرواتب',
-    notifications: 'التنبيهات', auditLogs: 'السجلات', brand: 'sahab digital',
+    notifications: 'التنبيهات', auditLogs: 'السجلات', brand: 'Sahab Digital',
     secretary: 'المتابعة', socialMedia: 'السوشيال ميديا', acquisition: 'الاستقطاب',
     reports: 'التقارير', ratings: 'التقييمات',
   },
@@ -34,17 +34,17 @@ const TRANSLATIONS = {
 };
 
 const NAV_ITEMS = (t: any) => [
-  { path: '/dashboard', label: t.dashboard, icon: LayoutDashboard, color: 'text-blue-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'] },
+  { path: '/dashboard', label: t.dashboard, icon: LayoutDashboard, color: 'text-blue-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
   { path: '/users', label: t.users, icon: Users, color: 'text-violet-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
-  { path: '/finance', label: t.finance, icon: DollarSign, color: 'text-emerald-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
-  { path: '/projects', label: t.projects, icon: FolderKanban, color: 'text-amber-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'] },
+  { path: '/finance', label: t.finance, icon: DollarSign, color: 'text-emerald-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'], depts: ['FINANCE'] },
+  { path: '/projects', label: t.projects, icon: FolderKanban, color: 'text-amber-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'], depts: ['OPERATIONS', 'MARKETING', 'IT'] },
   { path: '/tasks', label: t.tasks, icon: CheckSquare, color: 'text-sky-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'] },
   { path: '/files', label: t.files, icon: FileText, color: 'text-teal-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'] },
-  { path: '/hr', label: t.hr, icon: HeartPulse, color: 'text-rose-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'] },
+  { path: '/hr', label: t.hr, icon: HeartPulse, color: 'text-rose-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'], depts: ['HR'] },
   { path: '/ratings', label: t.ratings, icon: Star, color: 'text-amber-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'] },
   { path: '/secretary', label: t.secretary, icon: CheckSquare, color: 'text-violet-500', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'SECRETARY'] },
-  { path: '/social-media', label: t.socialMedia, icon: LayoutDashboard, color: 'text-pink-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'] },
-  { path: '/acquisition', label: t.acquisition, icon: FolderKanban, color: 'text-emerald-500', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
+  { path: '/social-media', label: t.socialMedia, icon: LayoutDashboard, color: 'text-pink-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'], depts: ['SOCIAL_MEDIA'] },
+  { path: '/acquisition', label: t.acquisition, icon: FolderKanban, color: 'text-emerald-500', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'], depts: ['MARKETING', 'SOCIAL_MEDIA'] },
   { path: '/reports', label: t.reports, icon: BarChart2, color: 'text-indigo-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
   { path: '/payroll', label: t.payroll, icon: CreditCard, color: 'text-indigo-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
   { path: '/notifications', label: t.notifications, icon: Bell, color: 'text-orange-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'] },
@@ -60,7 +60,16 @@ export function Sidebar() {
 
   const items = NAV_ITEMS(t).filter(item => {
     if (!user) return false;
-    return item.roles.includes(user.role);
+    if (!item.roles.includes(user.role)) return false;
+
+    // Restrict EMPLOYEE based on their department if 'depts' is defined for the item
+    if (user.role === 'EMPLOYEE' && item.depts) {
+      if (!user.department || !item.depts.includes(user.department)) {
+        return false;
+      }
+    }
+
+    return true;
   });
 
   // Placeholder for unread count, we can integrate the API once routes are ported

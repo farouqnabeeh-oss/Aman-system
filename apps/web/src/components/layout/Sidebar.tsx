@@ -16,7 +16,7 @@ const TRANSLATIONS = {
     dashboard: 'لوحة التحكم', users: 'الفريق', finance: 'المالية',
     projects: 'المشاريع', tasks: 'المهام', files: 'الملفات',
     hr: 'الموارد البشرية', payroll: 'الرواتب',
-    notifications: 'التنبيهات', auditLogs: 'السجلات', brand: 'sahab digital',
+    notifications: 'التنبيهات', auditLogs: 'السجلات', brand: 'Sahab Digital',
   },
   en: {
     dashboard: 'Dashboard', users: 'Team', finance: 'Finance',

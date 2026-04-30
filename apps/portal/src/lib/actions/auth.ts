@@ -133,6 +133,7 @@ export async function login(formData: any) {
         lastName: user.lastName,
         role: user.role,
         status: user.status,
+        department: user.department,
       }
     };
   } catch (error: any) {

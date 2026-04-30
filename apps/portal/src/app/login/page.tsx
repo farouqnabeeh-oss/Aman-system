@@ -12,7 +12,7 @@ import Image from 'next/image';
 
 const translations = {
   ar: {
-    title: 'sahab digital',
+    title: 'Sahab Digital',
     subtitle: 'بوابة الإدارة الرقمية المتكاملة 2026',
     welcome: 'مركز المصادقة المركزية',
     login: 'أدخل بيانات الاعتماد الوظيفية للوصول إلى المنصة الآمنة',

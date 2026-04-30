@@ -9,6 +9,8 @@ import {
   LayoutDashboard, CheckCircle2, AlertTriangle, Layers, Bell
 } from 'lucide-react';
 import { useUIStore } from '@/store/ui.store';
+import { useAuthStore } from '@/store/auth.store';
+import { useRouter } from 'next/navigation';
 import { useRef, useEffect } from 'react';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -63,10 +65,27 @@ const stagger = { show: { transition: { staggerChildren: 0.05 } } };
 
 export default function CommandCenter() {
   const { language } = useUIStore();
+  const user = useAuthStore(s => s.user);
+  const router = useRouter();
   const t = T[language as keyof typeof T] || T.en;
   const isRtl = language === 'ar';
   const [logSearch, setLogSearch] = useState('');
   const [isAnnouncementOpen, setIsAnnouncementOpen] = useState(false);
+
+  useEffect(() => {
+    if (user?.role === 'EMPLOYEE') {
+      switch (user.department) {
+        case 'SOCIAL_MEDIA': router.replace('/social-media'); break;
+        case 'HR': router.replace('/hr'); break;
+        case 'FINANCE': router.replace('/finance'); break;
+        case 'MARKETING': router.replace('/acquisition'); break;
+        case 'PROJECTS':
+        case 'IT':
+        case 'OPERATIONS': router.replace('/projects'); break;
+        default: router.replace('/tasks'); break;
+      }
+    }
+  }, [user, router]);
 
   const { data: stats, isLoading } = useQuery({
     queryKey: ['dashboard-stats'],
@@ -81,6 +100,7 @@ export default function CommandCenter() {
   const fmt = (v: number) => `${v.toLocaleString()}${currency}`;
 
   if (isLoading) return <div className="h-[80vh] flex items-center justify-center"><Activity className="animate-spin text-brand" size={40} /></div>;
+  if (user?.role === 'EMPLOYEE') return null;
 
   const filteredLogs = (stats?.recentLogs || []).filter((log: any) => 
     log.user?.toLowerCase()?.includes(logSearch.toLowerCase()) ||

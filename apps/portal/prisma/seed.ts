@@ -55,7 +55,7 @@ async function main() {
   const project = await prisma.project.create({
     data: {
       name: 'نظام الإدارة الرقمية',
-      description: 'نظام إدارة المشاريع والأقسام الخاص بـ sahab digital',
+      description: 'نظام إدارة المشاريع والأقسام الخاص بـ Sahab Digital',
       status: 'ACTIVE',
       budget: 250000,
       progress: 35,
