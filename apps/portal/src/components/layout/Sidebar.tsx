@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Users, DollarSign, FolderKanban,
   CheckSquare, FileText, Bell, HeartPulse, CreditCard,
-  ScrollText, ChevronLeft, ChevronRight, BarChart2
+  ScrollText, ChevronLeft, ChevronRight, BarChart2, Star
 } from 'lucide-react';
 import { useUIStore } from '@/store/ui.store';
 import { useAuthStore } from '@/store/auth.store';
@@ -20,7 +20,7 @@ const TRANSLATIONS = {
     hr: 'الموارد البشرية', payroll: 'الرواتب',
     notifications: 'التنبيهات', auditLogs: 'السجلات', brand: 'سحاب ديجيتال',
     secretary: 'المتابعة', socialMedia: 'السوشيال ميديا', acquisition: 'الاستقطاب',
-    reports: 'التقارير',
+    reports: 'التقارير', ratings: 'التقييمات',
   },
   en: {
     dashboard: 'Dashboard', users: 'Team', finance: 'Finance',
@@ -28,7 +28,7 @@ const TRANSLATIONS = {
     hr: 'Human Resources', payroll: 'Payroll',
     notifications: 'Notifications', auditLogs: 'Audit Logs', brand: 'Sahab Digital',
     secretary: 'Tracking', socialMedia: 'Social Media', acquisition: 'Acquisition',
-    reports: 'Reports',
+    reports: 'Reports', ratings: 'Ratings',
   }
 };
 
@@ -40,6 +40,7 @@ const NAV_ITEMS = (t: any) => [
   { path: '/tasks', label: t.tasks, icon: CheckSquare, color: 'text-sky-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'] },
   { path: '/files', label: t.files, icon: FileText, color: 'text-teal-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'] },
   { path: '/hr', label: t.hr, icon: HeartPulse, color: 'text-rose-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'] },
+  { path: '/ratings', label: t.ratings, icon: Star, color: 'text-amber-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'] },
   { path: '/secretary', label: t.secretary, icon: CheckSquare, color: 'text-violet-500', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'SECRETARY'] },
   { path: '/social-media', label: t.socialMedia, icon: LayoutDashboard, color: 'text-pink-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'] },
   { path: '/acquisition', label: t.acquisition, icon: FolderKanban, color: 'text-emerald-500', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },

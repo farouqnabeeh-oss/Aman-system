@@ -72,6 +72,7 @@ export default function AcquisitionPage() {
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
     const [form, setForm] = useState({ 
         name: '', 
         phone: '', 
@@ -104,6 +105,12 @@ export default function AcquisitionPage() {
             return res.data || [];
         }
     });
+
+    const filteredLeads = leads.filter((l: any) => 
+        (l.name && l.name.toLowerCase().includes(searchQuery.toLowerCase())) || 
+        (l.phone && l.phone.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (l.status && l.status.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
 
     const handleSave = async () => {
         if (!form.name) return toast.error('Name is required');
@@ -230,7 +237,12 @@ export default function AcquisitionPage() {
                     <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.3em]">{t.allLeads}</h4>
                     <div className="flex items-center gap-4 bg-white rounded-xl px-4 py-2 border border-slate-200">
                         <Search size={14} className="text-slate-400" />
-                        <input className="bg-transparent text-[10px] font-black uppercase text-slate-900 outline-none placeholder:text-slate-300" placeholder="Filter List..." />
+                        <input 
+                            className="bg-transparent text-[10px] font-black uppercase text-slate-900 outline-none placeholder:text-slate-300" 
+                            placeholder="Filter List..." 
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
                     </div>
                 </div>
                 <div className="overflow-x-auto no-scrollbar">
@@ -247,11 +259,11 @@ export default function AcquisitionPage() {
                         <tbody className="divide-y divide-slate-50">
                             {isLoading ? (
                                 Array(5).fill(0).map((_, i) => <tr key={i}><td colSpan={5} className="px-10 py-6"><div className="h-4 bg-slate-50 rounded-lg animate-pulse" /></td></tr>)
-                            ) : leads.length === 0 ? (
+                            ) : filteredLeads.length === 0 ? (
                                 <tr>
                                     <td colSpan={5} className="px-10 py-20 text-center text-slate-400 text-[10px] font-black uppercase tracking-widest">{t.noLeads}</td>
                                 </tr>
-                            ) : leads.map((l: any) => (
+                            ) : filteredLeads.map((l: any) => (
                                 <tr key={l.id} className="hover:bg-slate-50 transition-all group">
                                     <td className="px-10 py-5 text-sm font-black text-slate-900 uppercase tracking-tight group-hover:text-brand transition-colors">{l.name}</td>
                                     <td className="px-10 py-5 text-xs font-black text-slate-400 tracking-wider">{l.phone || 'NO-CONTACT'}</td>

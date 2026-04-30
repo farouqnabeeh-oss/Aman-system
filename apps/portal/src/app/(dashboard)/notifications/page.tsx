@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useUIStore } from '@/store/ui.store';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
+import { useEffect } from 'react';
 
 const fadeIn = { hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } };
 const stagger = { show: { transition: { staggerChildren: 0.05 } } };
@@ -27,8 +28,19 @@ export default function NotificationsPage() {
   const { data: notifications = [], isLoading } = useQuery({
     queryKey: ['notifications'],
     queryFn: async () => { const r = await getNotifications(); return r.data || []; },
-    refetchInterval: 15000, // auto-refresh every 15s
+    refetchInterval: 15000,
   });
+
+  // Auto-mark all as read when page opens
+  useEffect(() => {
+    const autoMarkRead = async () => {
+      await markAllNotificationsRead();
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications-count'] });
+      queryClient.invalidateQueries({ queryKey: ['global-notifications-check'] });
+    };
+    autoMarkRead();
+  }, []);
 
   const markReadMutation = useMutation({
     mutationFn: (id: string) => markAsRead(id),
@@ -38,6 +50,8 @@ export default function NotificationsPage() {
   const markAllRead = async () => {
     await markAllNotificationsRead();
     queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    queryClient.invalidateQueries({ queryKey: ['notifications-count'] });
+    queryClient.invalidateQueries({ queryKey: ['global-notifications-check'] });
     toast.success(isRtl ? 'تم تحديد الكل كمقروء' : 'All marked as read');
   };
 

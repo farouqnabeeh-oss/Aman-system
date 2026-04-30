@@ -135,6 +135,7 @@ export async function createUser(data: z.infer<typeof CreateUserSchema>) {
 
     const existing = await prisma.user.findFirst({ 
       where: { 
+        deletedAt: null,
         OR: [
           { email: val.email.toLowerCase() },
           { employeeNumber: finalEmployeeNumber }
