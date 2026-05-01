@@ -55,6 +55,7 @@ model User {
   reportedTasks       Task[]             @relation("TaskReporter")
   assignedTasks       Task[]             @relation("TaskAssignee")
   createdTransactions Transaction[]
+  visitorLogs         VisitorLog[]       @relation("VisitorHost")
   createdBy           User?              @relation("UserCreatedBy", fields: [createdById], references: [id])
   usersCreated        User[]             @relation("UserCreatedBy")
 
@@ -122,6 +123,7 @@ model Client {
   address     String?
   taxId       String?
   status      String    @default("POTENTIAL") // POTENTIAL, NEGOTIATING, AGREED
+  portalAccessKey String? @unique
   createdById String
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -129,6 +131,7 @@ model Client {
   invoices    Invoice[]
   projects    Project[]
   smDetails   SMClientDetails?
+  brandGuideline BrandGuideline?
   deletedAt   DateTime?
 
   @@index([email])
@@ -148,6 +151,7 @@ model SMClientDetails {
   doneVideos    Int      @default(0)
   content       String?
   contentStatus String   @default("PENDING") // PENDING, APPROVED, REWRITE
+  lastEditorId  String?
   packagePrice  Decimal? @db.Decimal(10, 2)
   packageDesc   String?
   createdAt     DateTime @default(now())
@@ -476,4 +480,69 @@ model Announcement {
   expiresAt       DateTime?
 
   @@map("announcements")
+}
+
+model VisitorLog {
+  id          String   @id @default(cuid())
+  name        String
+  phone       String?
+  purpose     String
+  hostId      String?
+  checkIn     DateTime @default(now())
+  checkOut    DateTime?
+  status      String   @default("IN") // IN, OUT, APPOINTMENT
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  host        User?    @relation("VisitorHost", fields: [hostId], references: [id])
+
+  @@index([hostId])
+  @@index([checkIn])
+  @@map("visitor_logs")
+}
+
+model InventoryItem {
+  id          String   @id @default(cuid())
+  name        String
+  category    String   @default("GENERAL") // STATIONERY, KITCHEN, CLEANING, IT
+  quantity    Int      @default(0)
+  minQuantity Int      @default(0)
+  unit        String   @default("PCS")
+  status      String   @default("AVAILABLE") // AVAILABLE, LOW, OUT_OF_STOCK
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("inventory_items")
+}
+
+model PettyCash {
+  id          String   @id @default(cuid())
+  amount      Decimal  @db.Decimal(10, 2)
+  reason      String
+  date        DateTime @default(now())
+  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  requestedBy String
+  approvedBy  String?
+  receiptUrl  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([date])
+  @@index([status])
+  @@map("petty_cash")
+}
+
+model BrandGuideline {
+  id           String   @id @default(cuid())
+  clientId     String   @unique
+  client       Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  colors       String?  // JSON string of hex codes
+  fonts        String?  // JSON string of font names
+  logoUrl      String?
+  driveLink    String?  // Main assets folder
+  notes        String?
+  updatedAt    DateTime @updatedAt
+
+  @@map("brand_guidelines")
 }

@@ -20,6 +20,7 @@ export async function getSMClients() {
       where: { status: 'AGREED', deletedAt: null } as any,
       include: { 
         smDetails: true,
+        brandGuideline: true,
         projects: {
           include: {
             tasks: {
@@ -43,121 +44,49 @@ export async function updateSMDetails(clientId: string, data: any) {
   if (!session) return { success: false, message: 'Unauthorized' };
 
   try {
+    const current = await prisma.sMClientDetails.findUnique({ where: { clientId } });
+    
+    const updateData = {
+      ...data,
+      ...(data.content ? { lastEditorId: session.userId } : {})
+    };
+
     const updated = await prisma.sMClientDetails.upsert({
       where: { clientId },
-      update: data,
+      update: updateData,
       create: {
         clientId,
         startDate: new Date(),
         endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        ...data,
+        ...updateData,
       },
     });
+
+    // Notify writer if manager requests rewrite
+    if (data.contentStatus === 'REWRITE' && updated.lastEditorId) {
+      await createNotification(
+        updated.lastEditorId,
+        'WARNING',
+        'طلب تعديل محتوى',
+        `تم طلب تعديل المحتوى للعميل رقم ${clientId}. يرجى المراجعة.`,
+        '/content-writer'
+      );
+    }
 
     await logAction({
       userId: session.userId,
       action: 'UPDATE',
       entity: 'sm_client_details',
       entityId: clientId,
-      newValues: data,
+      newValues: updateData,
     });
 
     revalidatePath('/social-media');
+    revalidatePath('/content-writer');
+    revalidatePath('/page-manager');
     return { success: true, data: updated };
   } catch (err) {
     return { success: false, message: 'Failed to update details' };
-  }
-}
-
-export async function rateEmployee(receiverId: string, stars: number, comment?: string) {
-  const session = await getSession();
-  if (!session) return { success: false, message: 'Unauthorized' };
-
-  if (receiverId === session.userId) {
-    return { success: false, message: 'You cannot rate yourself' };
-  }
-
-  try {
-    const rating = await prisma.rating.create({
-      data: {
-        giverId: session.userId,
-        receiverId,
-        stars,
-        comment,
-      },
-    });
-
-    // Notify the rated employee
-    const giver = await prisma.user.findUnique({
-      where: { id: session.userId },
-      select: { firstName: true, lastName: true },
-    });
-
-    const starEmoji = '⭐'.repeat(Math.min(stars, 5));
-    await createNotification(
-      receiverId,
-      'INFO',
-      `${starEmoji} تقييم جديد`,
-      `${giver?.firstName} ${giver?.lastName} قيّمك بـ ${stars}/5 نجوم.${comment ? ` "${comment}"` : ''}`,
-      '/social-media'
-    );
-
-    await logAction({
-      userId: session.userId,
-      action: 'CREATE',
-      entity: 'ratings',
-      entityId: rating.id,
-      newValues: { stars, receiverId },
-    });
-
-    return { success: true, data: rating };
-  } catch (err) {
-    return { success: false, message: 'Failed to submit rating' };
-  }
-}
-
-export async function getPeerRatings(userId: string) {
-  const session = await getSession();
-  const targetId = userId === 'current' ? session?.userId : userId;
-
-  if (!targetId) return { success: false, message: 'Invalid User ID' };
-
-  try {
-    const ratings = await prisma.rating.findMany({
-      where: { receiverId: targetId },
-      include: {
-        giver: { select: { firstName: true, lastName: true, position: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 20,
-    });
-
-    return { success: true, data: ratings };
-  } catch (err) {
-    return { success: false, message: 'Failed to fetch ratings' };
-  }
-}
-
-export async function getMyRatings() {
-  const session = await getSession();
-  if (!session) return { success: false, message: 'Unauthorized' };
-
-  try {
-    const ratings = await prisma.rating.findMany({
-      where: { receiverId: session.userId },
-      include: {
-        giver: { select: { firstName: true, lastName: true, position: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    const avg = ratings.length > 0 
-      ? ratings.reduce((acc, r) => acc + r.stars, 0) / ratings.length 
-      : 0;
-
-    return { success: true, data: { ratings, avgRating: avg, totalRatings: ratings.length } };
-  } catch (err) {
-    return { success: false, message: 'Failed to fetch my ratings' };
   }
 }
 
@@ -245,6 +174,25 @@ export async function createSMTask(clientId: string, data: { title: string; desc
       }
     });
 
+    // Notify Creative Team
+    const designers = await prisma.user.findMany({
+      where: { 
+        position: { in: ['DESIGNER', 'EDITOR', 'VIDEOGRAPHER', 'مصمم', 'مونتير'] },
+        deletedAt: null
+      },
+      select: { id: true }
+    });
+
+    for (const d of designers) {
+      await createNotification(
+        d.id,
+        'INFO',
+        'مهمة إبداعية جديدة',
+        `تمت إضافة مهمة [${data.type}] جديدة للعميل.`,
+        '/creative-studio'
+      );
+    }
+
     await logAction({
       userId: session.userId,
       action: 'CREATE',
@@ -254,6 +202,7 @@ export async function createSMTask(clientId: string, data: { title: string; desc
     });
 
     revalidatePath('/social-media');
+    revalidatePath('/creative-studio');
     return { success: true, data: task };
   } catch (error) {
     return { success: false, error: 'Failed to create task' };

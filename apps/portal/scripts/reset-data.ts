@@ -22,8 +22,8 @@ async function main() {
   await prisma.auditLog.deleteMany({});
   console.log('✅ Audit logs cleared');
 
-  await prisma.rating.deleteMany({});
-  console.log('✅ Ratings cleared');
+  await prisma.dailyReport.deleteMany({});
+  console.log('✅ Daily reports cleared');
 
   await prisma.taskComment.deleteMany({});
   console.log('✅ Task comments cleared');

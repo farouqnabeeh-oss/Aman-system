@@ -16,7 +16,7 @@ export async function submitDailyReport(data: { done: string; plan: string; bloc
     // Upsert: update today's report if it already exists
     const existing = await prisma.dailyReport.findFirst({
       where: {
-        userId: session.id,
+        userId: session.userId,
         date: { gte: today, lt: tomorrow }
       }
     });
@@ -29,7 +29,7 @@ export async function submitDailyReport(data: { done: string; plan: string; bloc
     } else {
       await prisma.dailyReport.create({
         data: {
-          userId: session.id,
+          userId: session.userId,
           done: data.done,
           plan: data.plan,
           blocks: data.blocks || ''
@@ -49,7 +49,7 @@ export async function getMyDailyReports() {
 
   try {
     const reports = await prisma.dailyReport.findMany({
-      where: { userId: session.id },
+      where: { userId: session.userId },
       orderBy: { date: 'desc' },
       take: 10
     });
@@ -96,7 +96,7 @@ export async function getTodayMyReport() {
     tomorrow.setDate(tomorrow.getDate() + 1);
 
     const report = await prisma.dailyReport.findFirst({
-      where: { userId: session.id, date: { gte: today, lt: tomorrow } }
+      where: { userId: session.userId, date: { gte: today, lt: tomorrow } }
     });
     return { success: true, data: report };
   } catch {

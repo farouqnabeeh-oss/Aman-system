@@ -4,10 +4,11 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ClipboardList, Users, Calendar, CheckCircle2, AlertCircle,
-  Zap, ChevronDown, ChevronUp, Search, Filter
+  Zap, ChevronDown, ChevronUp, Search, Filter, Sparkles, Share2
 } from 'lucide-react';
 import { useUIStore } from '@/store/ui.store';
 import { getAllDailyReports } from '@/lib/actions/daily-reports';
+import { analyzePerformance } from '@/lib/actions/ai';
 import { useQuery } from '@tanstack/react-query';
 import { clsx } from 'clsx';
 
@@ -26,6 +27,22 @@ export default function TeamReportsPage() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [search, setSearch] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [aiResult, setAiResult] = useState<string | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  const handleAIAnalyze = async (userId: string) => {
+    setIsAnalyzing(true);
+    const res = await analyzePerformance(userId);
+    setIsAnalyzing(false);
+    if (res.success && res.data) {
+      setAiResult(res.data);
+    }
+  };
+
+  const shareOnWhatsApp = (report: any) => {
+    const text = `Report: ${report.user.firstName} ${report.user.lastName}\nDone: ${report.done}\nPlan: ${report.plan}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+  };
 
   const { data: reports = [], isLoading } = useQuery({
     queryKey: ['team-reports', selectedDate],
@@ -211,6 +228,31 @@ export default function TeamReportsPage() {
                       className="overflow-hidden"
                     >
                       <div className="px-8 pb-8 space-y-6 border-t border-slate-100 pt-6">
+                        <div className="flex justify-end gap-3 mb-4">
+                          <button 
+                            onClick={() => handleAIAnalyze(r.userId)}
+                            disabled={isAnalyzing}
+                            className="px-4 py-2 bg-slate-900 text-white text-[9px] font-black uppercase tracking-widest rounded-xl flex items-center gap-2 hover:scale-[1.02] transition-all disabled:opacity-50"
+                          >
+                            <Sparkles size={12} /> {isRtl ? 'تحليل ذكي' : 'AI Analyze'}
+                          </button>
+                          <button 
+                            onClick={() => shareOnWhatsApp(r)}
+                            className="px-4 py-2 bg-emerald-500 text-white text-[9px] font-black uppercase tracking-widest rounded-xl flex items-center gap-2 hover:scale-[1.02] transition-all"
+                          >
+                            <Share2 size={12} /> {isRtl ? 'مشاركة' : 'Share'}
+                          </button>
+                        </div>
+
+                        {aiResult && expandedId === r.id && (
+                          <motion.div 
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="p-5 bg-indigo-50 border border-indigo-100 rounded-2xl text-[11px] font-medium text-indigo-900 whitespace-pre-wrap shadow-inner mb-6"
+                          >
+                            {aiResult}
+                          </motion.div>
+                        )}
                         {/* Done */}
                         <div>
                           <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-2 flex items-center gap-2">

@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Users, DollarSign, FolderKanban,
   CheckSquare, FileText, Bell, HeartPulse, CreditCard,
-  ScrollText, ChevronLeft, ChevronRight, BarChart2, ClipboardList
+  ScrollText, ChevronLeft, ChevronRight, BarChart2, ClipboardList, PenTool, ImageIcon, TrendingUp
 } from 'lucide-react';
 import { useUIStore } from '@/store/ui.store';
 import { useAuthStore } from '@/store/auth.store';
@@ -20,16 +20,19 @@ const TRANSLATIONS = {
     projects: 'المشاريع', tasks: 'المهام', files: 'الملفات',
     hr: 'الموارد البشرية', payroll: 'الرواتب',
     notifications: 'التنبيهات', auditLogs: 'السجلات', brand: 'Sahab Digital',
-    secretary: 'المتابعة', socialMedia: 'السوشيال ميديا', acquisition: 'الاستقطاب',
+    secretary: 'مركز القيادة', socialMedia: 'السوشيال ميديا', acquisition: 'الاستقطاب',
     reports: 'التقارير', dailyReport: 'تقرير اليوم', teamReports: 'تقارير الفريق',
+    contentWriter: 'مساحة الكاتب', pageManager: 'إدارة الصفحات', creativeStudio: 'مرسم الإبداع',
+    financeROI: 'تحليل الربحية',
   },
   en: {
     dashboard: 'Dashboard', users: 'Team', finance: 'Finance',
     projects: 'Projects', tasks: 'Tasks', files: 'Files',
     hr: 'Human Resources', payroll: 'Payroll',
     notifications: 'Notifications', auditLogs: 'Audit Logs', brand: 'Sahab Digital',
-    secretary: 'Tracking', socialMedia: 'Social Media', acquisition: 'Acquisition',
+    socialMedia: 'Social Media', acquisition: 'Acquisition',
     reports: 'Reports', dailyReport: 'Daily Report', teamReports: 'Team Reports',
+    contentWriter: 'Content Writer', pageManager: 'Page Manager', creativeStudio: 'Creative Studio', financeROI: 'Finance ROI', secretary: 'Command Center',
   }
 };
 
@@ -37,12 +40,16 @@ const NAV_ITEMS = (t: any) => [
   { path: '/dashboard', label: t.dashboard, icon: LayoutDashboard, color: 'text-blue-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
   { path: '/users', label: t.users, icon: Users, color: 'text-violet-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
   { path: '/finance', label: t.finance, icon: DollarSign, color: 'text-emerald-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'], depts: ['FINANCE'] },
+  { path: '/finance/roi', label: t.financeROI, icon: TrendingUp, color: 'text-emerald-500', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'], depts: ['FINANCE'] },
   { path: '/projects', label: t.projects, icon: FolderKanban, color: 'text-amber-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'], depts: ['OPERATIONS', 'MARKETING', 'IT'] },
   { path: '/tasks', label: t.tasks, icon: CheckSquare, color: 'text-sky-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'] },
   { path: '/files', label: t.files, icon: FileText, color: 'text-teal-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'] },
   { path: '/hr', label: t.hr, icon: HeartPulse, color: 'text-rose-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'], depts: ['HR'] },
-  { path: '/secretary', label: t.secretary, icon: CheckSquare, color: 'text-violet-500', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'SECRETARY'] },
+  { path: '/secretary', label: t.secretary, icon: ClipboardList, color: 'text-violet-500', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'SECRETARY'] },
   { path: '/social-media', label: t.socialMedia, icon: LayoutDashboard, color: 'text-pink-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'], depts: ['SOCIAL_MEDIA'] },
+  { path: '/content-writer', label: t.contentWriter, icon: PenTool, color: 'text-pink-500', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'], positions: ['CONTENT_WRITER', 'WRITER', 'كاتب محتوى'] },
+  { path: '/page-manager', label: t.pageManager, icon: LayoutDashboard, color: 'text-indigo-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'], positions: ['PAGE_MANAGER', 'MODERATOR', 'مدير صفحات'] },
+  { path: '/creative-studio', label: t.creativeStudio, icon: ImageIcon, color: 'text-purple-500', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'], positions: ['DESIGNER', 'EDITOR', 'VIDEOGRAPHER', 'مصمم', 'مونتير'] },
   { path: '/acquisition', label: t.acquisition, icon: FolderKanban, color: 'text-emerald-500', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'], depts: ['MARKETING', 'SOCIAL_MEDIA'] },
   { path: '/daily-report', label: t.dailyReport, icon: ClipboardList, color: 'text-teal-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'] },
   { path: '/team-reports', label: t.teamReports, icon: ClipboardList, color: 'text-cyan-500', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
@@ -61,11 +68,23 @@ export function Sidebar() {
 
   const items = NAV_ITEMS(t).filter(item => {
     if (!user) return false;
-    if (!item.roles.includes(user.role)) return false;
+    
+    // Always show to SUPER_ADMIN/ADMIN/MANAGER
+    if (['SUPER_ADMIN', 'ADMIN', 'MANAGER'].includes(user.role)) return true;
 
-    // Restrict EMPLOYEE based on their department if 'depts' is defined for the item
+    // Check specific roles
+    if (item.roles && !item.roles.includes(user.role)) return false;
+
+    // Check departments for employees
     if (user.role === 'EMPLOYEE' && item.depts) {
       if (!user.department || !item.depts.includes(user.department)) {
+        return false;
+      }
+    }
+
+    // Check positions for employees (Specialized Workspaces)
+    if (user.role === 'EMPLOYEE' && item.positions) {
+      if (!user.position || !item.positions.includes(user.position)) {
         return false;
       }
     }

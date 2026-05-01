@@ -13,7 +13,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Input, Select } from '@/components/ui/Input';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
-import { getSMClients, updateSMDetails, rateEmployee, getPeerRatings, getDeptMembers, getSMStats, createSMTask } from '@/lib/actions/social-media';
+import { getSMClients, updateSMDetails, getDeptMembers, getSMStats, createSMTask } from '@/lib/actions/social-media';
 import toast from 'react-hot-toast';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -92,7 +92,6 @@ export default function SocialMediaPage() {
         { key: 'clients' as const, label: t.clients, icon: LayoutDashboard },
         { key: 'writer' as const, label: t.writer, icon: PenTool },
         { key: 'creative' as const, label: t.creative, icon: ImageIcon },
-        { key: 'team' as const, label: t.team, icon: Star },
     ];
 
     return (
@@ -135,7 +134,6 @@ export default function SocialMediaPage() {
                 {tab === 'clients' && <ClientsTab key="clients" clients={clients} t={t} isRtl={isRtl} user={user} />}
                 {tab === 'writer' && <WriterTab key="writer" clients={clients} t={t} isRtl={isRtl} />}
                 {tab === 'creative' && <CreativeTab key="creative" clients={clients} t={t} isRtl={isRtl} />}
-                {tab === 'team' && <TeamTab key="team" t={t} isRtl={isRtl} />}
             </AnimatePresence>
         </motion.div>
     );
@@ -466,114 +464,6 @@ function CreativeTab({ clients, t, isRtl }: any) {
                         </div>
                     </div>
                 ))}
-            </div>
-        </motion.div>
-    );
-}
-
-function TeamTab({ t, isRtl }: any) {
-    const [rating, setRating] = useState({ stars: 5, comment: '', receiverId: '' });
-    
-    const { data: team = [] } = useQuery({
-        queryKey: ['dept-members'],
-        queryFn: async () => {
-            const res = await getDeptMembers();
-            return res.data || [];
-        }
-    });
-
-    const { data: feed = [], refetch: refetchFeed } = useQuery({
-        queryKey: ['peer-ratings'],
-        queryFn: async () => {
-            const res = await getPeerRatings('current');
-            return res.data || [];
-        }
-    });
-
-    const handleSubmit = async () => {
-        if (!rating.receiverId) { toast.error(isRtl ? 'يرجى اختيار زميل' : 'Please select a colleague'); return; }
-        const res = await rateEmployee(rating.receiverId, rating.stars, rating.comment);
-        if (res.success) {
-            toast.success(isRtl ? 'تم إرسال التقييم بنجاح! سيصل إشعار للزميل' : 'Rating submitted! Colleague notified.');
-            setRating({ stars: 5, comment: '', receiverId: '' });
-            refetchFeed();
-        } else {
-            toast.error(res.message || 'Failed to submit rating');
-        }
-    };
-
-    return (
-        <motion.div variants={fadeIn} initial="hidden" animate="show" className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="glass-card !p-10 border-slate-100 bg-white shadow-sm">
-                <h4 className="text-lg font-black text-slate-900 mb-10 uppercase tracking-tight">{isRtl ? 'تقييم أداء زميل' : 'Rate Peer Performance'}</h4>
-                <div className="space-y-8">
-                    <Select 
-                        label="Select Colleague"
-                        value={rating.receiverId}
-                        onChange={e => setRating({ ...rating, receiverId: e.target.value })}
-                        options={team.map((m: any) => ({ value: m.id, label: `${m.firstName} ${m.lastName} (${m.position})` }))}
-                        placeholder="Choose colleague..."
-                    />
-
-                    <div>
-                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-4">{t.stars}</label>
-                        <div className="flex gap-2">
-                            {[1, 2, 3, 4, 5].map(s => (
-                                <button
-                                    key={s}
-                                    onClick={() => setRating({ ...rating, stars: s })}
-                                    className={clsx(
-                                        'w-12 h-12 rounded-2xl flex items-center justify-center transition-all border',
-                                        rating.stars >= s ? 'bg-amber-500 border-amber-600 text-white shadow-lg shadow-amber-500/20' : 'bg-slate-50 border-slate-100 text-slate-300'
-                                    )}
-                                >
-                                    <Star size={18} fill={rating.stars >= s ? 'currentColor' : 'none'} />
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    <Input 
-                        label={t.comment}
-                        value={rating.comment}
-                        onChange={e => setRating({ ...rating, comment: e.target.value })}
-                        placeholder="Optional feedback..."
-                    />
-
-                    <button
-                        onClick={handleSubmit}
-                        className="w-full py-4 bg-brand text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-brand/90 transition-all shadow-lg shadow-brand/20 mt-4"
-                    >
-                        {t.submit}
-                    </button>
-                </div>
-            </div>
-
-            <div className="space-y-4">
-                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-4 px-2">Recent Peer Feedbacks</h4>
-                <div className="space-y-3">
-                    {feed.length === 0 ? (
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest py-10 text-center">No feedbacks yet.</p>
-                    ) : feed.map((f: any) => (
-                        <div key={f.id} className="glass-card !p-6 border-slate-100 bg-white group hover:border-brand/20 transition-all shadow-sm">
-                            <div className="flex justify-between items-start mb-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center font-black text-slate-400 text-xs group-hover:text-brand group-hover:bg-brand/10 group-hover:border-brand/20 transition-all shadow-sm">
-                                        {f.giver?.firstName?.[0]}
-                                    </div>
-                                    <div>
-                                        <p className="text-xs font-black text-slate-900 uppercase tracking-tight">{f.giver?.firstName} {f.giver?.lastName}</p>
-                                        <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest">{new Date(f.createdAt).toLocaleDateString()}</p>
-                                    </div>
-                                </div>
-                                <div className="flex gap-0.5 text-amber-500">
-                                    {[1, 2, 3, 4, 5].map(s => <Star key={s} size={11} fill={f.stars >= s ? 'currentColor' : 'none'} />)}
-                                </div>
-                            </div>
-                            <p className="text-xs text-slate-500 leading-relaxed italic font-medium">"{f.comment}"</p>
-                        </div>
-                    ))}
-                </div>
             </div>
         </motion.div>
     );

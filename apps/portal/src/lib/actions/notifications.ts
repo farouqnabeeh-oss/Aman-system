@@ -40,3 +40,18 @@ export async function markAsRead(id: string) {
     return { success: false, error: error.message };
   }
 }
+export async function createNotification(userId: string, title: string, message: string, type: 'INFO' | 'SUCCESS' | 'WARNING' | 'ERROR' = 'INFO') {
+  try {
+    await prisma.notification.create({
+      data: {
+        userId,
+        title,
+        message,
+        type
+      }
+    });
+    return { success: true };
+  } catch {
+    return { success: false };
+  }
+}
