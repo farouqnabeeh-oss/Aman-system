@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { Menu, Bell, Search, LogOut, User, ChevronDown, Languages, Command, Zap } from 'lucide-react';
+import { Menu, Bell, Search, LogOut, User, ChevronDown, Languages, Command, Zap, HeartPulse } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUIStore } from '@/store/ui.store';
@@ -12,10 +12,12 @@ import { logout as logoutAction } from '@/lib/actions/auth';
 import { getNotifications } from '@/lib/actions/notifications';
 import { clsx } from 'clsx';
 import toast from 'react-hot-toast';
+import { selfAttendance } from '@/lib/actions/hr';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 const TRANSLATIONS = {
-  ar: { search: 'بحث سريع...', profile: 'الملف الشخصي', logout: 'تسجيل خروج', cmd: 'بحث' },
-  en: { search: 'Quick search...', profile: 'Profile', logout: 'Sign Out', cmd: 'Search' }
+  ar: { search: 'بحث سريع...', profile: 'الملف الشخصي', logout: 'تسجيل خروج', cmd: 'بحث', checkIn: 'تسجيل دخول', checkOut: 'تسجيل خروج', leave: 'طلب إجازة' },
+  en: { search: 'Quick search...', profile: 'Profile', logout: 'Sign Out', cmd: 'Search', checkIn: 'Check In', checkOut: 'Check Out', leave: 'Request Leave' }
 };
 
 export function Topbar({ onOpenCommand }: { onOpenCommand?: () => void }) {
@@ -40,6 +42,19 @@ export function Topbar({ onOpenCommand }: { onOpenCommand?: () => void }) {
   });
 
   const unread = notifyData?.unreadCount || 0;
+  const queryClient = useQueryClient();
+
+  const attendanceMutation = useMutation({
+    mutationFn: (action: 'IN' | 'OUT') => selfAttendance(action),
+    onSuccess: (res) => {
+      if (res.success) {
+        queryClient.invalidateQueries({ queryKey: ['attendance'] });
+        toast.success(isRtl ? 'تم تسجيل العملية بنجاح' : 'Attendance updated');
+      } else {
+        toast.error(res.error || 'Failed');
+      }
+    }
+  });
 
   const handleLogout = async () => {
     try {
@@ -102,6 +117,23 @@ export function Topbar({ onOpenCommand }: { onOpenCommand?: () => void }) {
           </kbd>
         </div>
       </button>
+
+      {/* Attendance & Leave Quick Access */}
+      <div className="hidden md:flex items-center gap-2">
+        <button
+          onClick={() => attendanceMutation.mutate('IN')}
+          disabled={attendanceMutation.isPending}
+          className="px-4 py-2 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-600 text-[10px] font-black uppercase tracking-widest hover:bg-emerald-100 transition-all flex items-center gap-2"
+        >
+          <Zap size={12} /> {t.checkIn}
+        </button>
+        <button
+          onClick={() => router.push('/hr')}
+          className="px-4 py-2 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 text-[10px] font-black uppercase tracking-widest hover:bg-rose-100 transition-all flex items-center gap-2"
+        >
+          <HeartPulse size={12} /> {t.leave}
+        </button>
+      </div>
 
       {/* Right: Actions */}
       <div className="flex items-center gap-2">

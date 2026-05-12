@@ -93,7 +93,7 @@ export default function ContentWriterPage() {
         if (!content) return toast.error(isRtl ? 'يرجى إدخال نص أولاً' : 'Please enter content first');
         setIsAIProcessing(true);
         try {
-            const res = await processAIContent(content, action);
+            const res = await processAIContent(content, action, tone);
             if (res.success && res.data) {
                 setContent(res.data);
                 toast.success(isRtl ? 'تم تطبيق سحر الذكاء الاصطناعي!' : 'AI magic applied!');

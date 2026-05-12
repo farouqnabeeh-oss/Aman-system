@@ -38,8 +38,9 @@ export async function submitDailyReport(data: { done: string; plan: string; bloc
     }
 
     return { success: true };
-  } catch (err) {
-    return { success: false, message: 'Failed to submit report' };
+  } catch (err: any) {
+    console.error('Submit report error:', err);
+    return { success: false, message: `Failed to submit report: ${err.message || 'Unknown Error'}` };
   }
 }
 
@@ -54,7 +55,8 @@ export async function getMyDailyReports() {
       take: 10
     });
     return { success: true, data: reports };
-  } catch {
+  } catch (err) {
+    console.error('Get my reports error:', err);
     return { success: false, data: [] };
   }
 }
@@ -80,7 +82,8 @@ export async function getAllDailyReports(date?: string) {
     });
 
     return { success: true, data: reports };
-  } catch {
+  } catch (err) {
+    console.error('Get all reports error:', err);
     return { success: false, data: [] };
   }
 }
@@ -99,7 +102,8 @@ export async function getTodayMyReport() {
       where: { userId: session.userId, date: { gte: today, lt: tomorrow } }
     });
     return { success: true, data: report };
-  } catch {
+  } catch (err) {
+    console.error('Get today report error:', err);
     return { success: false, data: null };
   }
 }
