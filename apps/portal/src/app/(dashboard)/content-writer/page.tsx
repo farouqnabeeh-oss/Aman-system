@@ -81,14 +81,29 @@ export default function ContentWriterPage() {
         }
     });
 
+    const saveMutation = useMutation({
+        mutationFn: () => updateSMDetails(selectedClient.id, { content, contentStatus: 'DRAFT' }),
+        onSuccess: () => {
+            toast.success(isRtl ? 'تم حفظ المسودة بنجاح' : 'Draft saved successfully');
+            queryClient.invalidateQueries({ queryKey: ['sm-clients'] });
+        }
+    });
+
     const handleAIAction = async (action: 'HOOK' | 'EXPAND' | 'REWRITE') => {
-        if (!content) return toast.error('Please enter content first');
+        if (!content) return toast.error(isRtl ? 'يرجى إدخال نص أولاً' : 'Please enter content first');
         setIsAIProcessing(true);
-        const res = await processAIContent(content, action);
-        setIsAIProcessing(false);
-        if (res.success && res.data) {
-            setContent(res.data);
-            toast.success('AI magic applied!');
+        try {
+            const res = await processAIContent(content, action);
+            if (res.success && res.data) {
+                setContent(res.data);
+                toast.success(isRtl ? 'تم تطبيق سحر الذكاء الاصطناعي!' : 'AI magic applied!');
+            } else {
+                toast.error(res.message || 'AI processing failed');
+            }
+        } catch (err) {
+            toast.error('AI processing failed');
+        } finally {
+            setIsAIProcessing(false);
         }
     };
 
@@ -214,15 +229,20 @@ export default function ContentWriterPage() {
                         />
 
                         <div className="px-8 py-6 border-t border-slate-100 flex justify-end gap-4 bg-slate-50/30">
-                            <button className="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-600 transition-all">
-                                {isRtl ? 'حفظ كمسودة' : 'Save as Draft'}
+                            <button 
+                                onClick={() => selectedClient && saveMutation.mutate()}
+                                disabled={!selectedClient || !content.trim() || saveMutation.isPending || saveMutation.isPending}
+                                className="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-600 transition-all disabled:opacity-30"
+                            >
+                                {saveMutation.isPending ? (isRtl ? 'جاري الحفظ...' : 'Saving...') : (isRtl ? 'حفظ كمسودة' : 'Save as Draft')}
                             </button>
                             <button 
                                 onClick={() => submitMutation.mutate()}
                                 disabled={!selectedClient || !content.trim() || submitMutation.isPending}
                                 className="px-10 py-3 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-slate-900/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-3 disabled:opacity-50 disabled:pointer-events-none"
                             >
-                                <Send size={14} /> {t.submit}
+                                {submitMutation.isPending ? <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Send size={14} />}
+                                {t.submit}
                             </button>
                         </div>
                     </div>

@@ -91,7 +91,7 @@ export default function DailyReportPage() {
         queryClient.invalidateQueries({ queryKey: ['today-report'] });
         queryClient.invalidateQueries({ queryKey: ['my-reports'] });
       } else {
-        toast.error(res.message || 'Error');
+        toast.error(res.message || (isRtl ? 'حدث خطأ أثناء إرسال التقرير، يرجى المحاولة مرة أخرى' : 'Failed to submit report, please try again'));
       }
     }
   });

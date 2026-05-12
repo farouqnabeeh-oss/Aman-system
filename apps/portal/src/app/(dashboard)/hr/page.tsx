@@ -21,12 +21,16 @@ const T = {
     attendance: 'الحضور', leaves: 'الإجازات', payroll: 'الرواتب',
     present: 'حاضر اليوم', onLeave: 'في إجازة', late: 'متأخرون', totalPayroll: 'إجمالي الرواتب',
     employee: 'الموظف', status: 'الحالة', checkIn: 'وقت الحضور', dept: 'القسم',
+    checkInBtn: 'تسجيل دخول', checkOutBtn: 'تسجيل خروج',
+    requestLeave: 'طلب إجازة',
   },
   en: {
     hr: 'Human Resources', hrSub: 'Personnel management, attendance tracking and payroll',
     attendance: 'Attendance', leaves: 'Leave Requests', payroll: 'Payroll',
     present: 'Present Today', onLeave: 'On Leave', late: 'Late Arrivals', totalPayroll: 'Total Payroll',
     employee: 'Employee', status: 'Status', checkIn: 'Check-in', dept: 'Department',
+    checkInBtn: 'Check In', checkOutBtn: 'Check Out',
+    requestLeave: 'Request Leave',
   }
 };
 
@@ -162,15 +166,17 @@ export default function HrPage() {
             <div className="flex gap-2">
                 <button 
                     onClick={() => attendanceMutation.mutate('IN')}
-                    className="flex-1 py-2 rounded-lg bg-brand text-white text-[9px] font-black uppercase tracking-widest hover:bg-brand/90 transition-all shadow-md"
+                    disabled={attendanceMutation.isPending}
+                    className="flex-1 py-2 rounded-lg bg-brand text-white text-[9px] font-black uppercase tracking-widest hover:bg-brand/90 transition-all shadow-md disabled:opacity-50"
                 >
-                    Check In
+                    {attendanceMutation.isPending ? '...' : t.checkInBtn}
                 </button>
                 <button 
                     onClick={() => attendanceMutation.mutate('OUT')}
-                    className="flex-1 py-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-600 text-[9px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all"
+                    disabled={attendanceMutation.isPending}
+                    className="flex-1 py-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-600 text-[9px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all disabled:opacity-50"
                 >
-                    Check Out
+                    {attendanceMutation.isPending ? '...' : t.checkOutBtn}
                 </button>
             </div>
         </div>
@@ -192,7 +198,6 @@ export default function HrPage() {
             ))}
         </div>
         
-        <div className="flex items-center gap-3 flex-1 min-w-[300px]">
             <div className="flex-1 flex items-center gap-4 bg-white border border-slate-100 rounded-xl px-5 py-2.5 focus-within:border-brand/40 transition-all shadow-sm">
                 <Search size={16} className="text-slate-400" />
                 <input 
@@ -202,15 +207,12 @@ export default function HrPage() {
                     className="bg-transparent text-xs text-slate-900 outline-none w-full font-medium placeholder:text-slate-300" 
                 />
             </div>
-            {tab === 'leaves' && (
-                <button 
-                    onClick={() => setIsLeaveModalOpen(true)}
-                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-brand text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-brand/20 hover:scale-105 transition-all whitespace-nowrap"
-                >
-                    <Plus size={14} /> {isRtl ? 'طلب إجازة' : 'Request Leave'}
-                </button>
-            )}
-        </div>
+            <button 
+                onClick={() => setIsLeaveModalOpen(true)}
+                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-brand text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-brand/20 hover:scale-105 transition-all whitespace-nowrap"
+            >
+                <Plus size={14} /> {t.requestLeave}
+            </button>
       </div>
 
       {/* Attendance Tab */}

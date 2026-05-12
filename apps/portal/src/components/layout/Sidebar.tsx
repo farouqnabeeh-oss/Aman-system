@@ -44,7 +44,7 @@ const NAV_ITEMS = (t: any) => [
   { path: '/projects', label: t.projects, icon: FolderKanban, color: 'text-amber-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'], depts: ['OPERATIONS', 'MARKETING', 'IT'] },
   { path: '/tasks', label: t.tasks, icon: CheckSquare, color: 'text-sky-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'] },
   { path: '/files', label: t.files, icon: FileText, color: 'text-teal-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'] },
-  { path: '/hr', label: t.hr, icon: HeartPulse, color: 'text-rose-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'], depts: ['HR'] },
+  { path: '/hr', label: t.hr, icon: HeartPulse, color: 'text-rose-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'] },
   { path: '/secretary', label: t.secretary, icon: ClipboardList, color: 'text-violet-500', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'SECRETARY'] },
   { path: '/social-media', label: t.socialMedia, icon: LayoutDashboard, color: 'text-pink-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'], depts: ['SOCIAL_MEDIA'] },
   { path: '/content-writer', label: t.contentWriter, icon: PenTool, color: 'text-pink-500', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'], positions: ['CONTENT_WRITER', 'WRITER', 'كاتب محتوى'] },

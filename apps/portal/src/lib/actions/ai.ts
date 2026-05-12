@@ -16,16 +16,16 @@ export async function processAIContent(text: string, action: 'REWRITE' | 'HOOK' 
 
     switch (action) {
         case 'HOOK':
-            result = `🔥 BREAKING: ${text}\n\nDid you know that...`;
+            result = `✨ [AI Hook] هل تعلم أن: ${text.slice(0, 100)}...\n\nفي هذا المقال، سنكشف لك الأسرار التي ستغير نظرتك للأمر تماماً! 🚀\n\n#صناعة_المحتوى #ذكاء_اصطناعي`;
             break;
         case 'EXPAND':
-            result = `${text}\n\nFurthermore, this approach ensures maximum engagement and builds long-term trust with your audience. By focusing on quality and consistency, we can achieve sustainable growth.`;
+            result = `${text}\n\nبالإضافة إلى ذلك، يجب أن ندرك أن هذا النهج يساهم بشكل مباشر في تعزيز التفاعل وبناء جسور الثقة مع الجمهور المستهدف على المدى الطويل. من خلال التركيز على الجودة والاستمرارية، يمكننا تحقيق نمو مستدام يتجاوز التوقعات ويخلق قيمة حقيقية للعلامة التجارية.\n\nعلاوة على ذلك، فإن التفاصيل الدقيقة في التنفيذ هي ما يصنع الفارق التنافسي في السوق المزدحم حالياً.`;
             break;
         case 'REWRITE':
-            result = `✨ [Refined] ${text.toUpperCase()}`;
+            result = `💎 [نسخة محسنة] ${text}\n\nتمت إعادة صياغة هذا النص ليكون أكثر جاذبية واحترافية، مع الحفاظ على الجوهر الأصلي للرسالة وتطوير الأسلوب ليتناسب مع تطلعات القارئ الحديث.`;
             break;
         case 'SUMMARIZE':
-            result = `📝 Summary: ${text.slice(0, 50)}...`;
+            result = `📝 الملخص: ${text.slice(0, 150)}...\n\nالخلاصة: التركيز على القيمة الأساسية وتقديمها بشكل مباشر ومختصر.`;
             break;
     }
 
