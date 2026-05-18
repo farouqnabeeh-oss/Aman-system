@@ -13,6 +13,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
 import { getAcquisitionStats, getExpiringClients, createClientLead, updateClientStatus, getLeads, deleteClient, updateClient } from '@/lib/actions/acquisition';
 import toast from 'react-hot-toast';
+import { useAuthStore } from '@/store/auth.store';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -79,8 +80,13 @@ export default function AcquisitionPage() {
         status: 'POTENTIAL',
         packagePrice: '',
         packageDesc: '',
+        startDate: new Date().toISOString().split('T')[0],
         endDate: ''
     });
+
+    const user = useAuthStore(s => s.user);
+    const isManagerOrAdmin = ['SUPER_ADMIN', 'ADMIN', 'MANAGER'].includes(user?.role || '');
+    const canAddLead = isManagerOrAdmin || user?.department === 'MARKETING' || user?.department === 'SOCIAL_MEDIA' || user?.position === 'مستقطب';
 
     const { data: stats = { POTENTIAL: 0, NEGOTIATING: 0, AGREED: 0 } } = useQuery({
         queryKey: ['acquisition-stats'],
@@ -123,7 +129,7 @@ export default function AcquisitionPage() {
             toast.success(editingId ? 'System updated' : 'Lead deployed');
             setIsModalOpen(false);
             setEditingId(null);
-            setForm({ name: '', phone: '', status: 'POTENTIAL', packagePrice: '', packageDesc: '', endDate: '' });
+            setForm({ name: '', phone: '', status: 'POTENTIAL', packagePrice: '', packageDesc: '', startDate: new Date().toISOString().split('T')[0], endDate: '' });
             queryClient.invalidateQueries({ queryKey: ['acquisition-stats'] });
             queryClient.invalidateQueries({ queryKey: ['leads'] });
         } else {
@@ -149,6 +155,7 @@ export default function AcquisitionPage() {
             status: l.status,
             packagePrice: l.smDetails?.packagePrice?.toString() || '',
             packageDesc: l.smDetails?.packageDesc || '',
+            startDate: l.smDetails?.startDate ? new Date(l.smDetails.startDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
             endDate: l.smDetails?.endDate ? new Date(l.smDetails.endDate).toISOString().split('T')[0] : ''
         });
         setIsModalOpen(true);
@@ -160,9 +167,11 @@ export default function AcquisitionPage() {
                 title={t.title}
                 description={t.subtitle}
                 action={
-                    <button onClick={() => { setEditingId(null); setForm({ name: '', phone: '', status: 'POTENTIAL', packagePrice: '', packageDesc: '', endDate: '' }); setIsModalOpen(true); }} className="flex items-center gap-2 px-6 py-3 rounded-xl bg-brand text-white text-[10px] font-black uppercase tracking-widest hover:bg-brand/90 transition-all shadow-lg">
-                        <Plus size={14} /> {t.addLead}
-                    </button>
+                    canAddLead ? (
+                        <button onClick={() => { setEditingId(null); setForm({ name: '', phone: '', status: 'POTENTIAL', packagePrice: '', packageDesc: '', startDate: new Date().toISOString().split('T')[0], endDate: '' }); setIsModalOpen(true); }} className="flex items-center gap-2 px-6 py-3 rounded-xl bg-brand text-white text-[10px] font-black uppercase tracking-widest hover:bg-brand/90 transition-all shadow-lg">
+                            <Plus size={14} /> {t.addLead}
+                        </button>
+                    ) : null
                 }
             />
 
@@ -281,8 +290,12 @@ export default function AcquisitionPage() {
                                     </td>
                                     <td className="px-10 py-5 text-right">
                                         <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                                            <button onClick={() => handleEdit(l)} className="p-2 rounded-lg bg-slate-100 text-slate-400 hover:text-slate-900 transition-all"><Edit2 size={14} /></button>
-                                            <button onClick={() => handleDelete(l.id)} className="p-2 rounded-lg bg-slate-100 text-slate-400 hover:text-rose-500 transition-all"><Trash2 size={14} /></button>
+                                            {(isManagerOrAdmin || l.status !== 'AGREED') && (
+                                                <button onClick={() => handleEdit(l)} className="p-2 rounded-lg bg-slate-100 text-slate-400 hover:text-slate-900 transition-all"><Edit2 size={14} /></button>
+                                            )}
+                                            {isManagerOrAdmin && (
+                                                <button onClick={() => handleDelete(l.id)} className="p-2 rounded-lg bg-slate-100 text-slate-400 hover:text-rose-500 transition-all"><Trash2 size={14} /></button>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>
@@ -315,9 +328,12 @@ export default function AcquisitionPage() {
                         <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-4 pt-4 border-t border-slate-100">
                             <div className="grid grid-cols-2 gap-4">
                                 <Input label={t.packagePrice} type="number" value={form.packagePrice} onChange={(e: any) => setForm({ ...form, packagePrice: e.target.value })} placeholder="5000" />
+                                <Input label={t.packageDesc} value={form.packageDesc} onChange={(e: any) => setForm({ ...form, packageDesc: e.target.value })} placeholder="Silver Package - 12 Posts" />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <Input label={isRtl ? 'تاريخ البدء' : 'Start Date'} type="date" value={form.startDate} onChange={(e: any) => setForm({ ...form, startDate: e.target.value })} />
                                 <Input label={t.expiryDate} type="date" value={form.endDate} onChange={(e: any) => setForm({ ...form, endDate: e.target.value })} />
                             </div>
-                            <Input label={t.packageDesc} value={form.packageDesc} onChange={(e: any) => setForm({ ...form, packageDesc: e.target.value })} placeholder="Silver Package - 12 Posts" />
                         </motion.div>
                     )}
 

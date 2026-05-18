@@ -323,3 +323,21 @@ export async function selfAttendance(action: 'IN' | 'OUT') {
     return { success: false, error: 'Attendance operation failed' };
   }
 }
+
+export async function getSelfAttendanceToday() {
+  const session = await getSession();
+  if (!session) return { success: false, error: 'Unauthorized' };
+
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const record = await prisma.attendanceRecord.findUnique({
+      where: { userId_date: { userId: session.userId, date: today } },
+    });
+
+    return { success: true, data: record };
+  } catch (err) {
+    return { success: false, error: 'Failed' };
+  }
+}

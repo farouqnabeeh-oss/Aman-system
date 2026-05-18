@@ -8,6 +8,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Input, Select } from '@/components/ui/Input';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
+import { useAuthStore } from '@/store/auth.store';
 
 import { getTasks, createTask, updateTask, deleteTask } from '@/lib/actions/tasks';
 import { getUsers } from '@/lib/actions/users';
@@ -23,7 +24,7 @@ const T = {
     search: 'بحث في المهام...', allPriority: 'كل الأولويات',
     total: 'إجمالي المهام', inProgress: 'قيد التنفيذ', completed: 'مكتملة', overdue: 'متأخرة',
     newTask: 'مهمة جديدة', title: 'عنوان المهمة', desc: 'الوصف',
-    priority: 'الأولوية', assignee: 'المكلف بها', project: 'المشروع',
+    priority: 'الأولوية', assignee: 'المكلف بها', project: 'المشروع', dept: 'القسم / المصلحة',
     save: 'حفظ المهمة', cancel: 'إلغاء',
     noTasks: 'لا يوجد مهام مطابقة للبحث',
     deleteConfirm: 'هل أنت متأكد من حذف المهمة؟',
@@ -33,7 +34,7 @@ const T = {
     search: 'Search tasks...', allPriority: 'All Priorities',
     total: 'Total Tasks', inProgress: 'In Progress', completed: 'Completed', overdue: 'Overdue',
     newTask: 'New Task', title: 'Task Title', desc: 'Description',
-    priority: 'Priority', assignee: 'Assignee', project: 'Project',
+    priority: 'Priority', assignee: 'Assignee', project: 'Project', dept: 'Department',
     save: 'Save Task', cancel: 'Cancel',
     noTasks: 'No tasks found matching your search',
     deleteConfirm: 'Are you sure you want to delete this task?',
@@ -71,10 +72,24 @@ export default function TasksPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   
+  const DEPARTMENTS = [
+    { value: 'SOCIAL_MEDIA', label: isRtl ? 'السوشال ميديا' : 'Social Media' },
+    { value: 'MARKETING', label: isRtl ? 'التسويق' : 'Marketing' },
+    { value: 'PROGRAMMING', label: isRtl ? 'البرمجة' : 'Programming' },
+    { value: 'PROJECTS', label: isRtl ? 'المشاريع' : 'Projects' },
+    { value: 'HR', label: isRtl ? 'الموارد البشرية' : 'HR' },
+    { value: 'FINANCE', label: isRtl ? 'المالية' : 'Finance' },
+    { value: 'OPERATIONS', label: isRtl ? 'العمليات' : 'Operations' },
+    { value: 'OTHER', label: isRtl ? 'أخرى' : 'Other' },
+  ];
+
   const [form, setForm] = useState({
     title: '', description: '', priority: 'MEDIUM',
-    projectId: '', assigneeId: '', dueDate: '', status: 'TODO'
+    projectId: '', assigneeId: '', startDate: '', dueDate: '', status: 'TODO', department: ''
   });
+
+  const user = useAuthStore(s => s.user);
+  const isManagerOrAdmin = ['SUPER_ADMIN', 'ADMIN', 'MANAGER'].includes(user?.role || '');
 
   const [extModal, setExtModal] = useState<any>(null);
   const [extForm, setExtForm] = useState({ date: '', reason: '' });
@@ -113,6 +128,7 @@ export default function TasksPage() {
     
     const payload = {
         ...form,
+        startDate: form.startDate ? new Date(form.startDate).toISOString() : undefined,
         dueDate: form.dueDate ? new Date(form.dueDate).toISOString() : undefined
     };
 
@@ -134,7 +150,7 @@ export default function TasksPage() {
 
   const resetForm = () => {
     setEditingId(null);
-    setForm({ title: '', description: '', priority: 'MEDIUM', projectId: '', assigneeId: '', dueDate: '', status: 'TODO' });
+    setForm({ title: '', description: '', priority: 'MEDIUM', projectId: '', assigneeId: '', startDate: '', dueDate: '', status: 'TODO', department: '' });
   };
 
   const handleEdit = (task: any) => {
@@ -145,8 +161,10 @@ export default function TasksPage() {
       priority: task.priority,
       projectId: task.projectId,
       assigneeId: task.assigneeId || '',
+      startDate: task.startDate ? new Date(task.startDate).toISOString().split('T')[0] : '',
       dueDate: task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '',
-      status: task.status
+      status: task.status,
+      department: task.department || ''
     });
     setIsModalOpen(true);
   };
@@ -259,9 +277,13 @@ export default function TasksPage() {
                 >
                     {Object.keys(statusMap).map(s => <option key={s} value={s} className="bg-white text-slate-900">{s}</option>)}
                 </select>
-                <button onClick={() => handleEdit(task)} className="p-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-brand transition-all"><Edit2 size={16} /></button>
+                {(task.reporterId === user?.id || isManagerOrAdmin) && (
+                    <button onClick={() => handleEdit(task)} className="p-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-brand transition-all"><Edit2 size={16} /></button>
+                )}
                 <button onClick={() => { setSelectedTask(task); setDetailModalOpen(true); }} className="p-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-brand transition-all"><ExternalLink size={16} /></button>
-                <button onClick={() => handleDelete(task.id)} className="p-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-rose-500 transition-all"><Trash2 size={16} /></button>
+                {(task.reporterId === user?.id || isManagerOrAdmin) && (
+                    <button onClick={() => handleDelete(task.id)} className="p-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-rose-500 transition-all"><Trash2 size={16} /></button>
+                )}
               </div>
             </motion.div>
           );
@@ -274,14 +296,15 @@ export default function TasksPage() {
           <Input label={t.title} value={form.title} onChange={(e: any) => setForm({...form, title: e.target.value})} placeholder="What needs to be done?" />
           <Input label={t.desc} value={form.description} onChange={(e: any) => setForm({...form, description: e.target.value})} placeholder="Provide context..." />
           
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <Select 
               label={t.priority} 
               value={form.priority} 
               options={['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].map(p => ({ value: p, label: p }))}
               onChange={(e: any) => setForm({...form, priority: e.target.value})}
             />
-             <Input label="Due Date" type="date" value={form.dueDate} onChange={(e: any) => setForm({...form, dueDate: e.target.value})} />
+            <Input label={isRtl ? 'تاريخ البدء' : 'Start Date'} type="date" value={form.startDate} onChange={(e: any) => setForm({...form, startDate: e.target.value})} />
+            <Input label="Due Date" type="date" value={form.dueDate} onChange={(e: any) => setForm({...form, dueDate: e.target.value})} />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -300,6 +323,14 @@ export default function TasksPage() {
               placeholder="Assign To"
             />
           </div>
+
+          <Select
+            label={t.dept}
+            value={form.department}
+            options={DEPARTMENTS}
+            onChange={(e: any) => setForm({...form, department: e.target.value})}
+            placeholder={isRtl ? 'اختر القسم / المصلحة' : 'Select Department'}
+          />
 
           <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-slate-100">
             <button className="px-6 py-3 rounded-xl bg-slate-100 text-[10px] font-black text-slate-500 uppercase tracking-widest hover:bg-slate-200" onClick={() => setIsModalOpen(false)}>
@@ -357,10 +388,14 @@ function TaskDetailView({ task, isRtl, t, onClose }: any) {
                                 <p className="text-sm font-black text-slate-900 uppercase tracking-tight">{task.assigneeName || 'Unassigned'}</p>
                             </div>
                             <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t.dept || 'Department'}</p>
+                                <p className="text-sm font-black text-slate-900 uppercase tracking-tight">{task.department || '-'}</p>
+                            </div>
+                            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t.priority}</p>
                                 <p className={clsx("text-sm font-black uppercase tracking-tight", priorityColor[task.priority]?.split(' ')[0])}>{task.priority}</p>
                             </div>
-                            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 col-span-2">
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Status</p>
                                 <p className="text-sm font-black text-slate-900 uppercase tracking-tight">{task.status}</p>
                             </div>

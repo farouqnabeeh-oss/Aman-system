@@ -71,7 +71,7 @@ export async function createClientLead(data: any) {
   if (!session) return { success: false, message: 'Unauthorized' };
 
   try {
-    const { packagePrice, packageDesc, endDate, ...clientData } = data;
+    const { packagePrice, packageDesc, startDate, endDate, ...clientData } = data;
 
     const client = await prisma.client.create({
       data: {
@@ -80,7 +80,7 @@ export async function createClientLead(data: any) {
         ...(clientData.status === 'AGREED' ? {
           smDetails: {
             create: {
-              startDate: new Date(),
+              startDate: startDate ? new Date(startDate) : new Date(),
               endDate: endDate ? new Date(endDate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
               packagePrice: packagePrice ? Number(packagePrice) : null,
               packageDesc: packageDesc || null,
@@ -148,10 +148,18 @@ export async function updateClientStatus(clientId: string, status: string, packa
 }
 
 export async function getLeads() {
+  const session = await getSession();
+  if (!session) return { success: false, message: 'Unauthorized' };
+
   try {
+    const isManagerOrAdmin = ['SUPER_ADMIN', 'ADMIN', 'MANAGER'].includes(session.role);
     const leads = await prisma.client.findMany({
-      where: { deletedAt: null } as any,
+      where: { 
+        deletedAt: null,
+        ...(!isManagerOrAdmin ? { createdById: session.userId } : {})
+      } as any,
       orderBy: { createdAt: 'desc' },
+      include: { smDetails: true },
     });
     return { success: true, data: leads };
   } catch (err) {
@@ -182,7 +190,14 @@ export async function updateClient(id: string, data: any) {
   if (!session) return { success: false, message: 'Unauthorized' };
 
   try {
-    const { packagePrice, packageDesc, endDate, ...clientData } = data;
+    const existingClient = await prisma.client.findUnique({ where: { id } });
+    const isManagerOrAdmin = ['SUPER_ADMIN', 'ADMIN', 'MANAGER'].includes(session.role);
+
+    if (existingClient?.status === 'AGREED' && !isManagerOrAdmin) {
+      return { success: false, message: 'Cannot edit an approved project' };
+    }
+
+    const { packagePrice, packageDesc, startDate, endDate, ...clientData } = data;
 
     const updated = await prisma.client.update({
       where: { id },
@@ -192,12 +207,13 @@ export async function updateClient(id: string, data: any) {
           smDetails: {
             upsert: {
               create: {
-                startDate: new Date(),
+                startDate: startDate ? new Date(startDate) : new Date(),
                 endDate: endDate ? new Date(endDate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
                 packagePrice: packagePrice ? Number(packagePrice) : null,
                 packageDesc: packageDesc || null,
               },
               update: {
+                startDate: startDate ? new Date(startDate) : undefined,
                 endDate: endDate ? new Date(endDate) : undefined,
                 packagePrice: packagePrice ? Number(packagePrice) : undefined,
                 packageDesc: packageDesc || undefined,

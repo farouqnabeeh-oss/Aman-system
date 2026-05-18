@@ -257,9 +257,11 @@ export const CreateTaskSchema = z.object({
   priority: TaskPrioritySchema.default('MEDIUM'),
   projectId: cuid,
   assigneeId: cuid.optional(),
+  startDate: isoDate.optional(),
   dueDate: isoDate.optional(),
   estimatedHours: positiveDecimal.optional(),
   tags: z.array(z.string().max(50)).max(10).default([]),
+  department: DepartmentSchema.optional(),
 });
 
 export const UpdateTaskSchema = CreateTaskSchema.partial().extend({

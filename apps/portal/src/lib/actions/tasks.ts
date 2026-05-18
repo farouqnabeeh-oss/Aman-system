@@ -93,12 +93,23 @@ export async function updateTask(id: string, data: any) {
   if (!session) return { success: false, error: 'Unauthorized' };
 
   try {
+    const task = await prisma.task.findUnique({ where: { id } });
+    if (!task) return { success: false, error: 'Task not found' };
+
+    const isReporterOrManager = session.userId === task.reporterId || ['SUPER_ADMIN', 'ADMIN', 'MANAGER'].includes(session.role);
+
+    let updateData = { ...data, tags: data.tags?.join(',') || data.tags };
+
+    if (!isReporterOrManager) {
+        if (!data.status) {
+            return { success: false, error: 'Employees can only update task status' };
+        }
+        updateData = { status: data.status };
+    }
+
     const updated = await prisma.task.update({
       where: { id },
-      data: {
-        ...data,
-        tags: data.tags?.join(',') || data.tags,
-      },
+      data: updateData,
     });
     await logAction({
       userId: session.userId,
