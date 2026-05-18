@@ -16,6 +16,7 @@ import { clsx } from 'clsx';
 import { getSMClients, updateSMDetails, getDeptMembers, getSMStats, createSMTask } from '@/lib/actions/social-media';
 import toast from 'react-hot-toast';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { RestrictedAccess } from '@/components/ui/RestrictedAccess';
 
 const T = {
     ar: {
@@ -95,6 +96,7 @@ export default function SocialMediaPage() {
     ];
 
     return (
+        <RestrictedAccess departments={['SOCIAL_MEDIA']}>
         <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-6">
             <PageHeader title={t.title} description={t.subtitle} />
 
@@ -136,6 +138,7 @@ export default function SocialMediaPage() {
                 {tab === 'creative' && <CreativeTab key="creative" clients={clients} t={t} isRtl={isRtl} />}
             </AnimatePresence>
         </motion.div>
+        </RestrictedAccess>
     );
 }
 

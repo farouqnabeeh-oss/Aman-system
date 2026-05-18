@@ -17,6 +17,7 @@ import { getSMClients, updateSMDetails, createSMTask } from '@/lib/actions/socia
 import { updateBrandGuideline } from '@/lib/actions/client';
 import { Modal } from '@/components/ui/Modal';
 import { Input, Select } from '@/components/ui/Input';
+import { RestrictedAccess } from '@/components/ui/RestrictedAccess';
 
 const T = {
     ar: {
@@ -92,6 +93,7 @@ export default function PageManagerPage() {
     });
 
     return (
+        <RestrictedAccess positions={['PAGE_MANAGER', 'MODERATOR', 'مدير صفحات']}>
         <div className="space-y-8">
             {/* Header */}
             <div className="flex items-center gap-5">
@@ -315,5 +317,6 @@ export default function PageManagerPage() {
                 </div>
             </Modal>
         </div>
+        </RestrictedAccess>
     );
 }

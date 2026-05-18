@@ -67,10 +67,45 @@ export async function analyzePerformance(userId: string) {
 
         await new Promise(r => setTimeout(r, 2000));
 
+        const count = reports.length;
+        const total = 7;
+
+        // Dynamic consistency classification
+        let consistency: string;
+        let aiScore: number;
+        let recommendation: string;
+
+        if (count === 7) {
+            consistency = `Perfect (${count}/${total} days)`;
+            aiScore = 98 + Math.floor(Math.random() * 3); // 98-100
+            recommendation = '🏆 Outstanding! You have achieved perfect consistency this week. Your dedication sets the gold standard for the team.';
+        } else if (count >= 5) {
+            consistency = `Excellent (${count}/${total} days)`;
+            aiScore = 85 + Math.floor(Math.random() * 11); // 85-95
+            recommendation = '⭐ Strong performance! You are highly consistent. Aim for a perfect week and inspire your colleagues.';
+        } else if (count >= 3) {
+            consistency = `Good (${count}/${total} days)`;
+            aiScore = 65 + Math.floor(Math.random() * 16); // 65-80
+            recommendation = '📈 Solid effort! There is room to improve consistency. Try to report daily to maintain momentum and visibility.';
+        } else if (count >= 1) {
+            consistency = `Needs Improvement (${count}/${total} days)`;
+            aiScore = 35 + Math.floor(Math.random() * 21); // 35-55
+            recommendation = '⚠️ Reporting gaps detected. Consistent daily reports are essential for performance tracking. Please prioritize this going forward.';
+        } else {
+            consistency = `Critical — No Reports (0/${total} days)`;
+            aiScore = 0;
+            recommendation = '🚨 No reports submitted this week. Daily reporting is mandatory. Contact your manager immediately.';
+        }
+
+        const avgWordCount = count > 0
+            ? Math.round(reports.reduce((sum, r) => sum + (r.done?.split(' ').length || 0), 0) / count)
+            : 0;
+
         const summary = `🚀 PERFORMANCE ANALYSIS (Last 7 Days):
-- Consistency: Excellent (${reports.length}/7 days reported).
-- AI Score: 92/100.
-- Recommendation: Keep up the high engagement.`;
+- Consistency: ${consistency}.
+- AI Score: ${Math.min(100, aiScore)}/100.
+- Average Report Depth: ~${avgWordCount} words per report.
+- Recommendation: ${recommendation}`;
 
         return { success: true, data: summary };
     } catch (err) {

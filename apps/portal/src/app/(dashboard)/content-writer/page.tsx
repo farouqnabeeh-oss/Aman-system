@@ -12,6 +12,7 @@ import toast from 'react-hot-toast';
 import { clsx } from 'clsx';
 import { getSMClients, updateSMDetails } from '@/lib/actions/social-media';
 import { processAIContent } from '@/lib/actions/ai';
+import { RestrictedAccess } from '@/components/ui/RestrictedAccess';
 
 const T = {
     ar: {
@@ -130,6 +131,7 @@ export default function ContentWriterPage() {
     };
 
     return (
+        <RestrictedAccess positions={['CONTENT_WRITER', 'WRITER', 'كاتب محتوى']}>
         <div className="space-y-8">
             <div className="flex items-center gap-5">
                 <div className="w-14 h-14 rounded-2xl bg-pink-500/10 border border-pink-500/20 flex items-center justify-center text-pink-500 shadow-inner">
@@ -241,6 +243,7 @@ export default function ContentWriterPage() {
                 </div>
             </div>
         </div>
+        </RestrictedAccess>
     );
 }
 

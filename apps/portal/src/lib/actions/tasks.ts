@@ -98,13 +98,33 @@ export async function updateTask(id: string, data: any) {
 
     const isReporterOrManager = session.userId === task.reporterId || ['SUPER_ADMIN', 'ADMIN', 'MANAGER'].includes(session.role);
 
-    let updateData = { ...data, tags: data.tags?.join(',') || data.tags };
+    // Strip UI-only helper fields that don't exist in the DB schema
+    const UI_ONLY_FIELDS = [
+      'assigneeName', 'projectName', 'assignee', 'project',
+      'reporter', 'id', 'createdAt', 'updatedAt', 'deletedAt', 'reporterId',
+    ];
+
+    let updateData: Record<string, any> = {};
+    for (const [key, val] of Object.entries(data)) {
+      if (UI_ONLY_FIELDS.includes(key)) continue;
+      // Convert empty-string relation ID to undefined so Prisma ignores it
+      if (key === 'assigneeId' && typeof val === 'string' && val.trim() === '') {
+        updateData[key] = null;
+        continue;
+      }
+      updateData[key] = val;
+    }
+
+    // Handle tags serialization
+    if (Array.isArray(updateData.tags)) {
+      updateData.tags = updateData.tags.join(',');
+    }
 
     if (!isReporterOrManager) {
-        if (!data.status) {
-            return { success: false, error: 'Employees can only update task status' };
-        }
-        updateData = { status: data.status };
+      if (!data.status) {
+        return { success: false, error: 'Employees can only update task status' };
+      }
+      updateData = { status: data.status };
     }
 
     const updated = await prisma.task.update({
@@ -122,6 +142,8 @@ export async function updateTask(id: string, data: any) {
     revalidatePath('/dashboard');
     return { success: true, data: updated };
   } catch (err) {
+    console.error('[updateTask]', err);
     return { success: false, error: 'Failed to update task' };
   }
 }
+

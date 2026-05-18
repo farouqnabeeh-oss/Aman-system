@@ -100,9 +100,27 @@ export async function updateProject(id: string, data: any) {
   if (!session) return { success: false, error: 'Unauthorized' };
 
   try {
+    // Strip UI-only helper fields that don't exist in the DB schema
+    const UI_ONLY_FIELDS = [
+      'managerName', 'tasksCount', 'manager', '_count',
+      'createdBy', 'tasks', 'id', 'createdAt', 'updatedAt',
+      'deletedAt', 'createdById',
+    ];
+    const sanitized: Record<string, any> = {};
+    for (const [key, val] of Object.entries(data)) {
+      if (UI_ONLY_FIELDS.includes(key)) continue;
+      // Convert empty-string relation IDs to undefined so Prisma ignores them
+      if (typeof val === 'string' && val.trim() === '' &&
+          (key === 'managerId' || key === 'clientId')) {
+        sanitized[key] = undefined;
+        continue;
+      }
+      sanitized[key] = val;
+    }
+
     const updated = await prisma.project.update({
       where: { id },
-      data,
+      data: sanitized,
     });
     await logAction({
       userId: session.userId,
@@ -115,6 +133,7 @@ export async function updateProject(id: string, data: any) {
     revalidatePath('/dashboard');
     return { success: true, data: updated };
   } catch (err) {
+    console.error('[updateProject]', err);
     return { success: false, error: 'Failed to update project' };
   }
 }

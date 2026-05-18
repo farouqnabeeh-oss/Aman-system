@@ -15,6 +15,8 @@ import toast from 'react-hot-toast';
 import { clsx } from 'clsx';
 import { getSMClients, updateSMDetails } from '@/lib/actions/social-media';
 import { updateTask } from '@/lib/actions/tasks';
+import { RestrictedAccess } from '@/components/ui/RestrictedAccess';
+
 
 const T = {
     ar: {
@@ -79,6 +81,9 @@ export default function CreativeStudioPage() {
     });
 
     return (
+        <RestrictedAccess
+            positions={['DESIGNER', 'EDITOR', 'VIDEOGRAPHER', 'مصمم', 'مونتير', 'CREATIVE_DESIGNER']}
+        >
         <div className="space-y-8">
             {/* Header */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -192,5 +197,6 @@ export default function CreativeStudioPage() {
                 )}
             </div>
         </div>
+        </RestrictedAccess>
     );
 }

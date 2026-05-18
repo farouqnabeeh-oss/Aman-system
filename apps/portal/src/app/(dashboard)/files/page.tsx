@@ -12,7 +12,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Input, Select } from '@/components/ui/Input';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { getFiles, deleteFile, uploadFileMetadata } from '@/lib/actions/files';
+import { getFiles, deleteFile } from '@/lib/actions/files';
 import toast from 'react-hot-toast';
 import { clsx } from 'clsx';
 
@@ -83,28 +83,24 @@ export default function FilesPage() {
     const handleUpload = async () => {
         if (!selectedFile) return;
         setUploading(true);
-        
-        try {
-            // Simulate storage path (In a real app, this would be the S3/Blob key)
-            const storagePath = `uploads/${Date.now()}-${selectedFile.name}`;
-            
-            const res = await uploadFileMetadata({
-                name: overrideName || selectedFile.name,
-                originalName: selectedFile.name,
-                mimeType: selectedFile.type,
-                sizeBytes: selectedFile.size,
-                storagePath: storagePath,
-                publicUrl: URL.createObjectURL(selectedFile), // Temporary URL for demo
-            });
 
-            if (res.success) {
+        try {
+            const fd = new FormData();
+            fd.append('file', selectedFile);
+            fd.append('folderPath', '/');
+            fd.append('visibility', 'PRIVATE');
+
+            const res = await fetch('/api/upload', { method: 'POST', body: fd });
+            const json = await res.json();
+
+            if (json.success) {
                 toast.success('File uploaded successfully');
                 setIsModalOpen(false);
                 setSelectedFile(null);
                 setOverrideName('');
                 queryClient.invalidateQueries({ queryKey: ['files'] });
             } else {
-                toast.error(res.message || 'Upload failed');
+                toast.error(json.message || 'Upload failed');
             }
         } catch (err) {
             toast.error('An unexpected error occurred');
@@ -112,6 +108,7 @@ export default function FilesPage() {
             setUploading(false);
         }
     };
+
 
     const handleDelete = async (id: string) => {
         if (!confirm(t.deleteConfirm)) return;
@@ -175,6 +172,17 @@ export default function FilesPage() {
                         variants={fadeIn} 
                         className="glass-card group !p-5 border-slate-100 bg-white hover:bg-slate-50 hover:border-brand/20 transition-all relative overflow-hidden shadow-sm"
                     >
+                        {/* Inline image preview */}
+                        {file.mimeType?.startsWith('image/') && file.publicUrl && (
+                            <div className="-mx-5 -mt-5 mb-4 h-36 overflow-hidden rounded-t-2xl bg-slate-50 border-b border-slate-100">
+                                <img
+                                    src={file.publicUrl}
+                                    alt={file.name}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                />
+                            </div>
+                        )}
                         <div className="flex items-start justify-between mb-4">
                             <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center border border-slate-100 text-slate-600">
                                 {getFileIcon(file.mimeType)}
