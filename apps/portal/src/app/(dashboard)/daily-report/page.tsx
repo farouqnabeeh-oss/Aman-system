@@ -75,11 +75,11 @@ export default function DailyReportPage() {
 
   useEffect(() => {
     if (todayReport) {
-      setForm({
-        done: todayReport.done || '',
-        plan: todayReport.plan || '',
-        blocks: todayReport.blocks || '',
-      });
+      setForm(prev => ({
+        done: todayReport.done || prev.done,
+        plan: todayReport.plan || prev.plan,
+        blocks: todayReport.blocks || prev.blocks,
+      }));
     }
   }, [todayReport]);
 
