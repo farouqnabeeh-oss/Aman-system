@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getAuditLogs } from '@/lib/actions/system';
+import { getAuditLogs, clearAuditLogs } from '@/lib/actions/system';
 import { PageHeader, StatCard } from '@/components/ui/States';
-import { Shield, Activity, Search, Download, Clock, Terminal } from 'lucide-react';
+import { Shield, Activity, Search, Download, Clock, Terminal, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUIStore } from '@/store/ui.store';
 import { clsx } from 'clsx';
@@ -24,6 +24,9 @@ export default function AuditPage() {
   const isRtl = language === 'ar';
   const [search, setSearch] = useState('');
   const [actionFilter, setActionFilter] = useState('');
+  const [showClearMenu, setShowClearMenu] = useState(false);
+
+  const queryClient = useQueryClient();
 
   const { data: logs = [], isLoading } = useQuery({
     queryKey: ['audit'],
@@ -31,10 +34,26 @@ export default function AuditPage() {
     refetchInterval: 30000, // auto-refresh every 30s
   });
 
+  const clearMutation = useMutation({
+    mutationFn: async (period: 'week' | 'month' | 'all') => {
+      const res = await clearAuditLogs(period);
+      if (!res.success) throw new Error(res.message);
+      return res;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['audit'] });
+      alert(isRtl ? `تم حذف ${data.count} من السجلات بنجاح` : `Successfully cleared ${data.count} logs`);
+    },
+    onError: (err: any) => {
+      alert(isRtl ? `فشل حذف السجلات: ${err.message}` : `Failed to clear logs: ${err.message}`);
+    }
+  });
+
+
   const filtered = logs.filter((log: any) =>
     (log.userName?.toLowerCase()?.includes(search.toLowerCase()) ||
-    log.action?.toLowerCase()?.includes(search.toLowerCase()) ||
-    log.entity?.toLowerCase()?.includes(search.toLowerCase())) &&
+      log.action?.toLowerCase()?.includes(search.toLowerCase()) ||
+      log.entity?.toLowerCase()?.includes(search.toLowerCase())) &&
     (actionFilter ? log.action === actionFilter : true)
   );
 
@@ -63,12 +82,59 @@ export default function AuditPage() {
         title={isRtl ? 'سجل المراجعة' : 'Security Audit Trail'}
         description={isRtl ? 'تتبع كافة العمليات والتحركات داخل النظام' : 'Comprehensive ledger of all system operations and security events'}
         action={
-          <button
-            onClick={exportToCSV}
-            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-brand text-white text-[10px] font-black uppercase tracking-widest hover:bg-brand/90 transition-all shadow-lg shadow-brand/20"
-          >
-            <Download size={14} /> {isRtl ? 'تصدير إكسل' : 'Export CSV'}
-          </button>
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <button
+                onClick={() => setShowClearMenu(!showClearMenu)}
+                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-rose-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-rose-700 transition-all shadow-lg shadow-rose-600/20"
+              >
+                <Trash2 size={14} /> {isRtl ? 'مسح السجلات' : 'Clear Logs'}
+              </button>
+              {showClearMenu && (
+                <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden">
+                  <button
+                    onClick={() => {
+                      if (confirm(isRtl ? 'هل أنت متأكد من حذف سجلات الأسبوع الماضي؟' : 'Are you sure you want to delete logs older than a week?')) {
+                        clearMutation.mutate('week');
+                      }
+                      setShowClearMenu(false);
+                    }}
+                    className="w-full text-left rtl:text-right px-4 py-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors border-b border-slate-100"
+                  >
+                    {isRtl ? 'الأقدم من أسبوع' : 'Older than 1 week'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (confirm(isRtl ? 'هل أنت متأكد من حذف سجلات الشهر الماضي؟' : 'Are you sure you want to delete logs older than a month?')) {
+                        clearMutation.mutate('month');
+                      }
+                      setShowClearMenu(false);
+                    }}
+                    className="w-full text-left rtl:text-right px-4 py-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors border-b border-slate-100"
+                  >
+                    {isRtl ? 'الأقدم من شهر' : 'Older than 1 month'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (confirm(isRtl ? 'هل أنت متأكد من حذف جميع السجلات؟' : 'Are you sure you want to delete all logs?')) {
+                        clearMutation.mutate('all');
+                      }
+                      setShowClearMenu(false);
+                    }}
+                    className="w-full text-left rtl:text-right px-4 py-3 text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors"
+                  >
+                    {isRtl ? 'حذف الكل' : 'Clear All Logs'}
+                  </button>
+                </div>
+              )}
+            </div>
+            <button
+              onClick={exportToCSV}
+              className="flex items-center gap-2 px-6 py-3 rounded-xl bg-brand text-white text-[10px] font-black uppercase tracking-widest hover:bg-brand/90 transition-all shadow-lg shadow-brand/20"
+            >
+              <Download size={14} /> {isRtl ? 'تصدير إكسل' : 'Export CSV'}
+            </button>
+          </div>
         }
       />
 

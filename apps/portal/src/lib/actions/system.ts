@@ -78,7 +78,7 @@ export async function getAuditLogs() {
       take: 200,
     });
 
-    const mapped = logs.map(l => ({
+    const mapped = logs.map((l: any) => ({
       ...l,
       userName: l.user ? `${l.user.firstName} ${l.user.lastName}` : 'System',
     }));
@@ -145,10 +145,10 @@ export async function globalSearch(query: string) {
     ]);
 
     const results = [
-      ...users.map(u => ({ id: u.id, type: 'USER', title: `${u.firstName} ${u.lastName}`, subtitle: `${u.role} · ${u.department}`, url: `/users` })),
-      ...projects.map(p => ({ id: p.id, type: 'PROJECT', title: p.name, subtitle: `${p.status} · ${p.department}`, url: `/projects` })),
-      ...tasks.map(t => ({ id: t.id, type: 'TASK', title: t.title, subtitle: t.status, url: `/tasks` })),
-      ...transactions.map(tx => ({ id: tx.id, type: 'TRANSACTION', title: tx.description, subtitle: `${tx.type} · ₪${tx.amount}`, url: `/finance` })),
+      ...users.map((u: any) => ({ id: u.id, type: 'USER', title: `${u.firstName} ${u.lastName}`, subtitle: `${u.role} · ${u.department}`, url: `/users` })),
+      ...projects.map((p: any) => ({ id: p.id, type: 'PROJECT', title: p.name, subtitle: `${p.status} · ${p.department}`, url: `/projects` })),
+      ...tasks.map((t: any) => ({ id: t.id, type: 'TASK', title: t.title, subtitle: t.status, url: `/tasks` })),
+      ...transactions.map((tx: any) => ({ id: tx.id, type: 'TRANSACTION', title: tx.description, subtitle: `${tx.type} · ₪${tx.amount}`, url: `/finance` })),
     ];
 
     return { success: true, data: results };
@@ -156,3 +156,42 @@ export async function globalSearch(query: string) {
     return { success: false, error: 'Search failed' };
   }
 }
+
+export async function clearAuditLogs(period: 'week' | 'month' | 'all') {
+  const session = await getSession();
+  if (!session || !['SUPER_ADMIN', 'ADMIN'].includes(session.role)) {
+    return { success: false, message: 'Unauthorized' };
+  }
+
+  try {
+    let whereClause = {};
+    if (period === 'week') {
+      const oneWeekAgo = new Date();
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+      whereClause = { createdAt: { lt: oneWeekAgo } };
+    } else if (period === 'month') {
+      const oneMonthAgo = new Date();
+      oneMonthAgo.setDate(oneMonthAgo.getDate() - 30);
+      whereClause = { createdAt: { lt: oneMonthAgo } };
+    }
+
+    const result = await prisma.auditLog.deleteMany({
+      where: whereClause,
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        userId: session.userId,
+        action: 'DELETE',
+        entity: 'AuditLog',
+        newValues: JSON.stringify({ period, deletedCount: result.count }),
+      }
+    });
+
+    return { success: true, count: result.count };
+  } catch (err: any) {
+    console.error('Failed to clear audit logs:', err);
+    return { success: false, message: err.message || 'Failed to clear audit logs' };
+  }
+}
+

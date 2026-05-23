@@ -6,7 +6,6 @@ import { z } from 'zod';
 import {
   UserRole,
   UserStatus,
-  Department,
   TransactionType,
   TransactionStatus,
   InvoiceStatus,

@@ -31,7 +31,7 @@ export async function getAttendanceToday() {
       },
     });
 
-    const mapped = attendances.map((a) => ({
+    const mapped = attendances.map((a: any) => ({
       ...a,
       userName: `${a.user.firstName} ${a.user.lastName}`,
       department: a.user.department,
@@ -62,8 +62,9 @@ export async function getLeaveRequests() {
       take: 100,
     });
 
-    const mapped = leaves.map((l) => ({
+    const mapped = leaves.map((l: any) => ({
       ...l,
+      daysCount: Number(l.daysCount),
       userName: `${l.user.firstName} ${l.user.lastName}`,
       department: l.user.department,
       approvedByName: l.approvedBy ? `${l.approvedBy.firstName} ${l.approvedBy.lastName}` : null,
@@ -102,7 +103,7 @@ export async function getEmployeesForSecretary() {
       orderBy: { firstName: 'asc' },
     });
 
-    const mapped = users.map((u) => ({
+    const mapped = users.map((u: any) => ({
       id: u.id,
       name: `${u.firstName} ${u.lastName}`,
       employeeNumber: u.employeeNumber,
@@ -205,7 +206,7 @@ export async function requestLeave(data: { type: string; startDate: string; endD
     });
 
     await Promise.all(
-      managers.map((m) =>
+      managers.map((m: any) =>
         createNotification(
           m.id,
           'WARNING',
@@ -226,7 +227,7 @@ export async function requestLeave(data: { type: string; startDate: string; endD
 
     revalidatePath('/hr');
     revalidatePath('/dashboard');
-    return { success: true, data: leave };
+    return { success: true, data: { ...leave, daysCount: Number(leave.daysCount) } };
   } catch (err) {
     console.error('Leave request error:', err);
     return { success: false, error: 'Failed to request leave' };

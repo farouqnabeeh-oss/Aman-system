@@ -21,7 +21,7 @@ export async function getTasks() {
       take: 100,
     });
 
-    const mapped = tasks.map((t) => ({
+    const mapped = tasks.map((t: any) => ({
       ...t,
       assigneeName: t.assignee ? `${t.assignee.firstName} ${t.assignee.lastName}` : 'Unassigned',
       projectName: t.project.name,
@@ -47,9 +47,10 @@ export async function createTask(formData: any) {
   }
 
   try {
+    const { startDate, department, ...prismaData } = validated.data;
     const task = await prisma.task.create({
       data: {
-        ...validated.data,
+        ...prismaData,
         tags: validated.data.tags?.join(',') || null,
         reporterId: session.userId,
       },
@@ -102,6 +103,7 @@ export async function updateTask(id: string, data: any) {
     const UI_ONLY_FIELDS = [
       'assigneeName', 'projectName', 'assignee', 'project',
       'reporter', 'id', 'createdAt', 'updatedAt', 'deletedAt', 'reporterId',
+      'startDate', 'department',
     ];
 
     let updateData: Record<string, any> = {};

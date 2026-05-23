@@ -24,8 +24,12 @@ export async function addVisitor(data: { name: string; phone?: string; purpose: 
     if (!session) return { success: false, message: 'Unauthorized' };
 
     try {
+        const insertData = { ...data };
+        if (!insertData.hostId || insertData.hostId.trim() === '') {
+            insertData.hostId = null as any;
+        }
         const visitor = await prisma.visitorLog.create({
-            data: { ...data, status: 'IN' }
+            data: { ...insertData, status: 'IN' }
         });
         revalidatePath('/secretary');
         return { success: true, data: visitor };
@@ -99,7 +103,11 @@ export async function getPettyCash() {
             orderBy: { date: 'desc' },
             take: 100
         });
-        return { success: true, data: records };
+        const serialized = records.map((r: any) => ({
+            ...r,
+            amount: Number(r.amount)
+        }));
+        return { success: true, data: serialized };
     } catch {
         return { success: false, data: [] };
     }
@@ -119,7 +127,7 @@ export async function requestPettyCash(data: { amount: number; reason: string })
             }
         });
         revalidatePath('/secretary');
-        return { success: true, data: record };
+        return { success: true, data: { ...record, amount: Number(record.amount) } };
     } catch {
         return { success: false };
     }

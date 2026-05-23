@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
-    PenTool, Sparkles, CheckSquare, Save
+    PenTool, Sparkles, CheckSquare, Save, Upload, Download, FileText, Image as ImageIcon, Trash2, Loader2
 } from 'lucide-react';
 import { useUIStore } from '@/store/ui.store';
 import { useAuthStore } from '@/store/auth.store';
@@ -11,6 +11,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { clsx } from 'clsx';
 import { getSMClients, updateSMDetails } from '@/lib/actions/social-media';
+import { getFiles, deleteFile } from '@/lib/actions/files';
 import { processAIContent } from '@/lib/actions/ai';
 import { RestrictedAccess } from '@/components/ui/RestrictedAccess';
 
@@ -73,11 +74,20 @@ export default function ContentWriterPage() {
     const queryClient = useQueryClient();
     const [localContent, setLocalContent] = useState<Record<string, string>>({});
     const [processingAI, setProcessingAI] = useState<string | null>(null);
+    const [uploadingId, setUploadingId] = useState<string | null>(null);
 
     const { data: clients = [], isLoading } = useQuery({
         queryKey: ['sm-clients'],
         queryFn: async () => {
             const res = await getSMClients();
+            return res.data || [];
+        }
+    });
+
+    const { data: allFiles = [] } = useQuery({
+        queryKey: ['files'],
+        queryFn: async () => {
+            const res = await getFiles();
             return res.data || [];
         }
     });
@@ -120,6 +130,41 @@ export default function ContentWriterPage() {
             toast.error('AI processing failed');
         } finally {
             setProcessingAI(null);
+        }
+    };
+
+    const handleUploadAsset = async (clientId: string, file: File) => {
+        setUploadingId(clientId);
+        try {
+            const fd = new FormData();
+            fd.append('file', file);
+            fd.append('entityType', 'CLIENT');
+            fd.append('entityId', clientId);
+            fd.append('visibility', 'PUBLIC');
+
+            const res = await fetch('/api/upload', { method: 'POST', body: fd });
+            const json = await res.json();
+            if (json.success) {
+                toast.success(isRtl ? 'تم رفع الملف بنجاح' : 'Asset uploaded');
+                queryClient.invalidateQueries({ queryKey: ['files'] });
+            } else {
+                toast.error(json.message || 'Upload failed');
+            }
+        } catch (err) {
+            toast.error('Upload failed');
+        } finally {
+            setUploadingId(null);
+        }
+    };
+
+    const handleDeleteAsset = async (fileId: string) => {
+        if (!confirm(isRtl ? 'هل أنت متأكد من الحذف؟' : 'Are you sure?')) return;
+        const res = await deleteFile(fileId);
+        if (res.success) {
+            toast.success('Asset deleted');
+            queryClient.invalidateQueries({ queryKey: ['files'] });
+        } else {
+            toast.error('Delete failed');
         }
     };
 
@@ -206,6 +251,66 @@ export default function ContentWriterPage() {
                                                         </button>
                                                     </div>
                                                 )}
+
+                                                {/* Assets Section */}
+                                                <div className="mt-4 pt-4 border-t border-slate-100 space-y-3">
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                                            {isRtl ? 'ملفات ومرفقات المصلحة' : 'Client Assets & Drafts'}
+                                                        </span>
+                                                        <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-pink-50 border border-pink-100 text-[9px] font-black text-pink-600 hover:bg-pink-100 transition-all shadow-sm cursor-pointer">
+                                                            {uploadingId === c.id ? (
+                                                                <Loader2 size={12} className="animate-spin" />
+                                                            ) : (
+                                                                <Upload size={12} />
+                                                            )}
+                                                            {isRtl ? 'رفع ملف' : 'Upload File'}
+                                                            <input 
+                                                                type="file" 
+                                                                className="hidden" 
+                                                                disabled={uploadingId === c.id}
+                                                                onChange={(e) => {
+                                                                    if (e.target.files?.[0]) {
+                                                                        handleUploadAsset(c.id, e.target.files[0]);
+                                                                    }
+                                                                }}
+                                                            />
+                                                        </label>
+                                                    </div>
+                                                    
+                                                    {/* Files list */}
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        {allFiles.filter((f: any) => f.entityType === 'CLIENT' && f.entityId === c.id).map((file: any) => (
+                                                            <div key={file.id} className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-200 group/file">
+                                                                <div className="flex items-center gap-2 min-w-0">
+                                                                    {file.mimeType?.startsWith('image/') ? (
+                                                                        <ImageIcon size={14} className="text-pink-400 flex-shrink-0" />
+                                                                    ) : (
+                                                                        <FileText size={14} className="text-slate-400 flex-shrink-0" />
+                                                                    )}
+                                                                    <span className="text-[10px] font-bold text-slate-700 truncate" title={file.name}>
+                                                                        {file.name}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="flex gap-1 opacity-0 group-hover/file:opacity-100 transition-opacity">
+                                                                    {file.publicUrl && (
+                                                                        <a href={file.publicUrl} download target="_blank" className="p-1 rounded bg-white border border-slate-200 text-slate-500 hover:text-brand">
+                                                                            <Download size={10} />
+                                                                        </a>
+                                                                    )}
+                                                                    <button onClick={() => handleDeleteAsset(file.id)} className="p-1 rounded bg-white border border-slate-200 text-slate-500 hover:text-rose-500">
+                                                                        <Trash2 size={10} />
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                        {allFiles.filter((f: any) => f.entityType === 'CLIENT' && f.entityId === c.id).length === 0 && (
+                                                            <p className="text-[9px] text-slate-300 italic col-span-2">
+                                                                {isRtl ? 'لا توجد ملفات مرفقة' : 'No attached assets'}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
                                             </div>
                                         </td>
                                         

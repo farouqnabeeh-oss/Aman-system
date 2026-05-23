@@ -37,7 +37,7 @@ const TRANSLATIONS = {
 };
 
 const NAV_ITEMS = (t: any) => [
-  { path: '/dashboard', label: t.dashboard, icon: LayoutDashboard, color: 'text-blue-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
+  { path: '/dashboard', label: t.dashboard, icon: LayoutDashboard, color: 'text-blue-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'] },
   { path: '/users', label: t.users, icon: Users, color: 'text-violet-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
   { path: '/finance', label: t.finance, icon: DollarSign, color: 'text-emerald-400', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'EMPLOYEE'], depts: ['FINANCE'] },
   { path: '/finance/roi', label: t.financeROI, icon: TrendingUp, color: 'text-emerald-500', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'], depts: ['FINANCE'] },

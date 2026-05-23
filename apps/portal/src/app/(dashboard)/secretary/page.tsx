@@ -6,7 +6,7 @@ import {
     Users, Package, Wallet, Plus, Search, 
     CheckCircle2, Clock, AlertCircle, Phone, 
     User as UserIcon, Calendar, ArrowRightLeft,
-    TrendingUp, TrendingDown, ClipboardList
+    TrendingUp, TrendingDown, ClipboardList, Activity
 } from 'lucide-react';
 import { useUIStore } from '@/store/ui.store';
 import { useAuthStore } from '@/store/auth.store';
@@ -245,7 +245,11 @@ function VisitorsTab({ t, isRtl }: any) {
 // --- Inventory Tab ---
 
 function InventoryTab({ t, isRtl }: any) {
-    const [modal, setModal] = useState(false);
+    const [addModal, setAddModal] = useState(false);
+    const [updateModal, setUpdateModal] = useState(false);
+    const [selectedItem, setSelectedItem] = useState<any>(null);
+    const [form, setForm] = useState({ name: '', category: 'STATIONERY', quantity: '', minQuantity: '', unit: 'PCS' });
+    const [updateQty, setUpdateQty] = useState('');
     const queryClient = useQueryClient();
 
     const { data: items = [], isLoading } = useQuery({
@@ -256,16 +260,46 @@ function InventoryTab({ t, isRtl }: any) {
         }
     });
 
+    const addMutation = useMutation({
+        mutationFn: () => addInventoryItem({
+            name: form.name,
+            category: form.category,
+            quantity: parseInt(form.quantity) || 0,
+            minQuantity: parseInt(form.minQuantity) || 0,
+            unit: form.unit
+        }),
+        onSuccess: () => {
+            toast.success(isRtl ? 'تم إضافة الصنف بنجاح' : 'Item Added Successfully');
+            setAddModal(false);
+            setForm({ name: '', category: 'STATIONERY', quantity: '', minQuantity: '', unit: 'PCS' });
+            queryClient.invalidateQueries({ queryKey: ['inventory'] });
+        }
+    });
+
+    const updateMutation = useMutation({
+        mutationFn: () => updateInventoryQuantity(selectedItem.id, parseInt(updateQty) || 0),
+        onSuccess: () => {
+            toast.success(isRtl ? 'تم تحديث الكمية بنجاح' : 'Quantity Updated Successfully');
+            setUpdateModal(false);
+            setSelectedItem(null);
+            setUpdateQty('');
+            queryClient.invalidateQueries({ queryKey: ['inventory'] });
+        }
+    });
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">{t.inventory}</h3>
-                <button className="px-6 py-3 bg-amber-500 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-amber-500/20 flex items-center gap-2">
+                <button 
+                    onClick={() => setAddModal(true)}
+                    className="px-6 py-3 bg-amber-500 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-amber-500/20 flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                >
                     <Plus size={14} /> {t.addItem}
                 </button>
             </div>
 
-            <div className="glass-card bg-white border-slate-100 !p-0 overflow-hidden">
+            <div className="glass-card bg-white border-slate-100 !p-0 overflow-hidden shadow-sm">
                 <table className="w-full text-start">
                     <thead className="bg-slate-50 border-b border-slate-100">
                         <tr>
@@ -277,10 +311,11 @@ function InventoryTab({ t, isRtl }: any) {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50">
-                        {items.length === 0 && (
+                        {isLoading ? (
+                            <tr><td colSpan={5} className="py-20 text-center"><Activity className="animate-spin text-amber-500 mx-auto" size={24} /></td></tr>
+                        ) : items.length === 0 ? (
                             <tr><td colSpan={5} className="py-20 text-center text-[10px] font-black text-slate-300 uppercase tracking-widest">No items found</td></tr>
-                        )}
-                        {items.map((item: any) => (
+                        ) : items.map((item: any) => (
                             <tr key={item.id} className="hover:bg-slate-50/50 transition-all">
                                 <td className="px-8 py-5">
                                     <p className="text-xs font-black text-slate-900 uppercase tracking-tight">{item.name}</p>
@@ -301,7 +336,11 @@ function InventoryTab({ t, isRtl }: any) {
                                     </span>
                                 </td>
                                 <td className="px-8 py-5 text-end">
-                                    <button className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 transition-all">
+                                    <button 
+                                        onClick={() => { setSelectedItem(item); setUpdateQty(String(item.quantity)); setUpdateModal(true); }}
+                                        className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-brand transition-all"
+                                        title={isRtl ? 'تعديل الكمية' : 'Update Stock'}
+                                    >
                                         <ArrowRightLeft size={14} />
                                     </button>
                                 </td>
@@ -310,6 +349,64 @@ function InventoryTab({ t, isRtl }: any) {
                     </tbody>
                 </table>
             </div>
+
+            {/* Add Inventory Item Modal */}
+            <Modal open={addModal} onClose={() => setAddModal(false)} title={t.addItem}>
+                <div className="space-y-5 pt-2">
+                    <Input label={isRtl ? 'اسم الصنف' : 'Item Name'} value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                        <Select 
+                            label={t.category} 
+                            value={form.category} 
+                            onChange={e => setForm({...form, category: e.target.value})}
+                            options={[
+                                { value: 'STATIONERY', label: isRtl ? 'قرطاسية' : 'Stationery' },
+                                { value: 'KITCHEN', label: isRtl ? 'ضيافة ومطبخ' : 'Kitchen/Hospitality' },
+                                { value: 'CLEANING', label: isRtl ? 'مواد تنظيف' : 'Cleaning' },
+                                { value: 'IT', label: isRtl ? 'أجهزة وتقنية' : 'IT/Hardware' },
+                                { value: 'GENERAL', label: isRtl ? 'عام' : 'General' }
+                            ]}
+                        />
+                        <Input label={isRtl ? 'الوحدة (مثال: حبة، علبة)' : 'Unit (e.g. PCS, BOX)'} value={form.unit} onChange={e => setForm({...form, unit: e.target.value})} />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <Input label={isRtl ? 'الكمية الحالية' : 'Current Quantity'} type="number" value={form.quantity} onChange={e => setForm({...form, quantity: e.target.value})} />
+                        <Input label={isRtl ? 'الحد الأدنى للتنبيه' : 'Min Alert Quantity'} type="number" value={form.minQuantity} onChange={e => setForm({...form, minQuantity: e.target.value})} />
+                    </div>
+
+                    <button 
+                        onClick={() => addMutation.mutate()}
+                        className="w-full py-4 bg-amber-500 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-amber-500/20 mt-4 hover:bg-amber-600 transition-all"
+                    >
+                        {t.addItem}
+                    </button>
+                </div>
+            </Modal>
+
+            {/* Update Stock Modal */}
+            <Modal open={updateModal} onClose={() => setUpdateModal(false)} title={isRtl ? 'تحديث الكمية' : 'Update Stock'}>
+                {selectedItem && (
+                    <div className="space-y-5 pt-2">
+                        <p className="text-xs font-bold text-slate-500 mb-2">
+                            {isRtl ? 'الصنف المختار: ' : 'Selected Item: '} <span className="text-slate-900 font-black">{selectedItem.name}</span>
+                        </p>
+                        <Input 
+                            label={isRtl ? 'الكمية الجديدة' : 'New Quantity'} 
+                            type="number" 
+                            value={updateQty} 
+                            onChange={e => setUpdateQty(e.target.value)} 
+                        />
+                        <button 
+                            onClick={() => updateMutation.mutate()}
+                            className="w-full py-4 bg-brand text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-brand/20 mt-4 hover:bg-brand/90 transition-all"
+                        >
+                            {isRtl ? 'تحديث الكمية' : 'Update Stock'}
+                        </button>
+                    </div>
+                )}
+            </Modal>
         </div>
     );
 }

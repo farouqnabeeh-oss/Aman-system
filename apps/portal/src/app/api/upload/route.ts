@@ -19,6 +19,8 @@ export async function POST(req: NextRequest) {
     const file = formData.get('file') as File | null;
     const folderPath = (formData.get('folderPath') as string) || '/';
     const visibility = (formData.get('visibility') as string) || 'PRIVATE';
+    const entityType = formData.get('entityType') as string | null;
+    const entityId = formData.get('entityId') as string | null;
 
     if (!file) {
       return NextResponse.json({ success: false, message: 'No file provided' }, { status: 400 });
@@ -51,6 +53,8 @@ export async function POST(req: NextRequest) {
         publicUrl,
         folderPath,
         visibility,
+        entityType: entityType || null,
+        entityId: entityId || null,
         uploadedById: session.userId,
       },
       include: {
@@ -59,8 +63,13 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ success: true, data: record });
-  } catch (err) {
+  } catch (err: any) {
+    // Write error to logs.txt
+    try {
+      const fs = require('fs');
+      fs.appendFileSync(join(process.cwd(), 'logs.txt'), `[Upload Error] ${new Date().toISOString()}: ${err.stack || err}\n`);
+    } catch (logErr) {}
     console.error('[upload] Error:', err);
-    return NextResponse.json({ success: false, message: 'Upload failed' }, { status: 500 });
+    return NextResponse.json({ success: false, message: `Upload failed: ${err.message || 'Unknown'}` }, { status: 500 });
   }
 }

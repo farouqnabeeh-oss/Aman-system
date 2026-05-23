@@ -26,7 +26,16 @@ export async function getPayrollRecords() {
       },
       orderBy: [{ year: 'desc' }, { month: 'desc' }],
     });
-    return { success: true, data: records };
+    const serialized = records.map((r: any) => ({
+      ...r,
+      baseSalary: Number(r.baseSalary),
+      allowances: Number(r.allowances),
+      deductions: Number(r.deductions),
+      bonus: Number(r.bonus),
+      netSalary: Number(r.netSalary),
+      userName: `${r.user.firstName} ${r.user.lastName}`,
+    }));
+    return { success: true, data: serialized };
   } catch (err) {
     return { success: false, message: 'Failed to fetch payroll' };
   }
@@ -126,7 +135,17 @@ export async function createPayrollRecord(data: {
     });
 
     revalidatePath('/payroll');
-    return { success: true, data: record };
+    return {
+      success: true,
+      data: {
+        ...record,
+        baseSalary: Number(record.baseSalary),
+        allowances: Number(record.allowances),
+        deductions: Number(record.deductions),
+        bonus: Number(record.bonus),
+        netSalary: Number(record.netSalary),
+      },
+    };
   } catch (err: any) {
     console.error('Create payroll error:', err);
     if (err.code === 'P2002') {

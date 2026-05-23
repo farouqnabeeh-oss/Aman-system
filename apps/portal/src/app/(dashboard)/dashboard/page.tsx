@@ -6,7 +6,7 @@ import {
   Users, Activity, ArrowUpRight, ArrowDownLeft, Zap,
   TrendingUp, Clock, DollarSign, BarChart2, Search,
   PieChart as PieChartIcon, ShieldCheck, Target,
-  LayoutDashboard, CheckCircle2, AlertTriangle, Layers, Bell
+  LayoutDashboard, CheckCircle2, AlertTriangle, Layers, Bell, CheckSquare
 } from 'lucide-react';
 import { useUIStore } from '@/store/ui.store';
 import { useAuthStore } from '@/store/auth.store';
@@ -16,9 +16,13 @@ import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
   BarChart, Bar, PieChart, Pie, Cell
 } from 'recharts';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { clsx } from 'clsx';
 import { getDashboardStats } from '@/lib/actions/dashboard';
+import { getSelfAttendanceToday, selfAttendance } from '@/lib/actions/hr';
+import { getSMClients } from '@/lib/actions/social-media';
+import { getTasks } from '@/lib/actions/tasks';
+import toast from 'react-hot-toast';
 import { StatCard } from '@/components/ui/States';
 import Link from 'next/link';
 import { AnnouncementModal } from '@/components/dashboard/AnnouncementModal';
@@ -72,20 +76,7 @@ export default function CommandCenter() {
   const [logSearch, setLogSearch] = useState('');
   const [isAnnouncementOpen, setIsAnnouncementOpen] = useState(false);
 
-  useEffect(() => {
-    if (user?.role === 'EMPLOYEE') {
-      switch (user.department) {
-        case 'SOCIAL_MEDIA': router.replace('/social-media'); break;
-        case 'HR': router.replace('/hr'); break;
-        case 'FINANCE': router.replace('/finance'); break;
-        case 'MARKETING': router.replace('/acquisition'); break;
-        case 'PROJECTS':
-        case 'IT':
-        case 'OPERATIONS': router.replace('/projects'); break;
-        default: router.replace('/tasks'); break;
-      }
-    }
-  }, [user, router]);
+  // Removed automatic EMPLOYEE redirect to allow custom dashboards
 
   const { data: stats, isLoading } = useQuery({
     queryKey: ['dashboard-stats'],
@@ -100,7 +91,7 @@ export default function CommandCenter() {
   const fmt = (v: number) => `${v.toLocaleString()}${currency}`;
 
   if (isLoading) return <div className="h-[80vh] flex items-center justify-center"><Activity className="animate-spin text-brand" size={40} /></div>;
-  if (user?.role === 'EMPLOYEE') return null;
+  if (user?.role === 'EMPLOYEE') return <EmployeeDashboard user={user} isRtl={isRtl} language={language} t={t} />;
 
   const filteredLogs = (stats?.recentLogs || []).filter((log: any) => 
     log.user?.toLowerCase()?.includes(logSearch.toLowerCase()) ||
@@ -378,6 +369,277 @@ export default function CommandCenter() {
         onClose={() => setIsAnnouncementOpen(false)}
         language={language}
       />
+    </motion.div>
+  );
+}
+
+function EmployeeDashboard({ user, isRtl, language, t }: any) {
+  const queryClient = useQueryClient();
+  const router = useRouter();
+
+  // Fetch today's attendance record
+  const { data: attendanceRecord } = useQuery({
+    queryKey: ['self-attendance'],
+    queryFn: async () => {
+      const res = await getSelfAttendanceToday();
+      return res.data;
+    }
+  });
+
+  // Fetch client list if in Social Media department
+  const isSocialMedia = user?.department === 'SOCIAL_MEDIA';
+  const { data: clients = [] } = useQuery({
+    queryKey: ['sm-clients'],
+    queryFn: async () => {
+      if (!isSocialMedia) return [];
+      const res = await getSMClients();
+      return res.data || [];
+    },
+    enabled: isSocialMedia
+  });
+
+  // Fetch tasks assigned to employee
+  const { data: allTasks = [] } = useQuery({
+    queryKey: ['tasks'],
+    queryFn: async () => {
+      const res = await getTasks();
+      return res.data || [];
+    }
+  });
+
+  const employeeTasks = allTasks.filter((tk: any) => tk.assigneeId === user?.id && tk.status !== 'DONE');
+
+  const attendanceMutation = useMutation({
+    mutationFn: (action: 'IN' | 'OUT') => selfAttendance(action),
+    onSuccess: (res) => {
+      if (res.success) {
+        queryClient.invalidateQueries({ queryKey: ['self-attendance'] });
+        toast.success(isRtl ? 'تم تسجيل حضورك' : 'Attendance recorded');
+      } else {
+        toast.error(res.error || 'Operation failed');
+      }
+    }
+  });
+
+  const isWriter = ['CONTENT_WRITER', 'WRITER', 'كاتب محتوى'].includes(user?.position || '');
+  const isCreative = ['DESIGNER', 'EDITOR', 'VIDEOGRAPHER', 'مصمم', 'مونتير', 'CREATIVE_DESIGNER'].includes(user?.position || '');
+
+  return (
+    <motion.div initial="hidden" animate="show" variants={{ show: { transition: { staggerChildren: 0.05 } } }} className="space-y-8 pb-20">
+      {/* Welcome Banner */}
+      <motion.div variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } }} className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-r from-brand to-indigo-600 p-10 text-white shadow-xl">
+        <div className="absolute -right-16 -top-16 w-48 h-48 rounded-full bg-white/10 blur-2xl pointer-events-none" />
+        <div className="relative z-10 space-y-2">
+          <h1 className="text-2xl lg:text-3xl font-black tracking-tight">
+            {isRtl ? `مرحباً بك، ${user?.firstName} 👋` : `Welcome back, ${user?.firstName} 👋`}
+          </h1>
+          <p className="text-xs font-semibold opacity-90 max-w-xl leading-relaxed">
+            {isRtl
+              ? `لوحة التحكم الخاصة بك كـ ${user?.position || 'موظف'} في قسم ${user?.department || 'الشركة'}. تتبع حضورك اليومي ومهامك المجدولة.`
+              : `Your personalized hub as a ${user?.position || 'Employee'} in ${user?.department || 'Company'} Dept. Track your presence and active tasks.`}
+          </p>
+        </div>
+      </motion.div>
+
+      {/* Main Grid: HR attendance + Department Stats */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        {/* HR & Daily Attendance Card */}
+        <motion.div variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } }} className="lg:col-span-6 glass-card bg-white border-slate-100 p-8 shadow-sm">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-500">
+                <Clock size={20} />
+              </div>
+              <div>
+                <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">
+                  {isRtl ? 'الحضور والدوام اليومي' : 'Daily Shift & Attendance'}
+                </h3>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">HR Pulse</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 mb-6 space-y-4">
+            <div className="flex justify-between items-center text-xs font-bold text-slate-700">
+              <span>{isRtl ? 'حالة الحضور اليوم:' : 'Presence Status Today:'}</span>
+              <span className={clsx(
+                "px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border",
+                attendanceRecord ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-amber-50 text-amber-600 border-amber-100"
+              )}>
+                {attendanceRecord ? (isRtl ? 'حاضر (مسجل)' : 'PRESENT') : (isRtl ? 'غير مسجل بعد' : 'ABSENT / NOT CHECKED IN')}
+              </span>
+            </div>
+
+            {attendanceRecord?.checkIn && (
+              <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                <span>Check-In Time:</span>
+                <span className="font-mono text-slate-900">{new Date(attendanceRecord.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+              </div>
+            )}
+            {attendanceRecord?.checkOut && (
+              <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                <span>Check-Out Time:</span>
+                <span className="font-mono text-slate-900">{new Date(attendanceRecord.checkOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+              </div>
+            )}
+          </div>
+
+          <div className="flex gap-4">
+            <button
+              onClick={() => attendanceMutation.mutate('IN')}
+              disabled={attendanceMutation.isPending || !!attendanceRecord?.checkIn}
+              className="flex-1 py-3.5 rounded-xl bg-brand text-white text-[10px] font-black uppercase tracking-widest hover:bg-brand/90 transition-all shadow-lg shadow-brand/20 disabled:opacity-50 disabled:pointer-events-none"
+            >
+              {isRtl ? 'تسجيل الدخول (حضور)' : 'Check In'}
+            </button>
+            <button
+              onClick={() => attendanceMutation.mutate('OUT')}
+              disabled={attendanceMutation.isPending || !attendanceRecord?.checkIn || !!attendanceRecord?.checkOut}
+              className="flex-1 py-3.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all disabled:opacity-50 disabled:pointer-events-none"
+            >
+              {isRtl ? 'تسجيل الخروج (انصراف)' : 'Check Out'}
+            </button>
+          </div>
+
+          <div className="mt-6 pt-6 border-t border-slate-100 text-center">
+            <Link href="/hr" className="text-[10px] font-black text-brand uppercase tracking-widest hover:underline">
+              {isRtl ? 'انتقل إلى شؤون الموظفين وطلب الإجازات ←' : 'Go to HR & Request Leave ←'}
+            </Link>
+          </div>
+        </motion.div>
+
+        {/* Tailored Section: Social Media or General */}
+        <motion.div variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } }} className="lg:col-span-6 glass-card bg-white border-slate-100 p-8 shadow-sm">
+          {isSocialMedia ? (
+            <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-pink-50 border border-pink-100 flex items-center justify-center text-pink-500">
+                  <LayoutDashboard size={20} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">
+                    {isRtl ? 'مؤشرات السوشيال ميديا' : 'Social Media Matrix'}
+                  </h3>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Campaign Analytics</p>
+                </div>
+              </div>
+
+              {isWriter && (
+                <div className="space-y-4">
+                  <p className="text-xs font-bold text-slate-600 leading-relaxed">
+                    {isRtl
+                      ? 'مساحة كتابة المحتوى الخاصة بك. اكتب المرفقات واحفظ التعديلات للعملاء.'
+                      : 'Your content writing hub. Add assets and save copy references.'}
+                  </p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-pink-50/50 border border-pink-100/50 rounded-2xl p-4 text-center">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Assigned Clients</p>
+                      <p className="text-2xl font-black text-pink-600">{clients.length}</p>
+                    </div>
+                    <div className="bg-indigo-50/50 border border-indigo-100/50 rounded-2xl p-4 text-center">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Drafts Ready</p>
+                      <p className="text-2xl font-black text-indigo-600">
+                        {clients.filter((c: any) => c.smDetails?.content).length}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => router.push('/content-writer')}
+                    className="w-full py-3 rounded-xl bg-pink-500 text-white text-[10px] font-black uppercase tracking-widest hover:bg-pink-600 transition-all shadow-lg shadow-pink-500/10"
+                  >
+                    {isRtl ? 'افتح مساحة الكاتب ←' : 'Open Content Workspace ←'}
+                  </button>
+                </div>
+              )}
+
+              {isCreative && (
+                <div className="space-y-4">
+                  <p className="text-xs font-bold text-slate-600 leading-relaxed">
+                    {isRtl
+                      ? 'مرسم الإبداع الرقمي. استقبل المهام الإبداعية من مصممي ومنتجي الفيديو.'
+                      : 'Creative design & production workspace. View briefs and upload assets.'}
+                  </p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-purple-50/50 border border-purple-100/50 rounded-2xl p-4 text-center">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Target Designs</p>
+                      <p className="text-2xl font-black text-purple-600">
+                        {clients.reduce((acc: number, c: any) => acc + (c.smDetails?.targetDesigns || 0), 0)}
+                      </p>
+                    </div>
+                    <div className="bg-blue-50/50 border border-blue-100/50 rounded-2xl p-4 text-center">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Target Videos</p>
+                      <p className="text-2xl font-black text-blue-600">
+                        {clients.reduce((acc: number, c: any) => acc + (c.smDetails?.targetVideos || 0), 0)}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => router.push('/creative-studio')}
+                    className="w-full py-3 rounded-xl bg-purple-500 text-white text-[10px] font-black uppercase tracking-widest hover:bg-purple-600 transition-all shadow-lg shadow-purple-500/10"
+                  >
+                    {isRtl ? 'افتح مرسم الإبداع ←' : 'Open Creative Studio ←'}
+                  </button>
+                </div>
+              )}
+
+              {!isWriter && !isCreative && (
+                <div className="space-y-4">
+                  <p className="text-xs font-bold text-slate-600">
+                    Quickly monitor social media clients and current targets.
+                  </p>
+                  <button
+                    onClick={() => router.push('/social-media')}
+                    className="w-full py-3 rounded-xl bg-pink-500 text-white text-[10px] font-black uppercase tracking-widest hover:bg-pink-600 transition-all"
+                  >
+                    {isRtl ? 'مساحة عمل السوشيال ميديا ←' : 'Open Social Media Dept ←'}
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-500">
+                  <CheckSquare size={20} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">
+                    {isRtl ? 'مهامي النشطة' : 'My Active Tasks'}
+                  </h3>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Pending Deliverables</p>
+                </div>
+              </div>
+
+              <div className="space-y-2 max-h-[180px] overflow-y-auto pr-2 no-scrollbar">
+                {employeeTasks.slice(0, 3).map((task: any) => (
+                  <div key={task.id} className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-100">
+                    <span className="text-xs font-bold text-slate-700 truncate max-w-[200px]">{task.title}</span>
+                    <span className={clsx(
+                      "px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border",
+                      task.priority === 'HIGH' ? "bg-rose-50 text-rose-600 border-rose-100" : "bg-slate-100 text-slate-500 border-slate-200"
+                    )}>
+                      {task.priority}
+                    </span>
+                  </div>
+                ))}
+                {employeeTasks.length === 0 && (
+                  <p className="text-xs text-slate-400 italic py-6 text-center">
+                    {isRtl ? 'لا توجد مهام نشطة حالياً' : 'All caught up! No active tasks.'}
+                  </p>
+                )}
+              </div>
+
+              <button
+                onClick={() => router.push('/tasks')}
+                className="w-full py-3 rounded-xl bg-indigo-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/10"
+              >
+                {isRtl ? 'عرض كل مهامي ←' : 'View All Tasks ←'}
+              </button>
+            </div>
+          )}
+        </motion.div>
+      </div>
     </motion.div>
   );
 }
