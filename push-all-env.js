@@ -24,7 +24,7 @@ const envVars = {
   NEXT_PUBLIC_SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhpYW5nZHVveWh6aXByY3Vvb2J1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwMjA5NDUsImV4cCI6MjA5MjU5Njk0NX0.vY9a2plMO8Zpsx4sEtIuHLKe02LuCoIc3WamQEx6E1Q",
 };
 
-const envTypes = ['production', 'preview', 'development'];
+const envTypes = ['production', 'development'];
 const tmpDir = path.join(__dirname, '.tmp_env_push');
 if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir);
 
@@ -35,30 +35,27 @@ for (const [key, value] of Object.entries(envVars)) {
     // Remove existing (ignore errors)
     try {
       execSync(`npx vercel env rm "${key}" ${envType} --yes`, { stdio: 'pipe', cwd: path.join(__dirname, 'apps', 'portal') });
-    } catch (_) {}
+    } catch (_) { }
 
-    // Write value to temp file
-    const tmpFile = path.join(tmpDir, `${key}.txt`);
-    fs.writeFileSync(tmpFile, value, 'utf-8');
-
-    // Add using stdin redirect via cmd
-    const result = spawnSync('cmd', ['/C', `type "${tmpFile}" | npx vercel env add ${key} ${envType}`], {
-      cwd: path.join(__dirname, 'apps', 'portal'),
-      encoding: 'utf-8',
-      shell: false
-    });
-
-    if (result.status === 0) {
+    // Clean surrounding quotes if present
+    const cleanValue = value.replace(/^\"|\"$/g, '').replace(/\\u0026/g, '&');
+    // Escape double quotes
+    const escapedValue = cleanValue.replace(/"/g, '\\"');
+    // Debug output
+    console.log(`🔧 Pushing ${key} [${envType}] = ${cleanValue}`);
+    try {
+      execSync(`npx vercel env add ${key} ${envType} --value "${escapedValue}" --yes --force --project portal`, {
+        cwd: path.join(__dirname, 'apps', 'portal'),
+        stdio: 'inherit'
+      });
       console.log(`✅ ${key} [${envType}]`);
       success++;
-    } else {
+    } catch (e) {
       console.error(`❌ FAILED: ${key} [${envType}]`);
-      console.error(result.stderr || result.stdout);
+      console.error(e.message);
       failed++;
     }
   }
 }
 
-// Cleanup
-fs.rmSync(tmpDir, { recursive: true, force: true });
 console.log(`\n📊 Done: ${success} succeeded, ${failed} failed.`);
