@@ -1,6 +1,14 @@
 {
-  "version": 2,
-  "buildCommand": "turbo run build --filter=portal",
-  "outputDirectory": "apps/portal/.next",
-  "framework": "nextjs"
+  "build": {
+    "env": {
+      "NODE_ENV": "production"
+    },
+    "command": "npm install && npm run build"
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/$1"
+    }
+  ]
 }
