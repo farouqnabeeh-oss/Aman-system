@@ -47,7 +47,7 @@ export async function createTask(formData: any) {
   }
 
   try {
-    const { startDate, department, ...prismaData } = validated.data;
+    const { tags, ...prismaData } = validated.data;
     const task = await prisma.task.create({
       data: {
         ...prismaData,
@@ -65,8 +65,9 @@ export async function createTask(formData: any) {
     revalidatePath('/tasks');
     revalidatePath('/dashboard');
     return { success: true, data: task };
-  } catch (error) {
-    return { success: false, error: 'Failed to create task' };
+  } catch (error: any) {
+    console.error('[createTask] Error:', error);
+    return { success: false, error: `Failed to create task: ${error.message || 'Unknown error'}` };
   }
 }
 

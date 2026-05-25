@@ -34,7 +34,7 @@ for (const [key, value] of Object.entries(envVars)) {
   for (const envType of envTypes) {
     // Remove existing (ignore errors)
     try {
-      execSync(`npx vercel env rm "${key}" ${envType} --yes`, { stdio: 'pipe', cwd: __dirname + '/apps/portal' });
+      execSync(`npx vercel env rm "${key}" ${envType} --yes`, { stdio: 'pipe', cwd: path.join(__dirname, 'apps', 'portal') });
     } catch (_) {}
 
     // Write value to temp file

@@ -67,6 +67,93 @@ const COLORS = ['#1C93B2', '#10b981', '#f59e0b', '#ef4444', '#6366f1'];
 const fadeIn = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } };
 const stagger = { show: { transition: { staggerChildren: 0.05 } } };
 
+interface DashboardAnnouncementProps {
+  stats: any;
+  isRtl: boolean;
+}
+
+function DashboardAnnouncement({ stats, isRtl }: DashboardAnnouncementProps) {
+  const [announcementVisible, setAnnouncementVisible] = useState(false);
+
+  useEffect(() => {
+    if (stats?.latestAnnouncement) {
+      const key = `read_announcement_${stats.latestAnnouncement.id}`;
+      const firstSeen = localStorage.getItem(key);
+      if (firstSeen) {
+        const elapsed = (Date.now() - parseInt(firstSeen, 10)) / 1000 / 60;
+        if (elapsed < 5) {
+          setAnnouncementVisible(true);
+          const remainingMs = (5 - elapsed) * 60 * 1000;
+          const timer = setTimeout(() => {
+            setAnnouncementVisible(false);
+          }, remainingMs);
+          return () => clearTimeout(timer);
+        } else {
+          setAnnouncementVisible(false);
+        }
+      } else {
+        localStorage.setItem(key, Date.now().toString());
+        setAnnouncementVisible(true);
+        const timer = setTimeout(() => {
+          setAnnouncementVisible(false);
+        }, 5 * 60 * 1000);
+        return () => clearTimeout(timer);
+      }
+    } else {
+      setAnnouncementVisible(false);
+    }
+  }, [stats?.latestAnnouncement]);
+
+  if (!announcementVisible || !stats?.latestAnnouncement) return null;
+
+  const announcement = stats.latestAnnouncement;
+
+  return (
+    <AnimatePresence>
+      <motion.div 
+        initial={{ opacity: 0, height: 0 }}
+        animate={{ opacity: 1, height: 'auto' }}
+        exit={{ opacity: 0, height: 0 }}
+        className="overflow-hidden mb-6"
+      >
+        <div className={clsx(
+          "p-6 rounded-[2rem] flex flex-col md:flex-row items-center justify-between gap-6 border shadow-lg shadow-brand/5",
+          announcement.priority === 'URGENT' 
+            ? "bg-rose-50 border-rose-100 text-rose-900" 
+            : "bg-brand/5 border-brand/10 text-brand-900"
+        )}>
+          <div className="flex items-center gap-5">
+            <div className={clsx(
+              "w-14 h-14 rounded-2xl flex items-center justify-center shadow-inner",
+              announcement.priority === 'URGENT' ? "bg-rose-500 text-white" : "bg-brand text-white"
+            )}>
+              <Bell size={24} className={announcement.priority === 'URGENT' ? "animate-bounce" : ""} />
+            </div>
+            <div>
+              <h4 className="text-sm font-black uppercase tracking-tight leading-none mb-2">
+                {announcement.title}
+              </h4>
+              <p className="text-xs font-medium opacity-80 max-w-2xl">
+                {announcement.content}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+             <span className="text-[10px] font-black uppercase tracking-widest opacity-40">
+               {new Date(announcement.createdAt).toLocaleDateString()}
+             </span>
+             {announcement.priority === 'URGENT' && (
+                <span className="px-3 py-1 rounded-full bg-rose-500 text-white text-[9px] font-black uppercase tracking-widest animate-pulse">
+                  {isRtl ? 'عاجل جداً' : 'Urgent'}
+                </span>
+             )}
+          </div>
+        </div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
 export default function CommandCenter() {
   const { language } = useUIStore();
   const user = useAuthStore(s => s.user);
@@ -91,7 +178,7 @@ export default function CommandCenter() {
   const fmt = (v: number) => `${v.toLocaleString()}${currency}`;
 
   if (isLoading) return <div className="h-[80vh] flex items-center justify-center"><Activity className="animate-spin text-brand" size={40} /></div>;
-  if (user?.role === 'EMPLOYEE') return <EmployeeDashboard user={user} isRtl={isRtl} language={language} t={t} />;
+  if (user?.role === 'EMPLOYEE') return <EmployeeDashboard user={user} isRtl={isRtl} language={language} t={t} stats={stats} />;
 
   const filteredLogs = (stats?.recentLogs || []).filter((log: any) => 
     log.user?.toLowerCase()?.includes(logSearch.toLowerCase()) ||
@@ -103,50 +190,7 @@ export default function CommandCenter() {
     <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-8 pb-20">
       
       {/* Announcement Banner */}
-      <AnimatePresence>
-        {stats?.latestAnnouncement && (
-          <motion.div 
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden"
-          >
-            <div className={clsx(
-              "p-6 rounded-[2rem] flex flex-col md:flex-row items-center justify-between gap-6 border shadow-lg shadow-brand/5",
-              stats.latestAnnouncement.priority === 'URGENT' 
-                ? "bg-rose-50 border-rose-100 text-rose-900" 
-                : "bg-brand/5 border-brand/10 text-brand-900"
-            )}>
-              <div className="flex items-center gap-5">
-                <div className={clsx(
-                  "w-14 h-14 rounded-2xl flex items-center justify-center shadow-inner",
-                  stats.latestAnnouncement.priority === 'URGENT' ? "bg-rose-500 text-white" : "bg-brand text-white"
-                )}>
-                  <Bell size={24} className={stats.latestAnnouncement.priority === 'URGENT' ? "animate-bounce" : ""} />
-                </div>
-                <div>
-                  <h4 className="text-sm font-black uppercase tracking-tight leading-none mb-2">
-                    {stats.latestAnnouncement.title}
-                  </h4>
-                  <p className="text-xs font-medium opacity-80 max-w-2xl">
-                    {stats.latestAnnouncement.content}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                 <span className="text-[10px] font-black uppercase tracking-widest opacity-40">
-                   {new Date(stats.latestAnnouncement.createdAt).toLocaleDateString()}
-                 </span>
-                 {stats.latestAnnouncement.priority === 'URGENT' && (
-                    <span className="px-3 py-1 rounded-full bg-rose-500 text-white text-[9px] font-black uppercase tracking-widest animate-pulse">
-                      {isRtl ? 'عاجل جداً' : 'Urgent'}
-                    </span>
-                 )}
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <DashboardAnnouncement stats={stats} isRtl={isRtl} />
 
       {/* Header & System Status */}
       <motion.div variants={fadeIn} className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -373,7 +417,7 @@ export default function CommandCenter() {
   );
 }
 
-function EmployeeDashboard({ user, isRtl, language, t }: any) {
+function EmployeeDashboard({ user, isRtl, language, t, stats }: any) {
   const queryClient = useQueryClient();
   const router = useRouter();
 
@@ -426,6 +470,8 @@ function EmployeeDashboard({ user, isRtl, language, t }: any) {
 
   return (
     <motion.div initial="hidden" animate="show" variants={{ show: { transition: { staggerChildren: 0.05 } } }} className="space-y-8 pb-20">
+      <DashboardAnnouncement stats={stats} isRtl={isRtl} />
+
       {/* Welcome Banner */}
       <motion.div variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } }} className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-r from-brand to-indigo-600 p-10 text-white shadow-xl">
         <div className="absolute -right-16 -top-16 w-48 h-48 rounded-full bg-white/10 blur-2xl pointer-events-none" />
